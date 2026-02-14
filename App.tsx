@@ -4,13 +4,15 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { I18nManager, StatusBar, View, StyleSheet, Text as RNText } from 'react-native';
+import { I18nManager, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 
 import { ThemeProvider, useTheme } from './src/theme';
+import { RootNavigator } from './src/navigation';
+import { useUserAuthStore } from './src/stores/userAuthStore';
 
 // Keep splash screen visible while loading
 SplashScreen.preventAutoHideAsync();
@@ -73,55 +75,19 @@ const loadFonts = async (): Promise<boolean> => {
 };
 
 /**
- * Main App Component
+ * Main App Component with Navigation
  */
-function AppContent({ customFontsLoaded }: { customFontsLoaded: boolean }) {
+function AppContent() {
   const theme = useTheme();
 
-  // Use custom fonts if available, otherwise use system font
-  const headerFont = customFontsLoaded ? 'Beiruti-Bold' : undefined;
-  const bodyFont = customFontsLoaded ? 'Rubik-Regular' : undefined;
-  const mediumFont = customFontsLoaded ? 'Rubik-Medium' : undefined;
-
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.bg }]}>
+    <>
       <StatusBar
         barStyle={theme.isDark ? 'light-content' : 'dark-content'}
         backgroundColor={theme.colors.bg}
       />
-
-      {/* Placeholder - Navigation will go here */}
-      <View style={styles.placeholder}>
-        <RNText style={[
-          styles.title,
-          { color: theme.colors.text },
-          headerFont && { fontFamily: headerFont }
-        ]}>
-          شمباي
-        </RNText>
-        <RNText style={[
-          styles.subtitle,
-          { color: theme.colors.textSecondary },
-          bodyFont && { fontFamily: bodyFont }
-        ]}>
-          السوق السوري الأول
-        </RNText>
-        <View style={[styles.statusBadge, { backgroundColor: theme.colors.successLight }]}>
-          <RNText style={[
-            styles.rtlTest,
-            { color: theme.colors.success },
-            mediumFont && { fontFamily: mediumFont }
-          ]}>
-            {I18nManager.isRTL ? '✓ RTL مُفعّل' : '⟲ أعد تشغيل التطبيق'}
-          </RNText>
-        </View>
-        {!customFontsLoaded && (
-          <RNText style={[styles.fontNote, { color: theme.colors.textMuted }]}>
-            (باستخدام خطوط النظام)
-          </RNText>
-        )}
-      </View>
-    </View>
+      <RootNavigator />
+    </>
   );
 }
 
@@ -130,7 +96,7 @@ function AppContent({ customFontsLoaded }: { customFontsLoaded: boolean }) {
  */
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
-  const [customFontsLoaded, setCustomFontsLoaded] = useState(false);
+  const initialize = useUserAuthStore((state) => state.initialize);
 
   useEffect(() => {
     async function prepare() {
@@ -139,8 +105,10 @@ export default function App() {
         configureRTL();
 
         // Try to load fonts (will fallback to system fonts if not available)
-        const fontsLoaded = await loadFonts();
-        setCustomFontsLoaded(fontsLoaded);
+        await loadFonts();
+
+        // Initialize auth state
+        await initialize();
 
       } catch (error) {
         console.error('Error during app initialization:', error);
@@ -150,7 +118,7 @@ export default function App() {
     }
 
     prepare();
-  }, []);
+  }, [initialize]);
 
   const onLayoutRootView = useCallback(async () => {
     if (appIsReady) {
@@ -167,49 +135,9 @@ export default function App() {
     <SafeAreaProvider onLayout={onLayoutRootView}>
       <ThemeProvider defaultMode="light">
         <NavigationContainer>
-          <AppContent customFontsLoaded={customFontsLoaded} />
+          <AppContent />
         </NavigationContainer>
       </ThemeProvider>
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  placeholder: {
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-    writingDirection: 'rtl',
-  },
-  subtitle: {
-    fontSize: 18,
-    marginBottom: 24,
-    textAlign: 'center',
-    writingDirection: 'rtl',
-  },
-  statusBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  rtlTest: {
-    fontSize: 16,
-    fontWeight: '500',
-    writingDirection: 'rtl',
-  },
-  fontNote: {
-    fontSize: 12,
-    marginTop: 16,
-    writingDirection: 'rtl',
-  },
-});

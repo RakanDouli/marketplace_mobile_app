@@ -3,9 +3,9 @@
  */
 
 export { useMetadataStore } from "./metadataStore";
+export { useUserAuthStore } from "./userAuthStore";
 
 // TODO: Add more stores as they are created
-// export { useUserAuthStore } from "./userAuthStore";
 // export { useCategoriesStore } from "./categoriesStore";
 // export { useListingsStore } from "./listingsStore";
 // export { useChatStore } from "./chatStore";
