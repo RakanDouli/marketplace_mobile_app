@@ -6,88 +6,90 @@
 export const colors = {
   // Light theme (default)
   light: {
-    // Brand colors
-    primary: '#2563eb',      // Blue - main brand color
-    primaryLight: '#3b82f6',
-    primaryDark: '#1d4ed8',
-    secondary: '#64748b',    // Slate
-    accent: '#f59e0b',       // Amber
+    // Brand colors - Matching web frontend themes.scss
+    primary: 'rgb(61, 92, 182)',       // Syrian blue (web: --primary)
+    primaryLight: 'rgba(61, 92, 182, 0.15)',
+    primaryDark: 'rgb(41, 72, 162)',
+    secondary: 'rgb(216, 80, 32)',     // Orange (web: --secondary)
+    accent: 'rgb(234, 76, 137)',       // Pink (web: --accent)
+    accentBg: 'rgba(234, 76, 137, 0.2)',
 
-    // Status colors
-    success: '#22c55e',      // Green
-    successLight: '#dcfce7',
-    warning: '#f59e0b',      // Amber
-    warningLight: '#fef3c7',
-    error: '#ef4444',        // Red
-    errorLight: '#fee2e2',
-    info: '#3b82f6',         // Blue
-    infoLight: '#dbeafe',
+    // Status colors - Matching web frontend themes.scss
+    success: 'rgb(39, 174, 96)',       // Green (web: --success)
+    successLight: 'rgba(39, 174, 96, 0.15)',
+    warning: 'rgb(243, 156, 18)',      // Amber (web: --warning)
+    warningLight: 'rgba(243, 156, 18, 0.15)',
+    error: 'rgb(231, 76, 60)',         // Red (web: --error)
+    errorLight: 'rgba(231, 76, 60, 0.15)',
+    info: 'rgb(52, 152, 219)',         // Blue (web: --info)
+    infoLight: 'rgba(52, 152, 219, 0.15)',
 
-    // Backgrounds
-    bg: '#f8fafc',           // Page background (slate-50)
-    surface: '#ffffff',      // Card/container background
+    // Backgrounds - Matching web frontend themes.scss
+    bg: '#ffffff',           // Pure white (web: --bg-light)
+    surface: '#f8f8f8',      // Light gray (web: --bg-body-light)
     surfaceHover: '#f1f5f9', // Hover state
 
     // Borders
-    border: '#e2e8f0',       // slate-200
-    borderFocus: '#3b82f6',  // Focus ring
+    border: '#e5e7eb',       // Light border (web: --border-light)
+    borderFocus: 'rgb(61, 92, 182)',  // Focus ring
 
-    // Text colors
-    text: '#1e293b',         // Primary text (slate-800)
-    textSecondary: '#64748b', // Secondary text (slate-500)
-    textMuted: '#94a3b8',    // Muted text (slate-400)
-    textInverse: '#ffffff',  // White text on dark bg
+    // Text colors - Matching web frontend themes.scss
+    text: '#0f172a',         // Dark text (web: --text-header)
+    textSecondary: '#4b5563', // Secondary text (web: --text-secondary)
+    textMuted: '#1e293b',    // Muted text (web: --text-body-dark)
+    textInverse: '#f8fafc',  // Light text (web: --text-light)
 
     // Overlay
     overlay: 'rgba(0, 0, 0, 0.5)',
 
     // Account type badges
-    individual: '#3b82f6',   // Blue
-    dealer: '#f59e0b',       // Amber
-    business: '#10b981',     // Emerald
+    individual: 'rgb(52, 152, 219)',   // Blue (info)
+    dealer: 'rgb(243, 156, 18)',       // Amber (warning)
+    business: 'rgb(39, 174, 96)',      // Green (success)
   },
 
-  // Dark theme (future implementation)
+  // Dark theme - Matching web frontend themes.scss
   dark: {
     // Brand colors
-    primary: '#3b82f6',
-    primaryLight: '#60a5fa',
-    primaryDark: '#2563eb',
-    secondary: '#94a3b8',
-    accent: '#fbbf24',
+    primary: 'rgb(61, 92, 182)',
+    primaryLight: 'rgba(61, 92, 182, 0.2)',
+    primaryDark: 'rgb(41, 72, 162)',
+    secondary: 'rgb(216, 80, 32)',
+    accent: 'rgb(234, 76, 137)',
+    accentBg: 'rgba(234, 76, 137, 0.2)',
 
     // Status colors
-    success: '#22c55e',
-    successLight: '#166534',
-    warning: '#f59e0b',
-    warningLight: '#854d0e',
-    error: '#ef4444',
-    errorLight: '#991b1b',
-    info: '#60a5fa',
-    infoLight: '#1e40af',
+    success: 'rgb(39, 174, 96)',
+    successLight: 'rgba(39, 174, 96, 0.2)',
+    warning: 'rgb(243, 156, 18)',
+    warningLight: 'rgba(243, 156, 18, 0.2)',
+    error: 'rgb(231, 76, 60)',
+    errorLight: 'rgba(231, 76, 60, 0.2)',
+    info: 'rgb(52, 152, 219)',
+    infoLight: 'rgba(52, 152, 219, 0.2)',
 
-    // Backgrounds
-    bg: '#0f172a',           // slate-900
-    surface: '#1e293b',      // slate-800
-    surfaceHover: '#334155', // slate-700
+    // Backgrounds - Matching web frontend themes.scss
+    bg: '#0f172a',           // Dark (web: --bg-dark)
+    surface: '#1e293b',      // Medium gray (web: --bg-body-dark)
+    surfaceHover: '#334155',
 
     // Borders
-    border: '#334155',       // slate-700
-    borderFocus: '#60a5fa',
+    border: '#374151',       // Dark border (web: --border-dark)
+    borderFocus: 'rgb(61, 92, 182)',
 
-    // Text colors
-    text: '#f1f5f9',         // slate-100
-    textSecondary: '#94a3b8', // slate-400
-    textMuted: '#64748b',    // slate-500
+    // Text colors - Matching web frontend themes.scss
+    text: '#f8fafc',         // Light text (web: --text-light)
+    textSecondary: '#9ca3af', // Secondary text
+    textMuted: '#e8eaee',    // Muted text (web: --text-body-light)
     textInverse: '#0f172a',
 
     // Overlay
     overlay: 'rgba(0, 0, 0, 0.7)',
 
     // Account type badges
-    individual: '#60a5fa',
-    dealer: '#fbbf24',
-    business: '#34d399',
+    individual: 'rgb(52, 152, 219)',
+    dealer: 'rgb(243, 156, 18)',
+    business: 'rgb(39, 174, 96)',
   },
 };
 

@@ -13,7 +13,7 @@ import { fontFamily, fontSize, fontWeight, lineHeight, textStyles } from './typo
 type ThemeMode = 'light' | 'dark' | 'system';
 
 // Full theme object type
-interface Theme {
+export interface Theme {
   colors: ThemeColors;
   spacing: typeof spacing;
   radius: typeof radius;

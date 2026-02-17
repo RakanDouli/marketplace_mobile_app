@@ -3,6 +3,7 @@
     "name": "marketplace-mobile",
     "slug": "marketplace-mobile",
     "version": "1.0.0",
+    "scheme": "shambay",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -28,7 +29,8 @@
     },
     "plugins": [
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-router"
     ]
   }
 }

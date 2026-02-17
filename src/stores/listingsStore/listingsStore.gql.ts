@@ -1,0 +1,209 @@
+// GraphQL queries for ListingsStore
+// All listings-related queries organized by view type for optimized payload
+// COPIED FROM WEB FRONTEND - DO NOT MODIFY
+
+// Grid view query - Minimal data for card view
+export const LISTINGS_GRID_QUERY = `
+  query ListingsGrid($filter: ListingFilterInput, $limit: Int, $offset: Int) {
+    listingsSearch(filter: $filter, limit: $limit, offset: $offset) {
+      id
+      title
+      priceMinor
+      imageKeys
+      categoryId
+      accountType
+      location {
+        province
+        city
+      }
+      specs
+      specsDisplay
+      user {
+        id
+      }
+    }
+    listingsAggregations(filter: $filter) {
+      totalResults
+    }
+  }
+`;
+
+// List view query - More data than grid, less than full
+export const LISTINGS_LIST_QUERY = `
+  query ListingsList($filter: ListingFilterInput, $limit: Int, $offset: Int) {
+    listingsSearch(filter: $filter, limit: $limit, offset: $offset) {
+      id
+      title
+      description
+      priceMinor
+      imageKeys
+      createdAt
+      categoryId
+      accountType
+      location {
+        province
+        city
+      }
+      specs
+      specsDisplay
+      user {
+        id
+      }
+    }
+    listingsAggregations(filter: $filter) {
+      totalResults
+    }
+  }
+`;
+
+// Detail view query - Full data
+export const LISTINGS_DETAIL_QUERY = `
+  query ListingsDetail($filter: ListingFilterInput, $limit: Int, $offset: Int) {
+    listingsSearch(filter: $filter, limit: $limit, offset: $offset) {
+      id
+      title
+      description
+      priceMinor
+      status
+      imageKeys
+      createdAt
+      categoryId
+      accountType
+      location {
+        province
+        city
+        area
+        link
+        coordinates {
+          lat
+          lng
+        }
+      }
+      specs
+      specsDisplay
+    }
+    listingsAggregations(filter: $filter) {
+      totalResults
+    }
+  }
+`;
+
+// Full search query - Complete data (fallback)
+export const LISTINGS_SEARCH_QUERY = `
+  query ListingsSearch($filter: ListingFilterInput, $limit: Int, $offset: Int) {
+    listingsSearch(filter: $filter, limit: $limit, offset: $offset) {
+      id
+      title
+      description
+      priceMinor
+      status
+      imageKeys
+      createdAt
+      categoryId
+      accountType
+      location {
+        province
+        city
+        area
+        link
+        coordinates {
+          lat
+          lng
+        }
+      }
+      specs
+      specsDisplay
+    }
+    listingsAggregations(filter: $filter) {
+      totalResults
+    }
+  }
+`;
+
+// Featured listings query - For home page carousel (uses same fields as grid)
+export const FEATURED_LISTINGS_QUERY = `
+  query FeaturedListings($filter: ListingFilterInput, $limit: Int) {
+    listingsSearch(filter: $filter, limit: $limit, offset: 0) {
+      id
+      title
+      priceMinor
+      imageKeys
+      categoryId
+      accountType
+      location {
+        province
+        city
+      }
+      specs
+      specsDisplay
+    }
+  }
+`;
+
+// Single listing query - For detail page
+export const LISTING_BY_ID_QUERY = `
+  query ListingById($id: ID!) {
+    listing(id: $id) {
+      id
+      title
+      description
+      priceMinor
+      status
+      imageKeys
+      videoUrl
+      createdAt
+      categoryId
+      allowBidding
+      biddingStartPrice
+      listingType
+      condition
+      category {
+        id
+        name
+        slug
+      }
+      accountType
+      location {
+        province
+        city
+        area
+        link
+        coordinates {
+          lat
+          lng
+        }
+      }
+      specs
+      specsDisplay
+      viewCount
+      wishlistCount
+      user {
+        id
+        name
+        phone
+        contactPhone
+        phoneIsWhatsApp
+        showPhone
+        showContactPhone
+        accountType
+        companyName
+        website
+        companyRegistrationNumber
+      }
+    }
+  }
+`;
+
+// Query selector based on view type for optimal payload
+export const getQueryByViewType = (viewType: 'grid' | 'list' | 'detail'): string => {
+  switch (viewType) {
+    case 'grid':
+      return LISTINGS_GRID_QUERY;
+    case 'list':
+      return LISTINGS_LIST_QUERY;
+    case 'detail':
+      return LISTINGS_DETAIL_QUERY;
+    default:
+      return LISTINGS_SEARCH_QUERY;
+  }
+};

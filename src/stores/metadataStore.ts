@@ -53,10 +53,8 @@ const GET_AD_METADATA = `
 const GET_LOCATION_METADATA = `
   query GetLocationMetadata {
     getProvinces {
-      id
       key
       nameAr
-      nameEn
     }
   }
 `;
@@ -66,10 +64,8 @@ const GET_LOCATION_METADATA = `
 // ============================================================
 
 interface Province {
-  id: string;
   key: string;
   nameAr: string;
-  nameEn: string;
 }
 
 interface MetadataState {

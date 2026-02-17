@@ -14,6 +14,81 @@ import {
   signOut as supabaseSignOut,
   onAuthStateChange,
 } from '../services/supabase';
+import { graphqlRequest } from '../services/graphql/client';
+import { ME_QUERY } from './userAuthStore/userAuthStore.gql';
+
+// =============================================================================
+// ERROR TRANSLATION
+// =============================================================================
+
+/**
+ * Translate Supabase error messages to Arabic
+ * Matches web frontend userAuthStore pattern
+ */
+const translateAuthError = (error: any): string => {
+  const message = error?.message || error?.error_description || String(error);
+  const messageLower = message.toLowerCase();
+
+  // Invalid credentials
+  if (
+    messageLower.includes('invalid login credentials') ||
+    messageLower.includes('invalid email or password') ||
+    messageLower.includes('wrong password')
+  ) {
+    return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+  }
+
+  // Email not confirmed
+  if (messageLower.includes('email not confirmed')) {
+    return 'يرجى تأكيد بريدك الإلكتروني أولاً';
+  }
+
+  // User already registered
+  if (
+    messageLower.includes('user already registered') ||
+    messageLower.includes('email already in use')
+  ) {
+    return 'هذا البريد الإلكتروني مسجل مسبقاً';
+  }
+
+  // Password too short
+  if (messageLower.includes('password should be at least')) {
+    return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+  }
+
+  // Invalid email format
+  if (messageLower.includes('invalid email') || messageLower.includes('email format')) {
+    return 'صيغة البريد الإلكتروني غير صحيحة';
+  }
+
+  // Rate limit
+  if (messageLower.includes('rate limit') || messageLower.includes('too many requests')) {
+    return 'محاولات كثيرة جداً، يرجى المحاولة لاحقاً';
+  }
+
+  // User not found
+  if (messageLower.includes('user not found')) {
+    return 'لم يتم العثور على حساب بهذا البريد الإلكتروني';
+  }
+
+  // User banned/suspended
+  if (messageLower.includes('banned') || messageLower.includes('suspended')) {
+    return 'تم إيقاف حسابك، يرجى التواصل مع الدعم';
+  }
+
+  // Network/connection errors
+  if (
+    messageLower.includes('network') ||
+    messageLower.includes('fetch') ||
+    messageLower.includes('connection') ||
+    messageLower.includes('timeout')
+  ) {
+    return 'خطأ في الاتصال بالخادم، يرجى التحقق من اتصالك بالإنترنت';
+  }
+
+  // Default: return original message or generic error
+  return message || 'حدث خطأ غير متوقع';
+};
 
 // =============================================================================
 // TYPES
@@ -42,6 +117,7 @@ interface UserAuthState {
   // Actions
   initialize: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
@@ -81,9 +157,16 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
           isLoading: false,
         });
 
-        // TODO: Fetch full profile from GraphQL
-        // const profile = await fetchUserProfile(user.id);
-        // set({ profile });
+        // Fetch full profile from GraphQL (contains backend database ID)
+        try {
+          const data = await graphqlRequest<{ me: { user: UserProfile } }>(ME_QUERY, {}, false);
+          if (data?.me?.user) {
+            set({ profile: data.me.user });
+          }
+        } catch (profileError) {
+          console.warn('[Auth] Failed to fetch profile:', profileError);
+          // Continue without profile - fallback to Supabase user
+        }
       } else {
         set({
           session: null,
@@ -94,7 +177,7 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       }
 
       // Listen for auth state changes
-      onAuthStateChange((event, session) => {
+      onAuthStateChange(async (event, session) => {
         console.log('[Auth] State changed:', event);
 
         if (event === 'SIGNED_IN' && session) {
@@ -103,6 +186,16 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             user: session.user,
             isAuthenticated: true,
           });
+
+          // Fetch profile for OAuth logins (Google, etc.)
+          try {
+            const data = await graphqlRequest<{ me: { user: UserProfile } }>(ME_QUERY, {}, false);
+            if (data?.me?.user) {
+              set({ profile: data.me.user });
+            }
+          } catch (profileError) {
+            console.warn('[Auth] Failed to fetch profile on auth change:', profileError);
+          }
         } else if (event === 'SIGNED_OUT') {
           set({
             session: null,
@@ -133,8 +226,9 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       const { session, user, error } = await signInWithEmail(email, password);
 
       if (error) {
-        set({ isLoading: false, error: error.message });
-        return { success: false, error: error.message };
+        const arabicError = translateAuthError(error);
+        set({ isLoading: false, error: arabicError });
+        return { success: false, error: arabicError };
       }
 
       set({
@@ -144,11 +238,55 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         isLoading: false,
       });
 
+      // Fetch full profile from GraphQL (contains backend database ID)
+      try {
+        const data = await graphqlRequest<{ me: { user: UserProfile } }>(ME_QUERY, {}, false);
+        if (data?.me?.user) {
+          set({ profile: data.me.user });
+        }
+      } catch (profileError) {
+        console.warn('[Auth] Failed to fetch profile:', profileError);
+        // Continue without profile - fallback to Supabase user
+      }
+
       return { success: true };
     } catch (error: any) {
-      const message = error.message || 'فشل في تسجيل الدخول';
-      set({ isLoading: false, error: message });
-      return { success: false, error: message };
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
+    }
+  },
+
+  /**
+   * Sign in with Google OAuth
+   */
+  signInWithGoogle: async () => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'shambay://auth/callback',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        const arabicError = translateAuthError(error);
+        set({ isLoading: false, error: arabicError });
+        return { success: false, error: arabicError };
+      }
+
+      // OAuth will redirect, so we don't set loading to false here
+      return { success: true };
+    } catch (error: any) {
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
     }
   },
 
@@ -164,8 +302,9 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       });
 
       if (error) {
-        set({ isLoading: false, error: error.message });
-        return { success: false, error: error.message };
+        const arabicError = translateAuthError(error);
+        set({ isLoading: false, error: arabicError });
+        return { success: false, error: arabicError };
       }
 
       // If email confirmation is required, user will need to verify
@@ -184,11 +323,22 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         isLoading: false,
       });
 
+      // Fetch full profile from GraphQL (contains backend database ID)
+      try {
+        const data = await graphqlRequest<{ me: { user: UserProfile } }>(ME_QUERY, {}, false);
+        if (data?.me?.user) {
+          set({ profile: data.me.user });
+        }
+      } catch (profileError) {
+        console.warn('[Auth] Failed to fetch profile:', profileError);
+        // Continue without profile - fallback to Supabase user
+      }
+
       return { success: true };
     } catch (error: any) {
-      const message = error.message || 'فشل في إنشاء الحساب';
-      set({ isLoading: false, error: message });
-      return { success: false, error: message };
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
     }
   },
 
@@ -229,16 +379,17 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       const { error } = await supabase.auth.resetPasswordForEmail(email);
 
       if (error) {
-        set({ isLoading: false, error: error.message });
-        return { success: false, error: error.message };
+        const arabicError = translateAuthError(error);
+        set({ isLoading: false, error: arabicError });
+        return { success: false, error: arabicError };
       }
 
       set({ isLoading: false });
       return { success: true };
     } catch (error: any) {
-      const message = error.message || 'فشل في إرسال رابط استعادة كلمة المرور';
-      set({ isLoading: false, error: message });
-      return { success: false, error: message };
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
     }
   },
 
@@ -263,9 +414,9 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
 
       return { success: true };
     } catch (error: any) {
-      const message = error.message || 'فشل في تحديث الملف الشخصي';
-      set({ isLoading: false, error: message });
-      return { success: false, error: message };
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
     }
   },
 

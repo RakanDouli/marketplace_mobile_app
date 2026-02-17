@@ -16,3 +16,4 @@ export type { TextStyleKey } from './typography';
 
 // Theme Context
 export { ThemeProvider, useTheme, useThemeMode } from './ThemeContext';
+export type { Theme } from './ThemeContext';
