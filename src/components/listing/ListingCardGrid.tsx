@@ -106,6 +106,11 @@ export function ListingCardGrid({
         <Text variant="h4" color="primary" style={styles.price}>
           {price}
         </Text>
+        {specs && (
+          <Text variant="xs" color="secondary" numberOfLines={2} style={styles.specs}>
+            {specs}
+          </Text>
+        )}
         {location && (
           <View style={styles.location}>
             <Text variant="xs" color="secondary" style={styles.locationText}>
@@ -113,11 +118,6 @@ export function ListingCardGrid({
             </Text>
             <MapPin size={14} color={theme.colors.textSecondary} />
           </View>
-        )}
-        {specs && (
-          <Text variant="xs" color="secondary" numberOfLines={1} style={styles.specs}>
-            {specs}
-          </Text>
         )}
       </View>
     </TouchableOpacity>
@@ -179,13 +179,12 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'flex-end',
       gap: theme.spacing.xs,
-      marginBottom: theme.spacing.xs,
     },
     locationText: {
       flex: 0,
     },
     specs: {
-      marginTop: theme.spacing.xs,
+      marginBottom: theme.spacing.xs,
       opacity: 0.8,
       textAlign: 'right',
     },

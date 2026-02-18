@@ -21,7 +21,8 @@ interface ListingCardListProps {
   title: string;
   price: string;
   location?: string;
-  specs?: string;
+  specs?: string; // Compact format for fallback
+  specsDisplay?: Record<string, any>; // Detailed format with labels
   image?: string;
   imageUrl?: string;
   images?: string[];
@@ -36,6 +37,7 @@ export function ListingCardList({
   price,
   location,
   specs,
+  specsDisplay,
   image,
   imageUrl: imageUrlProp,
   images,
@@ -98,12 +100,27 @@ export function ListingCardList({
           {price}
         </Text>
 
-        {/* Specs - two lines for more visibility */}
-        {specs && (
+        {/* Specs - backend decides what to show */}
+        {specsDisplay && Object.keys(specsDisplay).length > 0 ? (
+          <Text variant="xs" color="secondary" numberOfLines={2} style={styles.specs}>
+            {[...new Set(
+              Object.entries(specsDisplay)
+                .filter(([key]) => key !== 'accountType' && key !== 'account_type')
+                .map(([, value]) => {
+                  if (!value) return null;
+                  const displayValue = typeof value === 'object' ? value.value : value;
+                  return displayValue || null;
+                })
+                .filter(Boolean)
+            )]
+              .map(v => `\u2068${v}\u2069`) // Wrap in Unicode isolates for BiDi
+              .join(' | ')}
+          </Text>
+        ) : specs ? (
           <Text variant="xs" color="secondary" numberOfLines={2} style={styles.specs}>
             {specs}
           </Text>
-        )}
+        ) : null}
 
         {/* Location - icon before text in RTL */}
         {location && (
@@ -128,7 +145,7 @@ const createStyles = (theme: Theme) =>
       overflow: 'hidden',
       borderWidth: 1,
       borderColor: theme.colors.border,
-      height: 145,
+      height: 160,
       position: 'relative',
       ...theme.shadows.sm,
     },

@@ -147,15 +147,17 @@ export default function HomeTab() {
       if (typeof specsDisplay === 'string') specs = JSON.parse(specsDisplay);
       else if (typeof specsDisplay === 'object') specs = specsDisplay;
     } catch { return ''; }
-    const parts: string[] = [];
+    // Deduplicate values
+    const partsSet = new Set<string>();
     Object.entries(specs)
       .filter(([key]) => key !== 'accountType' && key !== 'account_type')
       .forEach(([, value]) => {
         if (!value) return;
         const displayValue = typeof value === 'object' ? value.value : value;
-        if (displayValue && displayValue !== '') parts.push(String(displayValue));
+        if (displayValue && displayValue !== '') partsSet.add(String(displayValue));
       });
-    return parts.join(' | ');
+    // Wrap each part in Unicode isolates to prevent BiDi reordering
+    return Array.from(partsSet).map(p => `\u2068${p}\u2069`).join(' | ');
   };
 
   const renderCategoryIcon = (iconSvg: string | undefined, size: number, color: string) => {

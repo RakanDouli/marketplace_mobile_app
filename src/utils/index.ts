@@ -50,3 +50,10 @@ export {
   formatLocationFromFields,
 } from "./formatLocation";
 export type { LocationData } from "./formatLocation";
+
+// Specs filtering by view mode
+export {
+  filterSpecsByViewMode,
+  formatFilteredSpecs,
+} from "./filterSpecs";
+export type { SpecsViewMode } from "./filterSpecs";

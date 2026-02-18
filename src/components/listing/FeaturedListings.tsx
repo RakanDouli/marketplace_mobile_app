@@ -16,11 +16,12 @@ import { useTheme, Theme } from '../../theme';
 import { Container, ContainerProps } from '../slices/Container';
 import { Text } from '../slices/Text';
 import { Button } from '../slices/Button';
-import { ListingCard } from './ListingCard';
+import { ListingCardGrid } from './ListingCardGrid';
 import { Loading } from '../slices/Loading';
 import { Listing } from '../../stores/listingsStore';
 import { getListingImageUrl } from '../../services/cloudflare/images';
 import { formatLocation } from '../../utils';
+import { ENV } from '../../constants/env';
 
 export type FeaturedListingsVariant = 'slider' | 'grid';
 
@@ -95,24 +96,35 @@ export function FeaturedListings({
       return '';
     }
 
-    // Extract values from specs (handles both { label, value } and direct values)
-    const parts: string[] = [];
+    // Extract values from specs (handles both { label, value } and direct values) - deduplicated
+    const partsSet = new Set<string>();
     Object.entries(specs)
       .filter(([key]) => key !== 'accountType' && key !== 'account_type')
       .forEach(([, value]) => {
         if (!value) return;
         const displayValue = typeof value === 'object' ? value.value : value;
         if (displayValue && displayValue !== '') {
-          parts.push(String(displayValue));
+          partsSet.add(String(displayValue));
         }
       });
 
-    return parts.join(' | ');
+    // Wrap each part in Unicode isolates to prevent BiDi reordering
+    return Array.from(partsSet).map(p => `\u2068${p}\u2069`).join(' | ');
   };
 
-  // Render individual listing card
+  // Construct share URL for listing
+  const getShareUrl = (listing: Listing): string => {
+    const categorySlug = listing.category?.slug;
+    const listingType = listing.listingType || 'sell';
+    if (categorySlug) {
+      return `${ENV.WEB_URL}/${categorySlug}/${listingType}/${listing.id}`;
+    }
+    return `${ENV.WEB_URL}/listing/${listing.id}`;
+  };
+
+  // Render individual listing card - using ListingCardGrid directly for consistency
   const renderListingCard = (listing: Listing, index: number) => (
-    <ListingCard
+    <ListingCardGrid
       key={listing.id}
       id={listing.id}
       title={listing.title}
@@ -120,6 +132,8 @@ export function FeaturedListings({
       location={formatLocation(listing.location)}
       specs={formatSpecs(listing.specsDisplay)}
       imageUrl={getImage(listing.imageKeys)}
+      userId={listing.user?.id}
+      shareUrl={getShareUrl(listing)}
       onPress={() => onListingPress?.(listing.id)}
       style={{ width: cardWidth }}
     />

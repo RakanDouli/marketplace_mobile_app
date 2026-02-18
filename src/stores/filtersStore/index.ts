@@ -20,6 +20,9 @@ export interface AttributeOption {
   value: string;
   sortOrder: number;
   isActive: boolean;
+  showInGrid?: boolean;
+  showInList?: boolean;
+  showInDetail?: boolean;
   showInFilter?: boolean;
 }
 
@@ -34,6 +37,9 @@ export interface Attribute {
   groupOrder?: number;
   isActive: boolean;
   isGlobal?: boolean;
+  showInGrid?: boolean;
+  showInList?: boolean;
+  showInDetail?: boolean;
   showInFilter?: boolean;
   config?: any;
   options: AttributeOption[];

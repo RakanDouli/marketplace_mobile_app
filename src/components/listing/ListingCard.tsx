@@ -28,6 +28,8 @@ export interface ListingCardProps {
   price: string;
   location?: string;
   specs?: string;
+  /** Detailed specs with labels for list view */
+  specsDisplay?: Record<string, any>;
   /** Single image ID or URL */
   image?: string;
   /** Pre-optimized image URL */
@@ -52,6 +54,7 @@ export function ListingCard({
   price,
   location,
   specs,
+  specsDisplay,
   image,
   imageUrl: imageUrlProp,
   images,
@@ -103,6 +106,7 @@ export function ListingCard({
         price={price}
         location={location}
         specs={specs}
+        specsDisplay={specsDisplay}
         image={image}
         imageUrl={imageUrlProp}
         images={images}

@@ -37,6 +37,7 @@ import { useCurrencyStore } from '../../../../src/stores/currencyStore';
 import { useMetadataStore } from '../../../../src/stores/metadataStore';
 import { useFiltersStore, type ActiveFilter } from '../../../../src/stores/filtersStore';
 import { formatPrice } from '../../../../src/utils/formatPrice';
+import { filterSpecsByViewMode } from '../../../../src/utils/filterSpecs';
 import { getListingImageUrl } from '../../../../src/services/cloudflare/images';
 
 // Filter chip type for display
@@ -454,25 +455,33 @@ export default function CategoryListingsScreen() {
       locationParts.push(provinceArabic);
     }
 
-    // Build specs string from specsDisplay - use | separator (matching web frontend)
-    const specsArray: string[] = [];
-    if (listing.specsDisplay) {
-      Object.values(listing.specsDisplay).forEach((spec: any) => {
+    // Filter specs by view mode using attribute flags (showInGrid/showInList)
+    const viewMode = forListView ? 'list' : 'grid';
+    const filteredSpecs = filterSpecsByViewMode(
+      listing.specsDisplay,
+      filterAttributes,
+      viewMode
+    );
+
+    // Build specs string from filtered specsDisplay (deduplicated)
+    const specsSet = new Set<string>();
+    Object.entries(filteredSpecs)
+      .filter(([key]) => key !== 'accountType' && key !== 'account_type')
+      .forEach(([, spec]: [string, any]) => {
         if (spec?.value) {
-          specsArray.push(spec.value);
+          specsSet.add(spec.value);
         }
       });
-    }
-
-    // For list view, show more specs (up to 5), for grid show 3
-    const maxSpecs = forListView ? 5 : 3;
+    const specsArray = Array.from(specsSet);
 
     return {
       id: listing.id,
       title: listing.title,
       price: formatPrice(listing.priceMinor, preferredCurrency),
       location: locationParts.join('، '),
-      specs: specsArray.slice(0, maxSpecs).join(' | '),
+      specs: specsArray.map(s => `\u2068${s}\u2069`).join(' | '), // Unicode isolates for BiDi
+      // Pass filtered specsDisplay for list view
+      specsDisplay: forListView ? filteredSpecs : undefined,
       // Convert image ID to full Cloudflare URL - matching web frontend
       imageUrl: getImageUrl(listing.imageKeys),
       userId: listing.user?.id,
@@ -522,6 +531,7 @@ export default function CategoryListingsScreen() {
           price={formatted.price}
           location={formatted.location}
           specs={formatted.specs}
+          specsDisplay={formatted.specsDisplay}
           imageUrl={formatted.imageUrl}
           userId={formatted.userId}
           categorySlug={categorySlug}
