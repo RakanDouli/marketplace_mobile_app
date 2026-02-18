@@ -739,7 +739,7 @@ export default function CategoryListingsScreen() {
             keyExtractor={(item, index) => `${item.id}-${index}`}
             numColumns={viewMode === 'grid' ? gridColumns : 1}
             key={`${viewMode}-${gridColumns}`} // Force re-render when view mode or columns change
-            contentContainerStyle={[styles.listContent, { paddingTop: TOOLBAR_HEIGHT }]}
+            contentContainerStyle={[styles.listContent, { paddingTop: TOOLBAR_HEIGHT + theme.spacing.lg }]}
             columnWrapperStyle={viewMode === 'grid' ? styles.row : undefined}
             showsVerticalScrollIndicator={false}
             onScroll={handleScroll}
@@ -920,7 +920,7 @@ const createStyles = (
     },
     listContent: {
       paddingHorizontal: horizontalPadding,
-      paddingBottom: 40,
+      paddingBottom: theme.spacing.xxl + theme.spacing.xxl,
     },
     row: {
       flexDirection: 'row-reverse',
