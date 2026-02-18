@@ -17,7 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Link } from 'expo-router';
 import { ChevronDown } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
-import { Text, Button, Input, Form, LogoIcon } from '../../src/components/ui';
+import { Text, Button, Input, Form } from '../../src/components/slices';
+import { LogoIcon } from '../../src/components/icons';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
 
 // Development credentials from backend seed
@@ -196,7 +197,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Form with validation */}
-          <Form error={error}>
+          <Form error={error ?? undefined}>
             <Input
               label="البريد الإلكتروني"
               value={email}

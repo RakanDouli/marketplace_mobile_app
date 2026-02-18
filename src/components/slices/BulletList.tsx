@@ -1,15 +1,12 @@
 /**
  * BulletList Component
- * Reusable bullet list with automatic RTL support
+ * Reusable bullet list with automatic RTL support via I18nManager
  */
 
-import React from 'react';
-import { View, StyleSheet, I18nManager } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { Text, TextColor } from './Text';
 import { useTheme } from '../../theme';
-
-// Check if RTL - can be made dynamic with i18n later
-const isRTL = I18nManager.isRTL || true; // Force RTL for Arabic app
 
 export interface BulletListProps {
   items: string[];
@@ -25,7 +22,7 @@ export const BulletList: React.FC<BulletListProps> = ({
   variant = 'default',
 }) => {
   const theme = useTheme();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const resolvedBulletColor = bulletColor || theme.colors.primary;
 
@@ -49,22 +46,20 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       marginTop: theme.spacing.sm,
     },
     listItem: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
+      flexDirection: 'row', // Auto-flips to row-reverse in RTL
       alignItems: 'flex-start',
       marginBottom: theme.spacing.sm,
     },
     bullet: {
-      marginRight: isRTL ? 0 : theme.spacing.sm,
-      marginLeft: isRTL ? theme.spacing.md : 0,
+      marginEnd: theme.spacing.sm, // RTL-safe
       fontSize: theme.fontSize.lg,
       lineHeight: theme.fontSize.lg * theme.lineHeight.normal,
     },
     listText: {
       flex: 1,
       lineHeight: theme.fontSize.base * theme.lineHeight.normal,
-      textAlign: isRTL ? 'right' : 'left',
-      paddingLeft: isRTL ? theme.spacing.sm : 0,
-      paddingRight: isRTL ? 0 : theme.spacing.sm,
+      textAlign: 'left', // Auto-becomes right in RTL
+      paddingStart: theme.spacing.sm, // RTL-safe
     },
   });
 

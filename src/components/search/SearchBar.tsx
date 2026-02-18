@@ -17,7 +17,7 @@ import {
 import { Search, LayoutGrid, X } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import { useTheme, Theme } from '../../theme';
-import { Text } from './Text';
+import { Text } from '../slices/Text';
 
 export interface Category {
   slug: string;
@@ -93,7 +93,7 @@ export function SearchBar({
           <Search
             size={18}
             color={theme.colors.textSecondary}
-            style={{ marginLeft: theme.spacing.xs }}
+            style={{ marginStart: theme.spacing.xs }}
           />
           <TextInput
             style={styles.input}

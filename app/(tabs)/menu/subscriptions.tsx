@@ -9,7 +9,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { CreditCard, Check, X, AlertTriangle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../../src/theme';
-import { Text, Button } from '../../../src/components/ui';
+import { Text, Button } from '../../../src/components/slices';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
 import { useCurrencyStore } from '../../../src/stores/currencyStore';
 import { formatPrice } from '../../../src/utils/formatPrice';
@@ -25,7 +25,9 @@ export default function SubscriptionsScreen() {
   const theme = useTheme();
   const router = useRouter();
   const styles = createStyles(theme);
-  const { user, userPackage, isAuthenticated } = useUserAuthStore();
+  const { user, isAuthenticated } = useUserAuthStore();
+  // TODO: Add userPackage to store when subscription API is ready
+  const userPackage = null as unknown as { userSubscription?: any; currentListings?: number; endDate?: string } | null;
   const preferredCurrency = useCurrencyStore((state) => state.preferredCurrency);
 
   // Get subscription data from userPackage

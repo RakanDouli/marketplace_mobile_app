@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Car, Smartphone, Home, ShoppingBag, ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
-import { Text } from '../../src/components/ui/Text';
+import { Text } from '../../src/components/slices/Text';
 
 interface CategoryCardProps {
   icon: React.ReactNode;

@@ -8,8 +8,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
-import { Text } from '../../src/components/ui/Text';
-import { Button } from '../../src/components/ui/Button';
+import { Text } from '../../src/components/slices/Text';
+import { Button } from '../../src/components/slices/Button';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
 
 export default function ForgotPasswordScreen() {

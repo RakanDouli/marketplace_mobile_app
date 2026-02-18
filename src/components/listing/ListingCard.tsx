@@ -12,8 +12,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useTheme, Theme } from '../../theme';
-import { Text } from './Text';
-import { Image } from './Image';
+import { Text } from '../slices/Text';
+import { Image } from '../slices/Image';
 import { ShareButton } from './ShareButton';
 import { FavoriteButton } from './FavoriteButton';
 import { ListingCardGrid } from './ListingCardGrid';

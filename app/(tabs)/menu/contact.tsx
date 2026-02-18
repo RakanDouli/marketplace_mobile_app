@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Mail, MapPin, Clock, Send, Building2 } from 'lucide-react-native';
 import { useTheme } from '../../../src/theme';
-import { Text, Button } from '../../../src/components/ui';
+import { Text, Button } from '../../../src/components/slices';
 import { Collapsible } from '../../../src/components/slices';
 
 // Static contact info (no phone number - use form instead)

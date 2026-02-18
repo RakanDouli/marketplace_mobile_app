@@ -34,36 +34,22 @@ const configureRTL = (): void => {
 };
 
 /**
- * Check if custom fonts exist
- */
-const fontsExist = (): boolean => {
-  try {
-    require('../assets/fonts/Rubik-Regular.ttf');
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-/**
- * Load custom fonts
+ * Load custom fonts from @expo-google-fonts packages
  */
 const loadFonts = async (): Promise<boolean> => {
-  if (!fontsExist()) {
-    console.log('Custom fonts not found. Using system fonts.');
-    return false;
-  }
-
   try {
     await Font.loadAsync({
-      'Beiruti-Regular': require('../assets/fonts/Beiruti-Regular.ttf'),
-      'Beiruti-SemiBold': require('../assets/fonts/Beiruti-SemiBold.ttf'),
-      'Beiruti-Bold': require('../assets/fonts/Beiruti-Bold.ttf'),
-      'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
-      'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
-      'Rubik-SemiBold': require('../assets/fonts/Rubik-SemiBold.ttf'),
-      'Rubik-Bold': require('../assets/fonts/Rubik-Bold.ttf'),
+      // Beiruti - headers
+      'Beiruti-Regular': require('@expo-google-fonts/beiruti/400Regular/Beiruti_400Regular.ttf'),
+      'Beiruti-SemiBold': require('@expo-google-fonts/beiruti/600SemiBold/Beiruti_600SemiBold.ttf'),
+      'Beiruti-Bold': require('@expo-google-fonts/beiruti/700Bold/Beiruti_700Bold.ttf'),
+      // Rubik - body text
+      'Rubik-Regular': require('@expo-google-fonts/rubik/400Regular/Rubik_400Regular.ttf'),
+      'Rubik-Medium': require('@expo-google-fonts/rubik/500Medium/Rubik_500Medium.ttf'),
+      'Rubik-SemiBold': require('@expo-google-fonts/rubik/600SemiBold/Rubik_600SemiBold.ttf'),
+      'Rubik-Bold': require('@expo-google-fonts/rubik/700Bold/Rubik_700Bold.ttf'),
     });
+    console.log('Custom fonts loaded successfully.');
     return true;
   } catch (error) {
     console.log('Error loading fonts:', error);

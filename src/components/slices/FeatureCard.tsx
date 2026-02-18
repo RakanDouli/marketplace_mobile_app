@@ -6,7 +6,7 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme, Theme } from '../../theme';
-import { Text } from '../ui/Text';
+import { Text } from './Text';
 
 export type FeatureCardVariant = 'default' | 'card' | 'icon-row' | 'minimal';
 export type FeatureCardColor = 'bg' | 'surface' | 'primary' | 'accent';
@@ -110,7 +110,7 @@ export function FeatureCard({
     const isRow = variant === 'icon-row';
     return {
       flex: isRow ? 1 : undefined,
-      marginLeft: isRow ? theme.spacing.md : 0,
+      marginStart: isRow ? theme.spacing.md : 0,
       alignItems: isRow ? 'flex-end' : 'center',
     };
   };

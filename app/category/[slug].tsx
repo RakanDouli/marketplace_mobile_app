@@ -7,7 +7,7 @@ import { StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { useTheme } from '../../src/theme';
-import { Text } from '../../src/components/ui/Text';
+import { Text } from '../../src/components/slices/Text';
 
 export default function CategoryListingsScreen() {
   const theme = useTheme();

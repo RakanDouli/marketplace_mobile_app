@@ -7,7 +7,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ban } from 'lucide-react-native';
 import { useTheme } from '../../../src/theme';
-import { Text } from '../../../src/components/ui/Text';
+import { Text } from '../../../src/components/slices/Text';
 
 export default function BlockedUsersScreen() {
   const theme = useTheme();

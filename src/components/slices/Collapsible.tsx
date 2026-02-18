@@ -6,13 +6,13 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, LayoutAnimation } from 'react-native';
 import { Plus, Minus } from 'lucide-react-native';
-import { Text } from '../ui/Text';
+import { Text } from './Text';
 import { useTheme } from '../../theme';
 
 // Note: setLayoutAnimationEnabledExperimental is not needed on New Architecture (Expo 52+)
 // LayoutAnimation works natively without enabling it
 
-interface CollapsibleProps {
+export interface CollapsibleProps {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
@@ -117,7 +117,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       borderRadius: 14,
       justifyContent: 'center',
       alignItems: 'center',
-      marginLeft: theme.spacing.md,
+      marginStart: theme.spacing.md,
     },
     title: {
       flex: 1,

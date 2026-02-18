@@ -13,13 +13,14 @@ import {
 } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
-import { Container, ContainerProps } from './Container';
-import { Text } from '../ui/Text';
-import { Button } from '../ui/Button';
-import { ListingCard } from '../ui/ListingCard';
-import { Loading } from '../ui/Loading';
+import { Container, ContainerProps } from '../slices/Container';
+import { Text } from '../slices/Text';
+import { Button } from '../slices/Button';
+import { ListingCard } from './ListingCard';
+import { Loading } from '../slices/Loading';
 import { Listing } from '../../stores/listingsStore';
 import { getListingImageUrl } from '../../services/cloudflare/images';
+import { formatLocation } from '../../utils';
 
 export type FeaturedListingsVariant = 'slider' | 'grid';
 
@@ -66,10 +67,10 @@ export function FeaturedListings({
     ? 180 // Fixed width for horizontal scroll
     : (width - containerPadding * 2 - gap * (effectiveColumns - 1)) / effectiveColumns;
 
-  // Format price for display
+  // Format price for display (English numbers for consistency)
   const formatPrice = (priceMinor: number): string => {
     const price = priceMinor / 100;
-    return `${price.toLocaleString('ar-SY')} ل.س`;
+    return `${price.toLocaleString('en-US')} ل.س`;
   };
 
   // Get listing image URL
@@ -107,15 +108,6 @@ export function FeaturedListings({
       });
 
     return parts.join(' | ');
-  };
-
-  // Format location for display - matching web frontend pattern
-  const formatLocation = (location?: { province?: string; city?: string }): string => {
-    if (!location) return '';
-    const { city, province } = location;
-    // Format: "city، province" or just "province" or just "city"
-    if (city && province) return `${city}، ${province}`;
-    return city || province || '';
   };
 
   // Render individual listing card

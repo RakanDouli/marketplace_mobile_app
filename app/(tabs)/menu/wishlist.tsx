@@ -14,8 +14,8 @@ import {
 import { Heart } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme, Theme } from '../../../src/theme';
-import { Text } from '../../../src/components/ui/Text';
-import { ListingCard } from '../../../src/components/ui/ListingCard';
+import { Text } from '../../../src/components/slices/Text';
+import { ListingCard } from '../../../src/components/listing';
 import { useWishlistStore, WishlistListing } from '../../../src/stores/wishlistStore';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
 import { useCurrencyStore } from '../../../src/stores/currencyStore';

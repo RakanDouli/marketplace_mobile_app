@@ -13,8 +13,8 @@ import {
 import { Image } from 'expo-image';
 import { useTheme } from '../../theme';
 import { Container, ContainerProps } from './Container';
-import { Text } from '../ui/Text';
-import { Button } from '../ui/Button';
+import { Text } from './Text';
+import { Button } from './Button';
 
 export type BannerVariant = 'primary' | 'secondary' | 'accent';
 export type ImagePosition = 'left' | 'right';

@@ -1,6 +1,7 @@
 /**
- * ListingCardGrid Component
- * Vertical grid view card for listings
+ * ListingCardList Component
+ * Horizontal list view card for listings
+ * Clean design inspired by Dubizzle/Sahibinden
  */
 
 import React, { useMemo } from 'react';
@@ -8,16 +9,14 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  ViewStyle,
 } from 'react-native';
-import { MapPin, Star } from 'lucide-react-native';
+import { MapPin } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
-import { Text } from './Text';
-import { Image } from './Image';
-import { ShareButton } from './ShareButton';
+import { Text } from '../slices/Text';
+import { Image } from '../slices/Image';
 import { FavoriteButton } from './FavoriteButton';
 
-interface ListingCardGridProps {
+interface ListingCardListProps {
   id: string;
   title: string;
   price: string;
@@ -27,13 +26,11 @@ interface ListingCardGridProps {
   imageUrl?: string;
   images?: string[];
   userId?: string;
-  shareUrl: string;
   onPress?: () => void;
   isFeatured?: boolean;
-  style?: ViewStyle;
 }
 
-export function ListingCardGrid({
+export function ListingCardList({
   id,
   title,
   price,
@@ -43,11 +40,9 @@ export function ListingCardGrid({
   imageUrl: imageUrlProp,
   images,
   userId,
-  shareUrl,
   onPress,
   isFeatured = false,
-  style,
-}: ListingCardGridProps) {
+}: ListingCardListProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -61,63 +56,63 @@ export function ListingCardGrid({
 
   return (
     <TouchableOpacity
-      style={[styles.card, style]}
+      style={styles.card}
       onPress={onPress}
       activeOpacity={0.9}
     >
+      {/* Image - 35% width, full card height, rounded on right side (RTL) */}
       <View style={styles.imageContainer}>
         <Image
           src={imageSrc}
-          variant="card"
-          aspectRatio={4 / 3}
+          variant="small"
+          width="100%"
+          height="100%"
           borderRadius={0}
         />
-
         {isFeatured && (
           <View style={styles.featuredBadge}>
-            <Star size={10} color="#FFF" fill="#FFF" />
             <Text variant="xs" bold style={styles.featuredBadgeText}>
               مميز
             </Text>
           </View>
         )}
-
-        <View style={styles.imageActions}>
-          <ShareButton
-            metadata={{
-              title,
-              description: specs,
-              url: shareUrl,
-              price,
-              imageUrl: imageSrc || undefined,
-            }}
-          />
+        {/* Favorite button - bottom right of image */}
+        <View style={styles.favoriteButtonWrapper}>
           <FavoriteButton
             listingId={id}
             listingUserId={userId}
+            size={16}
           />
         </View>
       </View>
 
+      {/* Content area */}
       <View style={styles.content}>
-        <Text variant="h4" numberOfLines={2} style={styles.title}>
+        {/* Title */}
+        <Text variant="body" numberOfLines={2} style={styles.title}>
           {title}
         </Text>
+
+        {/* Price */}
         <Text variant="h4" color="primary" style={styles.price}>
           {price}
         </Text>
-        {location && (
-          <View style={styles.location}>
-            <MapPin size={14} color={theme.colors.textSecondary} />
-            <Text variant="xs" color="secondary" style={styles.locationText}>
-              {location}
-            </Text>
-          </View>
-        )}
+
+        {/* Specs - two lines for more visibility */}
         {specs && (
-          <Text variant="xs" color="secondary" numberOfLines={1} style={styles.specs}>
+          <Text variant="xs" color="secondary" numberOfLines={2} style={styles.specs}>
             {specs}
           </Text>
+        )}
+
+        {/* Location - icon before text in RTL */}
+        {location && (
+          <View style={styles.location}>
+            <Text variant="xs" color="muted" numberOfLines={1}>
+              {location}
+            </Text>
+            <MapPin size={12} color={theme.colors.textMuted} />
+          </View>
         )}
       </View>
     </TouchableOpacity>
@@ -127,68 +122,71 @@ export function ListingCardGrid({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     card: {
+      flexDirection: 'row-reverse',
       backgroundColor: theme.colors.bg,
-      borderRadius: theme.radius.xl,
+      borderRadius: theme.radius.lg,
       overflow: 'hidden',
       borderWidth: 1,
       borderColor: theme.colors.border,
+      height: 145,
+      position: 'relative',
       ...theme.shadows.sm,
     },
     imageContainer: {
-      width: '100%',
-      position: 'relative',
+      width: '35%',
+      height: '100%',
       overflow: 'hidden',
-      borderTopLeftRadius: theme.radius.xl,
-      borderTopRightRadius: theme.radius.xl,
-    },
-    imageActions: {
-      position: 'absolute',
-      bottom: theme.spacing.sm,
-      right: theme.spacing.sm,
-      flexDirection: 'row',
-      gap: theme.spacing.sm,
+      position: 'relative',
+      backgroundColor: theme.colors.surface,
+      // Rounded corners on right side (RTL image is on right)
+      borderTopRightRadius: theme.radius.lg,
+      borderBottomRightRadius: theme.radius.lg,
     },
     featuredBadge: {
       position: 'absolute',
-      top: theme.spacing.sm,
-      right: theme.spacing.sm,
-      flexDirection: 'row',
-      alignItems: 'center',
+      top: theme.spacing.xs,
+      right: theme.spacing.xs,
       backgroundColor: theme.colors.primary,
       paddingHorizontal: theme.spacing.sm,
-      paddingVertical: theme.spacing.xs,
-      borderRadius: theme.radius.md,
-      gap: theme.spacing.xs,
+      paddingVertical: 2,
+      borderRadius: theme.radius.sm,
     },
     featuredBadgeText: {
       color: '#FFFFFF',
+      fontSize: 10,
     },
     content: {
+      flex: 1,
       padding: theme.spacing.md,
+      paddingStart: theme.spacing.lg,
+      justifyContent: 'center',
     },
     title: {
-      marginBottom: theme.spacing.xs,
       textAlign: 'right',
+      marginBottom: theme.spacing.xs,
+      fontWeight: '600',
+      lineHeight: 20,
     },
     price: {
-      marginBottom: theme.spacing.xs,
       textAlign: 'right',
+      marginBottom: theme.spacing.xs,
+    },
+    specs: {
+      textAlign: 'right',
+      marginBottom: theme.spacing.xs,
+      opacity: 0.7,
     },
     location: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-end',
       gap: theme.spacing.xs,
-      marginBottom: theme.spacing.xs,
     },
-    locationText: {
-      flex: 0,
-    },
-    specs: {
-      marginTop: theme.spacing.xs,
-      opacity: 0.8,
-      textAlign: 'right',
+    favoriteButtonWrapper: {
+      position: 'absolute',
+      bottom: theme.spacing.xs,
+      right: theme.spacing.xs,
     },
   });
 
-export default ListingCardGrid;
+export default ListingCardList;

@@ -8,7 +8,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { HelpCircle, Mail, MapPin, Clock, ExternalLink } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../../src/theme';
-import { Text, Button } from '../../../src/components/ui';
+import { Text, Button } from '../../../src/components/slices';
 import { Collapsible } from '../../../src/components/slices';
 
 // Static FAQ items - grouped by category
@@ -140,7 +140,7 @@ export default function HelpScreen() {
             variant="ghost"
             arrow
             onPress={() => router.push('/menu/terms')}
-            style={[styles.linkItem, { borderBottomWidth: 0 }]}
+            style={{ ...styles.linkItem, borderBottomWidth: 0 }}
           >
             الشروط والأحكام
           </Button>

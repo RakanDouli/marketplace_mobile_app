@@ -13,7 +13,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ShoppingBag, Key, ChevronLeft } from 'lucide-react-native';
 import { useTheme, Theme } from '../../../../src/theme';
-import { Text, Loading } from '../../../../src/components/ui';
+import { Text, Loading } from '../../../../src/components/slices';
 import { useCategoriesStore } from '../../../../src/stores/categoriesStore';
 
 export default function ListingTypeSelectionScreen() {

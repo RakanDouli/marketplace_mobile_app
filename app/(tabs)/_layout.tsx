@@ -21,7 +21,7 @@ const TAB_CONFIG = [
     label: 'بحث',
     icon: 'search' as const,
     iconOutline: 'search-outline' as const,
-    sfIcon: 'magnifyingglass',
+    sfIcon: { default: 'magnifyingglass', selected: 'magnifyingglass' },
     role: 'search' as const,
   },
   {
@@ -66,7 +66,7 @@ function IOSTabs() {
       {tabs.map((tab) => (
         <NativeTabs.Trigger key={tab.name} name={tab.name} role={tab.role}>
           <Icon
-            sf={tab.sfIcon}
+            sf={tab.sfIcon as any}
             androidSrc={<VectorIcon family={Ionicons} name={tab.icon} />}
           />
           <Label>{tab.label}</Label>

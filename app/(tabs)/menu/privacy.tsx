@@ -7,7 +7,7 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Shield, AlertTriangle } from 'lucide-react-native';
 import { useTheme } from '../../../src/theme';
-import { Text, BulletList } from '../../../src/components/ui';
+import { Text, BulletList } from '../../../src/components/slices';
 
 // Privacy content sections - EXACT copy from web frontend
 const privacySections = [

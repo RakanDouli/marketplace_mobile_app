@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Linking } from 'react-native';
 import { Megaphone, BarChart, Users, Eye, Mail, Monitor, Smartphone, Clock, MapPin } from 'lucide-react-native';
 import { useTheme } from '../../../src/theme';
-import { Text, Button, Loading } from '../../../src/components/ui';
+import { Text, Button, Loading } from '../../../src/components/slices';
 import { Collapsible } from '../../../src/components/slices';
 import { useAdPackagesStore, type AdPackage } from '../../../src/stores/adPackagesStore';
 

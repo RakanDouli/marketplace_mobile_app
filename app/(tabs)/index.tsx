@@ -25,18 +25,19 @@ import {
   Zap,
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
-import { LogoIcon } from '../../src/components/ui/LogoIcon';
-import { Text } from '../../src/components/ui/Text';
-import { ListingCard } from '../../src/components/ui/ListingCard';
-import { Loading } from '../../src/components/ui/Loading';
-import { SearchBar } from '../../src/components/ui/SearchBar';
-import { useCategoriesStore, useListingsStore, useMetadataStore, useWishlistStore, useUserAuthStore } from '../../src/stores';
+import { LogoIcon } from '../../src/components/icons';
+import { Text } from '../../src/components/slices/Text';
+import { ListingCard } from '../../src/components/listing';
+import { Loading } from '../../src/components/slices/Loading';
+import { SearchBar } from '../../src/components/search';
+import { useCategoriesStore, useListingsStore, useWishlistStore, useUserAuthStore } from '../../src/stores';
 import {
   Container,
   FeatureCard,
   PromoCard,
   PromoBanner,
 } from '../../src/components/slices';
+import { formatLocation } from '../../src/utils';
 
 // CMS Assets
 const CMS_BASE_URL = 'https://staging.shambay.com';
@@ -86,7 +87,6 @@ export default function HomeTab() {
   // Stores
   const { categories, isLoading: categoriesLoading } = useCategoriesStore();
   const { listings, featuredListings, isLoading: listingsLoading } = useListingsStore();
-  const { provinces } = useMetadataStore();
   const { loadMyWishlist, isInitialized: wishlistInitialized } = useWishlistStore();
   const { isAuthenticated, isLoading: authLoading } = useUserAuthStore();
 
@@ -137,8 +137,8 @@ export default function HomeTab() {
     setSelectedCategory(slug);
   };
 
-  // Helpers
-  const formatPrice = (priceMinor: number) => `${(priceMinor / 100).toLocaleString('ar-SY')} ل.س`;
+  // Helpers - Format price with English numbers for consistency
+  const formatPriceDisplay = (priceMinor: number) => `${(priceMinor / 100).toLocaleString('en-US')} ل.س`;
 
   const formatSpecs = (specsDisplay: Record<string, any> | string | undefined): string => {
     if (!specsDisplay) return '';
@@ -156,19 +156,6 @@ export default function HomeTab() {
         if (displayValue && displayValue !== '') parts.push(String(displayValue));
       });
     return parts.join(' | ');
-  };
-
-  const getProvinceArabicName = (provinceKey: string): string => {
-    const province = provinces.find((p) => p.key === provinceKey);
-    return province?.nameAr || provinceKey;
-  };
-
-  const formatLocation = (location?: { province?: string; city?: string }): string => {
-    if (!location) return '';
-    const { city, province: provinceKey } = location;
-    const province = provinceKey ? getProvinceArabicName(provinceKey) : '';
-    if (city && province) return `${city}، ${province}`;
-    return city || province || '';
   };
 
   const renderCategoryIcon = (iconSvg: string | undefined, size: number, color: string) => {
@@ -240,8 +227,8 @@ export default function HomeTab() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <TouchableOpacity style={styles.seeAllButton} onPress={() => goToCategory('cars', 'سيارات')}>
-              <Text variant="paragraph" style={{ color: theme.colors.primary }}>عرض الكل</Text>
               <ChevronLeft size={16} color={theme.colors.primary} />
+              <Text variant="paragraph" style={{ color: theme.colors.primary }}>عرض الكل</Text>
             </TouchableOpacity>
             <Text variant="h3">عروض لك</Text>
           </View>
@@ -259,7 +246,7 @@ export default function HomeTab() {
                 <ListingCard
                   id={listing.id}
                   title={listing.title}
-                  price={formatPrice(listing.priceMinor)}
+                  price={formatPriceDisplay(listing.priceMinor)}
                   location={formatLocation(listing.location)}
                   specs={formatSpecs(listing.specsDisplay)}
                   images={listing.imageKeys}
@@ -291,7 +278,7 @@ export default function HomeTab() {
                   key={listing.id}
                   id={listing.id}
                   title={listing.title}
-                  price={formatPrice(listing.priceMinor)}
+                  price={formatPriceDisplay(listing.priceMinor)}
                   location={formatLocation(listing.location)}
                   specs={formatSpecs(listing.specsDisplay)}
                   images={listing.imageKeys}

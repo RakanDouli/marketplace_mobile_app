@@ -8,8 +8,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
-import { Text } from '../../src/components/ui/Text';
-import { Button } from '../../src/components/ui/Button';
+import { Text } from '../../src/components/slices/Text';
+import { Button } from '../../src/components/slices/Button';
 
 export default function SellerProfileScreen() {
   const theme = useTheme();

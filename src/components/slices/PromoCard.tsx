@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useTheme } from '../../theme';
-import { Text } from '../ui/Text';
-import { Button } from '../ui/Button';
+import { Text } from './Text';
+import { Button } from './Button';
 
 export type PromoCardVariant = 'primary' | 'secondary' | 'accent' | 'neutral';
 export type ImagePosition = 'left' | 'right';

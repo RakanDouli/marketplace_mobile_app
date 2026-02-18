@@ -230,16 +230,16 @@ const createStyles = (theme: Theme) =>
       writingDirection: 'rtl',
     },
     inputWithLeftIcon: {
-      paddingLeft: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
     },
     inputWithRightIcon: {
-      paddingRight: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
     },
     leftIcon: {
-      paddingLeft: theme.spacing.lg,
+      paddingStart: theme.spacing.lg,
     },
     rightIcon: {
-      paddingRight: theme.spacing.lg,
+      paddingEnd: theme.spacing.lg,
     },
     helperText: {
       marginTop: theme.spacing.xs,

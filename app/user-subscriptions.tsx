@@ -25,7 +25,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../src/theme';
-import { Text, Button, Loading } from '../src/components/ui';
+import { Text, Button, Loading } from '../src/components/slices';
 import { Collapsible } from '../src/components/slices';
 import { useUserAuthStore } from '../src/stores/userAuthStore';
 import { useSubscriptionPlansStore, type SubscriptionPlan } from '../src/stores/subscriptionPlansStore';
@@ -56,7 +56,7 @@ function PlanCard({ plan, isCurrentPlan, theme, styles, onSelect, preferredCurre
   theme: ReturnType<typeof useTheme>;
   styles: ReturnType<typeof createStyles>;
   onSelect: () => void;
-  preferredCurrency: string;
+  preferredCurrency: import('../src/stores/currencyStore').Currency;
 }) {
   const isFree = plan.monthlyPrice === 0;
   const isPopular = plan.sortOrder === 2;
@@ -173,7 +173,10 @@ export default function UserSubscriptionsScreen() {
   const theme = useTheme();
   const router = useRouter();
   const styles = createStyles(theme);
-  const { user, userPackage, isAuthenticated, openAuthModal } = useUserAuthStore();
+  const { user, isAuthenticated } = useUserAuthStore();
+  // TODO: Add userPackage and openAuthModal to store when subscription API is ready
+  const userPackage = null as unknown as { userSubscription?: { name?: string } } | null;
+  const openAuthModal = () => router.push('/auth/login');
   const { plans, isLoading, fetchPublicPlans } = useSubscriptionPlansStore();
   const preferredCurrency = useCurrencyStore((state) => state.preferredCurrency);
 

@@ -8,7 +8,7 @@ import React, { useMemo } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useTheme, Theme } from '../../theme';
 import { Container, ContainerProps } from './Container';
-import { Text } from '../ui/Text';
+import { Text } from './Text';
 
 export type GapSize = 'sm' | 'md' | 'lg' | 'xl';
 

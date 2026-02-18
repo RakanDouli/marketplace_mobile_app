@@ -12,7 +12,7 @@ import {
   Image,
 } from 'react-native';
 import { useTheme, Theme } from '../../theme';
-import { Text } from './Text';
+import { Text } from '../slices/Text';
 
 export interface CategoryCardProps {
   id: string;
@@ -135,7 +135,7 @@ const createStyles = (theme: Theme) =>
     // Chip style (horizontal scroll)
     chipCard: {
       alignItems: 'center',
-      marginRight: theme.spacing.md,
+      marginEnd: theme.spacing.md,
     },
     chipIconContainer: {
       width: theme.layout.avatarSizeMd + theme.spacing.sm,
@@ -165,17 +165,17 @@ const createStyles = (theme: Theme) =>
     mediumCard: {
       width: 140,
       height: 100,
-      marginRight: theme.spacing.md,
+      marginEnd: theme.spacing.md,
     },
     largeCard: {
       width: 200,
       height: 140,
-      marginRight: theme.spacing.md,
+      marginEnd: theme.spacing.md,
     },
     fullWidthCard: {
       width: '100%',
       height: 120,
-      marginRight: 0,
+      marginEnd: 0,
     },
     cardImage: {
       width: '100%',

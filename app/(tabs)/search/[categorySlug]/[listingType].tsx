@@ -4,7 +4,7 @@
  * Supports grid and list view modes with filters
  */
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,6 +13,9 @@ import {
   TouchableOpacity,
   ScrollView,
   useWindowDimensions,
+  Animated,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import {
@@ -25,7 +28,9 @@ import {
   ArrowDownUp,
 } from 'lucide-react-native';
 import { useTheme, Theme } from '../../../../src/theme';
-import { Text, ListingCard, Loading, SearchBar, Button } from '../../../../src/components/ui';
+import { Text, Loading, Button } from '../../../../src/components/slices';
+import { ListingCard } from '../../../../src/components/listing';
+import { SearchBar } from '../../../../src/components/search';
 import { useCategoriesStore } from '../../../../src/stores/categoriesStore';
 import { useListingsStore, type Listing } from '../../../../src/stores/listingsStore';
 import { useCurrencyStore } from '../../../../src/stores/currencyStore';
@@ -134,6 +139,51 @@ export default function CategoryListingsScreen() {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState(searchParam || '');
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Scroll animation for hiding/showing toolbar
+  const TOOLBAR_HEIGHT = 100; // Approximate height of chips row + toolbar
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const lastScrollY = useRef(0);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+
+  // Track if toolbar is currently hidden
+  const isToolbarHidden = useRef(false);
+
+  // Handle scroll to show/hide toolbar
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    const diff = currentScrollY - lastScrollY.current;
+
+    // At top - always show toolbar
+    if (currentScrollY <= 5) {
+      if (isToolbarHidden.current) {
+        isToolbarHidden.current = false;
+        Animated.timing(headerTranslateY, {
+          toValue: 0,
+          duration: 120,
+          useNativeDriver: true,
+        }).start();
+      }
+    } else if (diff > 3 && !isToolbarHidden.current) {
+      // Scrolling down fast enough - hide toolbar
+      isToolbarHidden.current = true;
+      Animated.timing(headerTranslateY, {
+        toValue: -TOOLBAR_HEIGHT,
+        duration: 120,
+        useNativeDriver: true,
+      }).start();
+    } else if (diff < -2 && isToolbarHidden.current) {
+      // Scrolling up - show toolbar
+      isToolbarHidden.current = false;
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 120,
+        useNativeDriver: true,
+      }).start();
+    }
+
+    lastScrollY.current = currentScrollY;
+  }, [headerTranslateY, TOOLBAR_HEIGHT]);
 
   // Initialize filters from URL params - sync to shared store
   // Re-run when URL params change (Expo Router params load asynchronously)
@@ -275,35 +325,66 @@ export default function CategoryListingsScreen() {
   }, [activeFilters]);
 
   // Build specs object from active filters (excluding known non-spec fields)
+  // Handles range filters (year, mileage) in "min-max" format
   const buildSpecsFromFilters = useCallback((filters: Record<string, any>) => {
-    const nonSpecFields = ['search', 'province', 'priceMinMinor', 'priceMaxMinor', 'specs'];
-    const specs: Record<string, string> = {};
+    const nonSpecFields = ['search', 'province', 'priceMinMinor', 'priceMaxMinor', 'price', 'specs'];
+    const rangeFields = ['year', 'mileage']; // Fields that should be converted to range format
+    const specs: Record<string, any> = {};
 
     Object.entries(filters).forEach(([key, value]) => {
       if (!nonSpecFields.includes(key) && value !== undefined && value !== '') {
-        specs[key] = String(value);
+        const strValue = String(value);
+
+        // Check if this is a range value (format: "min-max")
+        if (rangeFields.includes(key) && strValue.includes('-')) {
+          const [minStr, maxStr] = strValue.split('-');
+          const min = minStr ? parseInt(minStr, 10) : undefined;
+          const max = maxStr ? parseInt(maxStr, 10) : undefined;
+
+          if (min !== undefined || max !== undefined) {
+            specs[key] = [min, max]; // Store as array [min, max] for backend
+          }
+        } else {
+          specs[key] = strValue;
+        }
       }
     });
 
     return Object.keys(specs).length > 0 ? specs : undefined;
   }, []);
 
+  // Extract price min/max from filters (price is stored as "min-max" format)
+  const extractPriceFilters = useCallback((filters: Record<string, any>) => {
+    const priceValue = filters.price;
+    if (!priceValue) return { priceMinMinor: undefined, priceMaxMinor: undefined };
+
+    const strValue = String(priceValue);
+    if (strValue.includes('-')) {
+      const [minStr, maxStr] = strValue.split('-');
+      const min = minStr && minStr !== '0' ? parseInt(minStr, 10) : undefined;
+      const max = maxStr && maxStr !== '999999999' ? parseInt(maxStr, 10) : undefined;
+      return { priceMinMinor: min, priceMaxMinor: max };
+    }
+    return { priceMinMinor: undefined, priceMaxMinor: undefined };
+  }, []);
+
   // Fetch listings when filters or sort change
   useEffect(() => {
     if (!categorySlug || !listingType) return;
 
+    const { priceMinMinor, priceMaxMinor } = extractPriceFilters(activeFilters);
     clearListings();
     fetchListings({
       categoryId: categorySlug,
       listingType: listingType.toUpperCase(),
       search: activeFilters.search,
       province: activeFilters.province,
-      priceMinMinor: activeFilters.priceMinMinor,
-      priceMaxMinor: activeFilters.priceMaxMinor,
+      priceMinMinor,
+      priceMaxMinor,
       specs: buildSpecsFromFilters(activeFilters),
       sort: sortBy,
     });
-  }, [categorySlug, listingType, filterKey, sortBy, buildSpecsFromFilters]);
+  }, [categorySlug, listingType, filterKey, sortBy, buildSpecsFromFilters, extractPriceFilters]);
 
   // Handle search from search bar - uses shared store
   const handleSearch = useCallback(() => {
@@ -323,20 +404,21 @@ export default function CategoryListingsScreen() {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     if (categorySlug && listingType) {
+      const { priceMinMinor, priceMaxMinor } = extractPriceFilters(activeFilters);
       clearListings();
       await fetchListings({
         categoryId: categorySlug,
         listingType: listingType.toUpperCase(),
         search: activeFilters.search,
         province: activeFilters.province,
-        priceMinMinor: activeFilters.priceMinMinor,
-        priceMaxMinor: activeFilters.priceMaxMinor,
+        priceMinMinor,
+        priceMaxMinor,
         specs: buildSpecsFromFilters(activeFilters),
         sort: sortBy,
       });
     }
     setIsRefreshing(false);
-  }, [categorySlug, listingType, activeFilters, sortBy, clearListings, fetchListings, buildSpecsFromFilters]);
+  }, [categorySlug, listingType, activeFilters, sortBy, clearListings, fetchListings, buildSpecsFromFilters, extractPriceFilters]);
 
   // Handle listing press
   const handleListingPress = (listingId: string) => {
@@ -480,9 +562,14 @@ export default function CategoryListingsScreen() {
     );
   };
 
-  // Render list header (scrolls with content)
-  const renderListHeader = () => (
-    <View style={styles.listHeader}>
+  // Render animated toolbar (fixed position, hides on scroll)
+  const renderAnimatedToolbar = () => (
+    <Animated.View
+      style={[
+        styles.animatedToolbar,
+        { transform: [{ translateY: headerTranslateY }] },
+      ]}
+    >
       {/* Filter Chips Row: Filter Button (fixed) + Chips (scrollable) */}
       <View style={styles.chipsRow}>
         {/* Filter Button - fixed on right */}
@@ -597,7 +684,7 @@ export default function CategoryListingsScreen() {
           ))}
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 
   return (
@@ -605,7 +692,7 @@ export default function CategoryListingsScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerBackTitleVisible: false,
+          headerBackButtonDisplayMode: 'minimal',
           headerTitle: () => (
             <SearchBar
               value={searchQuery}
@@ -616,9 +703,6 @@ export default function CategoryListingsScreen() {
               style={styles.headerSearchBar}
             />
           ),
-          headerTitleContainerStyle: {
-            flex: 1,
-          },
           headerStyle: {
             backgroundColor: theme.colors.bg,
           },
@@ -630,6 +714,8 @@ export default function CategoryListingsScreen() {
       <View style={styles.headerBorder} />
 
       <View style={styles.container}>
+        {/* Animated Toolbar - Fixed position, hides on scroll down */}
+        {renderAnimatedToolbar()}
 
         {/* Listings */}
         {isLoading && listings.length === 0 ? (
@@ -643,19 +729,21 @@ export default function CategoryListingsScreen() {
             keyExtractor={(item, index) => `${item.id}-${index}`}
             numColumns={viewMode === 'grid' ? gridColumns : 1}
             key={`${viewMode}-${gridColumns}`} // Force re-render when view mode or columns change
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[styles.listContent, { paddingTop: TOOLBAR_HEIGHT }]}
             columnWrapperStyle={viewMode === 'grid' ? styles.row : undefined}
             showsVerticalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
                 onRefresh={handleRefresh}
                 tintColor={theme.colors.primary}
+                progressViewOffset={TOOLBAR_HEIGHT}
               />
             }
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}
-            ListHeaderComponent={renderListHeader}
             ListFooterComponent={renderFooter}
             ListEmptyComponent={renderEmptyState}
           />
@@ -691,6 +779,18 @@ const createStyles = (
     headerBorder: {
       height: 1,
       backgroundColor: theme.colors.border,
+    },
+
+    // Animated toolbar - fixed position, hides on scroll
+    animatedToolbar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 10,
+      backgroundColor: theme.colors.bg,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
     },
 
     // Chips Row - container with filter button fixed, chips scrollable
@@ -793,13 +893,6 @@ const createStyles = (
     viewToggleButtonActive: {
       backgroundColor: theme.colors.bg,
       borderRadius: theme.radius.md,
-    },
-
-    // List Header (scrolls with content)
-    listHeader: {
-      backgroundColor: theme.colors.bg,
-      marginHorizontal: -theme.spacing.md,
-      marginBottom: theme.spacing.md,
     },
 
     // Content

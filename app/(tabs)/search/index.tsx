@@ -17,7 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
 import { LayoutGrid, Package } from 'lucide-react-native';
 import { useTheme } from '../../../src/theme';
-import { Text, Loading, SearchBar } from '../../../src/components/ui';
+import { Text, Loading } from '../../../src/components/slices';
+import { SearchBar } from '../../../src/components/search';
 import { useCategoriesStore } from '../../../src/stores/categoriesStore';
 
 export default function SearchScreen() {

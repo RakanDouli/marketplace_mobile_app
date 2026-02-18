@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
 import { User, Camera } from 'lucide-react-native';
 import { useTheme } from '../../../src/theme';
-import { Text, Button } from '../../../src/components/ui';
+import { Text, Button } from '../../../src/components/slices';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
 
 export default function EditProfileScreen() {

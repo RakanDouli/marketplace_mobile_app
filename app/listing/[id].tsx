@@ -31,10 +31,10 @@ import {
   Building2,
 } from 'lucide-react-native';
 import { useTheme, Theme } from '../../src/theme';
-import { Text, Button, Loading } from '../../src/components/ui';
+import { Text, Button, Loading } from '../../src/components/slices';
 import { useListingsStore } from '../../src/stores/listingsStore';
 import { useCurrencyStore } from '../../src/stores/currencyStore';
-import { formatPrice } from '../../src/utils/formatPrice';
+import { formatPrice, formatLocation } from '../../src/utils';
 
 import { getCloudflareImageUrl } from '../../src/services/cloudflare/images';
 import { ENV } from '../../src/constants/env';
@@ -188,9 +188,7 @@ export default function ListingDetailScreen() {
 
   const images = currentListing.imageKeys || [];
   const specsList = getSpecsList();
-  const location = [currentListing.location?.city, currentListing.location?.province]
-    .filter(Boolean)
-    .join('، ');
+  const location = formatLocation(currentListing.location);
   const hasPhone = currentListing.user?.showPhone && (currentListing.user?.phone || currentListing.user?.contactPhone);
   const isWhatsApp = currentListing.user?.phoneIsWhatsApp;
 
@@ -283,39 +281,39 @@ export default function ListingDetailScreen() {
               {currentListing.title}
             </Text>
 
-            {/* Meta info */}
+            {/* Meta info - icons before text in RTL */}
             <View style={styles.metaRow}>
               {location && (
                 <View style={styles.metaItem}>
-                  <MapPin size={16} color={theme.colors.textMuted} />
                   <Text variant="small" color="secondary" style={styles.metaText}>
                     {location}
                   </Text>
+                  <MapPin size={16} color={theme.colors.textMuted} />
                 </View>
               )}
               {currentListing.createdAt && (
                 <View style={styles.metaItem}>
-                  <Calendar size={16} color={theme.colors.textMuted} />
                   <Text variant="small" color="secondary" style={styles.metaText}>
                     {formatDate(currentListing.createdAt)}
                   </Text>
+                  <Calendar size={16} color={theme.colors.textMuted} />
                 </View>
               )}
             </View>
 
-            {/* Stats */}
+            {/* Stats - icons before text in RTL */}
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
-                <Eye size={16} color={theme.colors.textMuted} />
                 <Text variant="small" color="muted">
                   {currentListing.viewCount || 0} مشاهدة
                 </Text>
+                <Eye size={16} color={theme.colors.textMuted} />
               </View>
               <View style={styles.statItem}>
-                <Heart size={16} color={theme.colors.textMuted} />
                 <Text variant="small" color="muted">
                   {currentListing.wishlistCount || 0} مفضلة
                 </Text>
+                <Heart size={16} color={theme.colors.textMuted} />
               </View>
             </View>
 

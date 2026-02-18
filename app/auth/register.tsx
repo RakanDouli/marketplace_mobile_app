@@ -7,9 +7,9 @@ import { View, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Pl
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Link } from 'expo-router';
 import { useTheme } from '../../src/theme';
-import { Text } from '../../src/components/ui/Text';
-import { Button } from '../../src/components/ui/Button';
-import { LogoIcon } from '../../src/components/ui/LogoIcon';
+import { Text } from '../../src/components/slices/Text';
+import { Button } from '../../src/components/slices/Button';
+import { LogoIcon } from '../../src/components/icons';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
 
 export default function RegisterScreen() {

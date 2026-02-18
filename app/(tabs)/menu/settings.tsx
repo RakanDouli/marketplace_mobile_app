@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Switch } from 'react-native';
 import { Bell } from 'lucide-react-native';
 import { useTheme } from '../../../src/theme';
-import { Text } from '../../../src/components/ui/Text';
+import { Text } from '../../../src/components/slices/Text';
 
 export default function SettingsScreen() {
   const theme = useTheme();

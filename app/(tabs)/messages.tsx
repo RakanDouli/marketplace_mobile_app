@@ -7,7 +7,7 @@ import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MessageCircle } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
-import { Text } from '../../src/components/ui/Text';
+import { Text } from '../../src/components/slices/Text';
 
 export default function MessagesScreen() {
   const theme = useTheme();
