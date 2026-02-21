@@ -155,10 +155,10 @@ export const RangePickerModal: React.FC<RangePickerModalProps> = ({
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.container} onPress={() => {}}>
-          {/* Header */}
+          {/* Header - RTL: title on right, close on left */}
           <View style={styles.header}>
-            <Text variant="h3" style={styles.title}>{title}</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text variant="h3">{title}</Text>
+            <TouchableOpacity onPress={onClose}>
               <X size={24} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
@@ -275,22 +275,12 @@ const createStyles = (theme: Theme) =>
       paddingBottom: theme.spacing.xl,
     },
     header: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: 'row-reverse',
       justifyContent: 'space-between',
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
+      alignItems: 'center',
+      padding: theme.spacing.lg,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
-    },
-    title: {
-      flex: 1,
-      textAlign: 'center',
-    },
-    closeButton: {
-      position: 'absolute',
-      left: theme.spacing.md,
-      padding: theme.spacing.xs,
     },
     columnHeaders: {
       flexDirection: 'row',
