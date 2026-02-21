@@ -289,7 +289,7 @@ const createStyles = (theme: Theme) =>
     },
     closeButton: {
       position: 'absolute',
-      right: theme.spacing.md,
+      left: theme.spacing.md,
       padding: theme.spacing.xs,
     },
     columnHeaders: {
