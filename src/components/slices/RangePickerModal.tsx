@@ -163,47 +163,19 @@ export const RangePickerModal: React.FC<RangePickerModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Column headers */}
+          {/* Column headers - RTL: من (from) on right, إلى (to) on left */}
           <View style={styles.columnHeaders}>
-            <View style={styles.columnHeader}>
-              <Text variant="body" color="secondary">{minLabel}</Text>
-            </View>
             <View style={styles.columnHeader}>
               <Text variant="body" color="secondary">{maxLabel}</Text>
             </View>
+            <View style={styles.columnHeader}>
+              <Text variant="body" color="secondary">{minLabel}</Text>
+            </View>
           </View>
 
-          {/* Two columns */}
+          {/* Two columns - RTL: من (min) on right, إلى (max) on left */}
           <View style={styles.columnsContainer}>
-            {/* Min column */}
-            <ScrollView
-              ref={minScrollRef}
-              style={styles.column}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.columnContent}
-            >
-              {/* "All" option */}
-              {renderOptionItem(
-                null,
-                selectedMin === undefined,
-                () => setSelectedMin(undefined),
-                true
-              )}
-              {/* Options */}
-              {options.map((option) =>
-                renderOptionItem(
-                  option,
-                  selectedMin === option.key,
-                  () => setSelectedMin(option.key),
-                  true
-                )
-              )}
-            </ScrollView>
-
-            {/* Divider */}
-            <View style={styles.columnDivider} />
-
-            {/* Max column */}
+            {/* Max column (left side in RTL) */}
             <ScrollView
               ref={maxScrollRef}
               style={styles.column}
@@ -224,6 +196,34 @@ export const RangePickerModal: React.FC<RangePickerModalProps> = ({
                   selectedMax === option.key,
                   () => setSelectedMax(option.key),
                   false
+                )
+              )}
+            </ScrollView>
+
+            {/* Divider */}
+            <View style={styles.columnDivider} />
+
+            {/* Min column (right side in RTL) */}
+            <ScrollView
+              ref={minScrollRef}
+              style={styles.column}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.columnContent}
+            >
+              {/* "All" option */}
+              {renderOptionItem(
+                null,
+                selectedMin === undefined,
+                () => setSelectedMin(undefined),
+                true
+              )}
+              {/* Options */}
+              {options.map((option) =>
+                renderOptionItem(
+                  option,
+                  selectedMin === option.key,
+                  () => setSelectedMin(option.key),
+                  true
                 )
               )}
             </ScrollView>
