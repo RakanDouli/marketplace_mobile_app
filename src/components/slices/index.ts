@@ -22,6 +22,9 @@ export type { InputProps } from './Input';
 export { RangeInput } from './RangeInput';
 export type { RangeInputProps, RangeOption } from './RangeInput';
 
+export { RangePickerModal } from './RangePickerModal';
+export type { RangePickerModalProps, RangeOption as RangePickerOption } from './RangePickerModal';
+
 export { Select } from './Select';
 export type { SelectProps, SelectOption } from './Select';
 

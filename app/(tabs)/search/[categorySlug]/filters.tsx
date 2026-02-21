@@ -25,7 +25,7 @@ import {
   Check,
 } from 'lucide-react-native';
 import { useTheme, Theme } from '../../../../src/theme';
-import { Text, Loading, IconGridSelector } from '../../../../src/components/slices';
+import { Text, Loading, IconGridSelector, RangePickerModal } from '../../../../src/components/slices';
 import {
   useFiltersStore,
   type ActiveFilter,
@@ -102,6 +102,10 @@ export default function FiltersScreen() {
   // Navigation state
   const [screen, setScreen] = useState<FilterScreen>({ type: 'list' });
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Range picker modal state
+  const [rangeModalVisible, setRangeModalVisible] = useState(false);
+  const [rangeModalAttribute, setRangeModalAttribute] = useState<AttributeWithCounts | null>(null);
 
   // Initialize filters from URL params
   useEffect(() => {
@@ -293,6 +297,84 @@ export default function FiltersScreen() {
     }
   }, [appliedFilters, addFilter, removeFilter]);
 
+  // Set both min and max range values at once (for modal)
+  const setRangeValues = useCallback((attrKey: string, attrLabel: string, minValue: string | undefined, maxValue: string | undefined, isCurrency: boolean) => {
+    if (isCurrency) {
+      // Price uses separate keys
+      if (minValue) {
+        addFilter('priceMinMinor', attrLabel, minValue, `$${minValue}`);
+      } else {
+        removeFilter('priceMinMinor');
+      }
+      if (maxValue) {
+        addFilter('priceMaxMinor', attrLabel, maxValue, `$${maxValue}`);
+      } else {
+        removeFilter('priceMaxMinor');
+      }
+      return;
+    }
+
+    // Other range filters use "min-max" format
+    if (!minValue && !maxValue) {
+      removeFilter(attrKey);
+    } else {
+      const newValue = `${minValue || ''}-${maxValue || ''}`;
+      let valueLabel = '';
+      if (minValue && maxValue) valueLabel = `${minValue} - ${maxValue}`;
+      else if (minValue) valueLabel = `من ${minValue}`;
+      else if (maxValue) valueLabel = `حتى ${maxValue}`;
+      addFilter(attrKey, attrLabel, newValue, valueLabel);
+    }
+  }, [addFilter, removeFilter]);
+
+  // Get range options for modal
+  const getRangeOptions = useCallback((attribute: AttributeWithCounts) => {
+    const isCurrency = attribute.type?.toLowerCase() === 'currency';
+
+    if (isCurrency) {
+      const priceOptions = generatePriceOptions(categorySlug);
+      return priceOptions.map(price => ({
+        key: String(price),
+        value: `$${price.toLocaleString()}`,
+      }));
+    }
+
+    // Use attribute options
+    return (attribute.processedOptions || []).map(opt => ({
+      key: opt.key,
+      value: opt.value,
+    }));
+  }, [categorySlug]);
+
+  // Get current range values for modal
+  const getRangeCurrentValues = useCallback((attribute: AttributeWithCounts) => {
+    const isCurrency = attribute.type?.toLowerCase() === 'currency';
+    const attrKey = isCurrency ? 'price' : attribute.key;
+
+    return {
+      min: getRangeFieldValue(attrKey, 'min') || undefined,
+      max: getRangeFieldValue(attrKey, 'max') || undefined,
+    };
+  }, [getRangeFieldValue]);
+
+  // Handle range modal confirm
+  const handleRangeModalConfirm = useCallback((min: string | undefined, max: string | undefined) => {
+    if (!rangeModalAttribute) return;
+
+    const isCurrency = rangeModalAttribute.type?.toLowerCase() === 'currency';
+    const attrKey = isCurrency ? 'price' : rangeModalAttribute.key;
+
+    setRangeValues(attrKey, rangeModalAttribute.name, min, max, isCurrency);
+    setRangeModalVisible(false);
+    setRangeModalAttribute(null);
+  }, [rangeModalAttribute, setRangeValues]);
+
+  // Open range modal for an attribute
+  const openRangeModal = useCallback((attribute: AttributeWithCounts) => {
+    setRangeModalAttribute(attribute);
+    setRangeModalVisible(true);
+  }, []);
+
   // Check if attribute is disabled
   // Brand → Variant flow (variant requires brand to be selected first)
   const isAttributeDisabled = useCallback((attrKey: string) => {
@@ -343,6 +425,16 @@ export default function FiltersScreen() {
         const isRange = isRangeAttribute(attr.type);
         const hasNoOptions = !isRange && (!attr.processedOptions || attr.processedOptions.length === 0);
 
+        // Handle press - range filters open modal, others navigate to detail
+        const handlePress = () => {
+          if (disabled || hasNoOptions) return;
+          if (isRange) {
+            openRangeModal(attr);
+          } else {
+            setScreen({ type: 'detail', attribute: attr });
+          }
+        };
+
         return (
           <TouchableOpacity
             key={attr.key}
@@ -350,7 +442,7 @@ export default function FiltersScreen() {
               styles.filterItem,
               (disabled || hasNoOptions) && styles.filterItemDisabled,
             ]}
-            onPress={() => !disabled && !hasNoOptions && setScreen({ type: 'detail', attribute: attr })}
+            onPress={handlePress}
             disabled={disabled || hasNoOptions}
           >
             <View style={styles.filterItemContent}>
@@ -794,6 +886,23 @@ export default function FiltersScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Range Picker Modal */}
+        {rangeModalAttribute && (
+          <RangePickerModal
+            visible={rangeModalVisible}
+            onClose={() => {
+              setRangeModalVisible(false);
+              setRangeModalAttribute(null);
+            }}
+            onConfirm={handleRangeModalConfirm}
+            title={rangeModalAttribute.name}
+            options={getRangeOptions(rangeModalAttribute)}
+            minValue={getRangeCurrentValues(rangeModalAttribute).min}
+            maxValue={getRangeCurrentValues(rangeModalAttribute).max}
+            formatValue={rangeModalAttribute.type?.toLowerCase() === 'currency' ? (v) => `$${Number(v).toLocaleString()}` : undefined}
+          />
+        )}
       </SafeAreaView>
     </>
   );
