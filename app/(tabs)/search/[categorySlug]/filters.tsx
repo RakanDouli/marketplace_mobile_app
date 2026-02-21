@@ -673,7 +673,7 @@ export default function FiltersScreen() {
           {!currentValue && <Check size={20} color={theme.colors.primary} />}
         </TouchableOpacity>
 
-        {/* Options */}
+        {/* Options - no counts for range min/max values */}
         {options.map((option) => {
           const isSelected = currentValue === option.key;
           return (
@@ -689,9 +689,6 @@ export default function FiltersScreen() {
                 <Text variant="body" style={isSelected && styles.optionTextSelected}>
                   {option.value}
                 </Text>
-                {option.count !== undefined && (
-                  <Text variant="small" color="secondary">({option.count})</Text>
-                )}
               </View>
               {isSelected && <Check size={20} color={theme.colors.primary} />}
             </TouchableOpacity>
