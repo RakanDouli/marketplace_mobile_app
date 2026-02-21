@@ -221,9 +221,9 @@ export default function FiltersScreen() {
     let updated = [...appliedFilters];
     const existingIdx = updated.findIndex(f => f.key === key);
 
-    // Cascading: clear dependent filters (Brand → Variant flow)
+    // Cascading: clear dependent filters (Brand → Model/Variant flow)
     if (key === 'brandId') {
-      updated = updated.filter(f => f.key !== 'variantId');
+      updated = updated.filter(f => f.key !== 'variantId' && f.key !== 'modelId');
     }
 
     if (existingIdx >= 0) {
@@ -237,9 +237,9 @@ export default function FiltersScreen() {
   // Remove filter
   const removeFilter = useCallback((filterKey: string) => {
     let updated = appliedFilters.filter(f => f.key !== filterKey);
-    // Cascading: clear variant when brand is removed
+    // Cascading: clear model/variant when brand is removed
     if (filterKey === 'brandId') {
-      updated = updated.filter(f => f.key !== 'variantId');
+      updated = updated.filter(f => f.key !== 'variantId' && f.key !== 'modelId');
     }
     setAppliedFilters(updated);
   }, [appliedFilters, setAppliedFilters]);
@@ -292,9 +292,9 @@ export default function FiltersScreen() {
   }, [appliedFilters, addFilter, removeFilter]);
 
   // Check if attribute is disabled
-  // Brand → Variant flow (skip model, variant shows model as section headers)
+  // Brand → Model/Variant flow (variant/model require brand to be selected first)
   const isAttributeDisabled = useCallback((attrKey: string) => {
-    if (attrKey === 'variantId') {
+    if (attrKey === 'variantId' || attrKey === 'modelId') {
       return !appliedFilters.some(f => f.key === 'brandId');
     }
     return false;
@@ -362,7 +362,7 @@ export default function FiltersScreen() {
               {valueDisplay && (
                 <Text variant="small" color="primary">{valueDisplay}</Text>
               )}
-              {disabled && attr.key === 'variantId' && (
+              {disabled && (attr.key === 'variantId' || attr.key === 'modelId') && (
                 <Text variant="xs" color="muted">اختر العلامة أولاً</Text>
               )}
             </View>
@@ -464,8 +464,31 @@ export default function FiltersScreen() {
       );
     }
 
-    // Special handling for variantId - group by model with section headers
+    // Special handling for variantId - mixed display:
+    // 1. Models with variants → show as groups with section headers
+    // 2. Models without variants → show as clickable items at the end
     if (attribute.key === 'variantId') {
+      // Get modelId attribute to find models without variants
+      const modelAttribute = attributes.find(a => a.key === 'modelId');
+      const modelOptions = modelAttribute?.processedOptions || [];
+      const currentModelValue = appliedFilters.find(f => f.key === 'modelId')?.value;
+
+      // Get model names that have variants
+      const modelsWithVariants = new Set<string>();
+      const modelIdToName = new Map<string, string>();
+      attribute.processedOptions.forEach((option) => {
+        if (option.modelName) modelsWithVariants.add(option.modelName);
+        if (option.modelId && option.modelName) modelIdToName.set(option.modelId, option.modelName);
+      });
+
+      // Find models without variants
+      const modelsWithoutVariants = modelOptions.filter((model) => {
+        const hasVariants = attribute.processedOptions.some(
+          (opt) => opt.modelId === model.key || opt.modelName === model.value
+        );
+        return !hasVariants && (model.count > 0 || currentModelValue === model.key);
+      });
+
       // Group variants by modelName
       const groupedByModel: Record<string, typeof attribute.processedOptions> = {};
       attribute.processedOptions.forEach((option) => {
@@ -483,6 +506,7 @@ export default function FiltersScreen() {
 
       return (
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* First: Groups (models with variants) */}
           {sortedModelNames.map((modelName) => {
             const variants = groupedByModel[modelName];
             if (variants.length === 0) return null;
@@ -523,6 +547,51 @@ export default function FiltersScreen() {
               </View>
             );
           })}
+
+          {/* Second: Standalone models (models without variants) */}
+          {modelsWithoutVariants.length > 0 && (
+            <View>
+              {/* Divider between groups and standalone models */}
+              {sortedModelNames.length > 0 && (
+                <View style={styles.sectionDivider}>
+                  <Text variant="small" color="secondary">موديلات أخرى</Text>
+                </View>
+              )}
+              {modelsWithoutVariants.map((model) => {
+                const isSelected = currentModelValue === model.key;
+                return (
+                  <TouchableOpacity
+                    key={model.key}
+                    style={[styles.optionItem, isSelected && styles.optionItemSelected]}
+                    onPress={() => {
+                      if (isSelected) {
+                        removeFilter('modelId');
+                      } else {
+                        // Add modelId filter for models without variants
+                        addFilter('modelId', 'الموديل', model.key, model.value);
+                      }
+                      setScreen({ type: 'list' });
+                    }}
+                  >
+                    <View style={styles.optionContent}>
+                      <Text variant="body" style={isSelected && styles.optionTextSelected}>
+                        {model.value}
+                      </Text>
+                      <Text variant="small" color="secondary">({model.count})</Text>
+                    </View>
+                    {isSelected && <Check size={20} color={theme.colors.primary} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+
+          {/* Empty state */}
+          {attribute.processedOptions.length === 0 && modelsWithoutVariants.length === 0 && (
+            <View style={styles.emptyState}>
+              <Text variant="body" color="secondary">لا توجد طرازات متاحة</Text>
+            </View>
+          )}
         </ScrollView>
       );
     }
@@ -809,6 +878,28 @@ const createStyles = (theme: Theme) =>
       fontWeight: '600',
       color: theme.colors.text,
       textAlign: 'right',
+    },
+
+    // Section divider (between grouped variants and standalone models)
+    sectionDivider: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      backgroundColor: theme.colors.bg,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      marginTop: theme.spacing.sm,
+    },
+
+    // Empty state
+    emptyState: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: theme.spacing.xl,
+      paddingHorizontal: theme.spacing.md,
     },
 
     // Footer

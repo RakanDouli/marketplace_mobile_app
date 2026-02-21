@@ -219,8 +219,8 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
         .map((attr) => {
           let processedOptions: AttributeOptionWithCount[] = [];
 
-          // Special handling for brandId, variantId - get from raw aggregations
-          if (attr.key === 'brandId' || attr.key === 'variantId') {
+          // Special handling for brandId, modelId, variantId - get from raw aggregations
+          if (attr.key === 'brandId' || attr.key === 'modelId' || attr.key === 'variantId') {
             const rawAttributeData = aggregations.rawAggregations?.attributes?.find(
               (a: any) => a.field === attr.key
             );
@@ -355,8 +355,8 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
             ...opt,
             count: countMap.get(opt.key) ?? 0,
           }));
-        } else if (attr.key === 'variantId') {
-          // For variant, replace options with what's returned from aggregation
+        } else if (attr.key === 'modelId' || attr.key === 'variantId') {
+          // For model/variant, replace options with what's returned from aggregation
           // Include modelId/modelName for grouped display
           const rawAttributeData = aggregations.rawAggregations?.attributes?.find(
             (a: any) => a.field === attr.key
