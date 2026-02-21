@@ -169,6 +169,8 @@ export default function FiltersScreen() {
       .filter(attr => {
         if (attr.showInFilter === false) return false;
         if (attr.key === 'listingType') return false; // Handled by route
+        // Hide modelId - it's handled within variantId screen (shows both variants AND standalone models)
+        if (attr.key === 'modelId') return false;
         return true;
       })
       .sort((a, b) => {
@@ -292,9 +294,9 @@ export default function FiltersScreen() {
   }, [appliedFilters, addFilter, removeFilter]);
 
   // Check if attribute is disabled
-  // Brand → Model/Variant flow (variant/model require brand to be selected first)
+  // Brand → Variant flow (variant requires brand to be selected first)
   const isAttributeDisabled = useCallback((attrKey: string) => {
-    if (attrKey === 'variantId' || attrKey === 'modelId') {
+    if (attrKey === 'variantId') {
       return !appliedFilters.some(f => f.key === 'brandId');
     }
     return false;
@@ -362,7 +364,7 @@ export default function FiltersScreen() {
               {valueDisplay && (
                 <Text variant="small" color="primary">{valueDisplay}</Text>
               )}
-              {disabled && (attr.key === 'variantId' || attr.key === 'modelId') && (
+              {disabled && attr.key === 'variantId' && (
                 <Text variant="xs" color="muted">اختر العلامة أولاً</Text>
               )}
             </View>
