@@ -1,7 +1,7 @@
 /**
  * Filters Screen
  * Full-screen filter selection with drill-down navigation
- * Implements cascading filters (brand → model dependency)
+ * Implements cascading filters (brand → model → variant dependency)
  *
  * Navigation pattern (matches web):
  * - Level 1 (list): All filter names
@@ -221,11 +221,8 @@ export default function FiltersScreen() {
     let updated = [...appliedFilters];
     const existingIdx = updated.findIndex(f => f.key === key);
 
-    // Cascading: clear dependent filters
+    // Cascading: clear dependent filters (Brand → Variant flow)
     if (key === 'brandId') {
-      updated = updated.filter(f => f.key !== 'modelId' && f.key !== 'variantId');
-    }
-    if (key === 'modelId') {
       updated = updated.filter(f => f.key !== 'variantId');
     }
 
@@ -240,10 +237,8 @@ export default function FiltersScreen() {
   // Remove filter
   const removeFilter = useCallback((filterKey: string) => {
     let updated = appliedFilters.filter(f => f.key !== filterKey);
+    // Cascading: clear variant when brand is removed
     if (filterKey === 'brandId') {
-      updated = updated.filter(f => f.key !== 'modelId' && f.key !== 'variantId');
-    }
-    if (filterKey === 'modelId') {
       updated = updated.filter(f => f.key !== 'variantId');
     }
     setAppliedFilters(updated);
@@ -297,12 +292,10 @@ export default function FiltersScreen() {
   }, [appliedFilters, addFilter, removeFilter]);
 
   // Check if attribute is disabled
+  // Brand → Variant flow (skip model, variant shows model as section headers)
   const isAttributeDisabled = useCallback((attrKey: string) => {
-    if (attrKey === 'modelId') {
-      return !appliedFilters.some(f => f.key === 'brandId');
-    }
     if (attrKey === 'variantId') {
-      return !appliedFilters.some(f => f.key === 'modelId');
+      return !appliedFilters.some(f => f.key === 'brandId');
     }
     return false;
   }, [appliedFilters]);
@@ -369,7 +362,7 @@ export default function FiltersScreen() {
               {valueDisplay && (
                 <Text variant="small" color="primary">{valueDisplay}</Text>
               )}
-              {disabled && attr.key === 'modelId' && (
+              {disabled && attr.key === 'variantId' && (
                 <Text variant="xs" color="muted">اختر العلامة أولاً</Text>
               )}
             </View>
@@ -467,6 +460,69 @@ export default function FiltersScreen() {
               showCounts={true}
             />
           </View>
+        </ScrollView>
+      );
+    }
+
+    // Special handling for variantId - group by model with section headers
+    if (attribute.key === 'variantId') {
+      // Group variants by modelName
+      const groupedByModel: Record<string, typeof attribute.processedOptions> = {};
+      attribute.processedOptions.forEach((option) => {
+        const modelName = option.modelName || 'أخرى'; // "Other" for variants without model
+        if (!groupedByModel[modelName]) {
+          groupedByModel[modelName] = [];
+        }
+        if (option.count > 0 || currentValue === option.key) {
+          groupedByModel[modelName].push(option);
+        }
+      });
+
+      // Sort model names alphabetically
+      const sortedModelNames = Object.keys(groupedByModel).sort();
+
+      return (
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {sortedModelNames.map((modelName) => {
+            const variants = groupedByModel[modelName];
+            if (variants.length === 0) return null;
+
+            return (
+              <View key={modelName}>
+                {/* Model Section Header */}
+                <View style={styles.sectionHeader}>
+                  <Text variant="h4" style={styles.sectionHeaderText}>{modelName}</Text>
+                </View>
+
+                {/* Variants under this model */}
+                {variants.map((option) => {
+                  const isSelected = currentValue === option.key;
+                  return (
+                    <TouchableOpacity
+                      key={option.key}
+                      style={[styles.optionItem, isSelected && styles.optionItemSelected]}
+                      onPress={() => {
+                        if (isSelected) {
+                          removeFilter(attribute.key);
+                        } else {
+                          addFilter(attribute.key, attribute.name, option.key, option.value);
+                        }
+                        setScreen({ type: 'list' });
+                      }}
+                    >
+                      <View style={styles.optionContent}>
+                        <Text variant="body" style={isSelected && styles.optionTextSelected}>
+                          {option.value}
+                        </Text>
+                        <Text variant="small" color="secondary">({option.count})</Text>
+                      </View>
+                      {isSelected && <Check size={20} color={theme.colors.primary} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            );
+          })}
         </ScrollView>
       );
     }
@@ -739,6 +795,20 @@ const createStyles = (theme: Theme) =>
     optionTextSelected: {
       fontWeight: '600',
       color: theme.colors.primary,
+    },
+
+    // Section headers (for grouped variants by model)
+    sectionHeader: {
+      backgroundColor: theme.colors.surface,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    sectionHeaderText: {
+      fontWeight: '600',
+      color: theme.colors.text,
+      textAlign: 'right',
     },
 
     // Footer

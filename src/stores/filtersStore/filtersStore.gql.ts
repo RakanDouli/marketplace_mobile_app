@@ -53,6 +53,8 @@ export const GET_LISTING_AGGREGATIONS_QUERY = `
           value
           count
           key
+          modelId
+          modelName
         }
       }
     }

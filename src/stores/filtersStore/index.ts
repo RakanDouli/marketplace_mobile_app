@@ -47,6 +47,8 @@ export interface Attribute {
 
 export interface AttributeOptionWithCount extends AttributeOption {
   count: number;
+  modelId?: string;   // For variant options - parent model ID
+  modelName?: string; // For variant options - parent model name for grouping
 }
 
 export interface AttributeWithCounts extends Attribute {
@@ -217,8 +219,8 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
         .map((attr) => {
           let processedOptions: AttributeOptionWithCount[] = [];
 
-          // Special handling for brandId, modelId - get from raw aggregations
-          if (attr.key === 'brandId' || attr.key === 'modelId' || attr.key === 'variantId') {
+          // Special handling for brandId, variantId - get from raw aggregations
+          if (attr.key === 'brandId' || attr.key === 'variantId') {
             const rawAttributeData = aggregations.rawAggregations?.attributes?.find(
               (a: any) => a.field === attr.key
             );
@@ -230,6 +232,9 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
                 sortOrder: 0,
                 isActive: true,
                 count: option.count,
+                // Include model info for variant grouping
+                modelId: option.modelId,
+                modelName: option.modelName,
               }));
             }
           } else {
@@ -350,8 +355,9 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
             ...opt,
             count: countMap.get(opt.key) ?? 0,
           }));
-        } else if (attr.key === 'modelId' || attr.key === 'variantId') {
-          // For model/variant, replace options with what's returned from aggregation
+        } else if (attr.key === 'variantId') {
+          // For variant, replace options with what's returned from aggregation
+          // Include modelId/modelName for grouped display
           const rawAttributeData = aggregations.rawAggregations?.attributes?.find(
             (a: any) => a.field === attr.key
           );
@@ -363,6 +369,8 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
               sortOrder: 0,
               isActive: true,
               count: option.count,
+              modelId: option.modelId,
+              modelName: option.modelName,
             }));
           } else {
             // No options available for this filter combination
