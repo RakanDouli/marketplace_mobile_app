@@ -277,7 +277,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'flex-end',
     },
     container: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.bg,
       borderTopLeftRadius: theme.radius.lg,
       borderTopRightRadius: theme.radius.lg,
       maxHeight: SCREEN_HEIGHT * 0.7,
