@@ -106,6 +106,12 @@ export const RangePickerModal: React.FC<RangePickerModalProps> = ({
     onClose();
   };
 
+  // Handle clear/delete filter
+  const handleClear = () => {
+    setSelectedMin(undefined);
+    setSelectedMax(undefined);
+  };
+
   // Get display value
   const getDisplayValue = (value: string) => {
     if (formatValue) return formatValue(value);
@@ -155,11 +161,14 @@ export const RangePickerModal: React.FC<RangePickerModalProps> = ({
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.container} onPress={() => {}}>
-          {/* Header - RTL: title on right, close on left */}
+          {/* Header: Close left, Title center, Clear right */}
           <View style={styles.header}>
-            <Text variant="h3">{title}</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} style={styles.headerButton}>
               <X size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+            <Text variant="h3" style={styles.headerTitle}>{title}</Text>
+            <TouchableOpacity onPress={handleClear} style={styles.headerButton}>
+              <Text variant="body" color="primary">مسح</Text>
             </TouchableOpacity>
           </View>
 
@@ -275,12 +284,21 @@ const createStyles = (theme: Theme) =>
       paddingBottom: theme.spacing.xl,
     },
     header: {
-      flexDirection: 'row-reverse',
+      flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: theme.spacing.lg,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
+    },
+    headerButton: {
+      minWidth: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
     },
     columnHeaders: {
       flexDirection: 'row',
