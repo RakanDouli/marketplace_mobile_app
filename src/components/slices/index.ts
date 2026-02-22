@@ -68,3 +68,7 @@ export { PromoBanner } from './PromoBanner';
 // Dropdown
 export { Dropdown, DropdownMenuItem, DropdownSeparator } from './Dropdown';
 export type { DropdownProps, DropdownMenuItemProps } from './Dropdown';
+
+// Modal
+export { ImagePreviewModal } from './ImagePreviewModal';
+export type { ImagePreviewModalProps } from './ImagePreviewModal';

@@ -44,7 +44,7 @@ import {
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme, Theme } from '../../src/theme';
-import { Text, Loading, Dropdown, DropdownMenuItem, DropdownSeparator } from '../../src/components/slices';
+import { Text, Loading, Dropdown, DropdownMenuItem, DropdownSeparator, ImagePreviewModal } from '../../src/components/slices';
 import { useChatStore, ChatMessage, ChatThread } from '../../src/stores/chatStore';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
 import { getCloudflareImageUrl } from '../../src/services/cloudflare/images';
@@ -112,6 +112,18 @@ export default function ChatScreen() {
   const [showDeleteMessageModal, setShowDeleteMessageModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
+
+  // Image preview
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+
+  // Open image preview
+  const openImagePreview = (images: string[], index: number) => {
+    setPreviewImages(images);
+    setPreviewInitialIndex(index);
+    setShowImagePreview(true);
+  };
 
   // Get thread info
   const thread = getThreadById(threadId || '');
@@ -461,27 +473,49 @@ export default function ChatScreen() {
             </View>
           ) : (
             <>
-              {/* Images */}
+              {/* Images - WhatsApp style grid */}
               {hasImages && (
-                <View style={styles.messageImages}>
-                  {message.imageKeys!.slice(0, 4).map((imageKey, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.messageImageWrapper}
-                    >
-                      <Image
-                        source={{ uri: getCloudflareImageUrl(imageKey, 'thumbnail') }}
-                        style={styles.messageImage}
-                      />
-                      {index === 3 && message.imageKeys!.length > 4 && (
-                        <View style={styles.moreImagesOverlay}>
-                          <Text variant="h4" style={{ color: '#fff' }}>
-                            +{message.imageKeys!.length - 4}
-                          </Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  ))}
+                <View style={[
+                  styles.messageImagesGrid,
+                  message.imageKeys!.length === 1 && styles.messageImagesSingle,
+                  message.imageKeys!.length === 2 && styles.messageImagesDouble,
+                  message.imageKeys!.length >= 3 && styles.messageImagesMultiple,
+                ]}>
+                  {message.imageKeys!.slice(0, 4).map((imageKey, index) => {
+                    const imageCount = message.imageKeys!.length;
+                    const isLast = index === 3 && imageCount > 4;
+
+                    return (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.messageImageWrapper,
+                          // Single image - full width
+                          imageCount === 1 && styles.messageImageWrapperSingle,
+                          // Two images - half width each
+                          imageCount === 2 && styles.messageImageWrapperHalf,
+                          // 3+ images - grid layout
+                          imageCount >= 3 && index === 0 && styles.messageImageWrapperLarge,
+                          imageCount >= 3 && index > 0 && styles.messageImageWrapperSmall,
+                        ]}
+                        onPress={() => openImagePreview(message.imageKeys!, index)}
+                        activeOpacity={0.9}
+                      >
+                        <Image
+                          source={{ uri: getCloudflareImageUrl(imageKey, imageCount === 1 ? 'desktop' : 'thumbnail') }}
+                          style={styles.messageImage}
+                          resizeMode="cover"
+                        />
+                        {isLast && (
+                          <View style={styles.moreImagesOverlay}>
+                            <Text variant="h3" style={styles.moreImagesText}>
+                              +{imageCount - 4}
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               )}
 
@@ -776,6 +810,14 @@ export default function ChatScreen() {
         onConfirm={handleReportUser}
         isLoading={isActionLoading}
       />
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        visible={showImagePreview}
+        onClose={() => setShowImagePreview(false)}
+        images={previewImages}
+        initialIndex={previewInitialIndex}
+      />
     </SafeAreaView>
   );
 }
@@ -940,26 +982,62 @@ const createStyles = (theme: Theme) =>
     ownMessageTime: {
       color: 'rgba(255, 255, 255, 0.7)',
     },
-    messageImages: {
+    // WhatsApp-style image grid
+    messageImagesGrid: {
+      borderRadius: theme.radius.md,
+      overflow: 'hidden',
+      marginBottom: theme.spacing.xs,
+    },
+    messageImagesSingle: {
+      width: 220,
+      height: 280,
+    },
+    messageImagesDouble: {
+      flexDirection: 'row',
+      width: 220,
+      height: 150,
+      gap: 2,
+    },
+    messageImagesMultiple: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 4,
-      marginBottom: theme.spacing.xs,
+      width: 220,
+      height: 220,
+      gap: 2,
     },
     messageImageWrapper: {
       position: 'relative',
+      overflow: 'hidden',
+    },
+    messageImageWrapperSingle: {
+      width: '100%',
+      height: '100%',
+    },
+    messageImageWrapperHalf: {
+      flex: 1,
+      height: '100%',
+    },
+    messageImageWrapperLarge: {
+      width: '60%',
+      height: '100%',
+    },
+    messageImageWrapperSmall: {
+      width: '38%',
+      height: '32%',
     },
     messageImage: {
-      width: 100,
-      height: 100,
-      borderRadius: theme.radius.sm,
+      width: '100%',
+      height: '100%',
     },
     moreImagesOverlay: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
       justifyContent: 'center',
       alignItems: 'center',
-      borderRadius: theme.radius.sm,
+    },
+    moreImagesText: {
+      color: '#FFFFFF',
+      fontWeight: '600',
     },
 
     // Message Menu
