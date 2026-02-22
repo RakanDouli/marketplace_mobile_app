@@ -64,3 +64,7 @@ export type { BulletListProps } from './BulletList';
 export { FeatureCard } from './FeatureCard';
 export { PromoCard } from './PromoCard';
 export { PromoBanner } from './PromoBanner';
+
+// Dropdown
+export { Dropdown, DropdownMenuItem, DropdownSeparator } from './Dropdown';
+export type { DropdownProps, DropdownMenuItemProps } from './Dropdown';

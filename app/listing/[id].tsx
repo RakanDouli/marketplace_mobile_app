@@ -48,6 +48,7 @@ import { ReportModal } from '../../src/components/listing/ReportModal';
 import { ReviewsModal } from '../../src/components/listing/ReviewsModal';
 import { FavoriteButton } from '../../src/components/listing/FavoriteButton';
 import { ShareButton } from '../../src/components/listing/ShareButton';
+import { ContactSellerModal } from '../../src/components/ContactSellerModal';
 
 import { getCloudflareImageUrl } from '../../src/services/cloudflare/images';
 import { ENV } from '../../src/constants/env';
@@ -66,6 +67,7 @@ export default function ListingDetailScreen() {
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   // Stores
@@ -132,15 +134,9 @@ export default function ListingDetailScreen() {
     }
   }, [owner, currentListing]);
 
-  // Handle Message - Opens chat or shows placeholder
+  // Handle Message - Opens contact seller modal
   const handleMessage = useCallback(() => {
-    // TODO: Implement chat/messaging feature
-    // For now, show an alert
-    Alert.alert(
-      'إرسال رسالة',
-      'ميزة المراسلة قيد التطوير. يمكنك استخدام الاتصال أو واتساب للتواصل مع البائع.',
-      [{ text: 'حسناً', style: 'default' }]
-    );
+    setShowContactModal(true);
   }, []);
 
   // Build share metadata
@@ -502,8 +498,8 @@ export default function ListingDetailScreen() {
         </ScrollView>
 
         {/* Bottom Actions - Fixed at bottom */}
-        {/* Always show for other's listings, hide for own listings */}
-        {!isOwnListing && (
+        {/* Only show after owner data is loaded (prevents layout shift) */}
+        {!isOwnListing && !ownerLoading && (
           <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}>
             <View style={styles.bottomActions}>
               {/* Message Button - Always visible */}
@@ -516,41 +512,28 @@ export default function ListingDetailScreen() {
                 رسالة
               </Button>
 
-              {/* Show skeleton buttons while owner data is loading */}
-              {/* This prevents layout shift when phone buttons appear */}
-              {ownerLoading ? (
-                <>
-                  {/* Placeholder for Call button */}
-                  <View style={[styles.actionButton, styles.skeletonButton]} />
-                  {/* Placeholder for WhatsApp button */}
-                  <View style={[styles.actionButton, styles.skeletonButton]} />
-                </>
-              ) : (
-                <>
-                  {/* Call Button - Only if phone is available */}
-                  {hasPhone && (
-                    <Button
-                      variant="outline"
-                      icon={<Phone size={18} color={theme.colors.primary} />}
-                      onPress={handleCallSeller}
-                      style={styles.actionButton}
-                    >
-                      اتصال
-                    </Button>
-                  )}
+              {/* Call Button - Only if phone is available */}
+              {hasPhone && (
+                <Button
+                  variant="outline"
+                  icon={<Phone size={18} color={theme.colors.primary} />}
+                  onPress={handleCallSeller}
+                  style={styles.actionButton}
+                >
+                  اتصال
+                </Button>
+              )}
 
-                  {/* WhatsApp Button - Only if phone is WhatsApp */}
-                  {hasPhone && isWhatsApp && (
-                    <Button
-                      variant="success"
-                      icon={<MessageCircle size={18} color="#FFFFFF" />}
-                      onPress={handleWhatsApp}
-                      style={styles.actionButton}
-                    >
-                      واتساب
-                    </Button>
-                  )}
-                </>
+              {/* WhatsApp Button - Only if phone is WhatsApp */}
+              {hasPhone && isWhatsApp && (
+                <Button
+                  variant="success"
+                  icon={<MessageCircle size={18} color="#FFFFFF" />}
+                  onPress={handleWhatsApp}
+                  style={styles.actionButton}
+                >
+                  واتساب
+                </Button>
               )}
             </View>
           </SafeAreaView>
@@ -581,6 +564,17 @@ export default function ListingDetailScreen() {
           onClose={() => setShowReviewsModal(false)}
           userId={listingUserId}
           userName={owner?.name}
+        />
+      )}
+
+      {/* Contact Seller Modal */}
+      {currentListing && listingUserId && (
+        <ContactSellerModal
+          visible={showContactModal}
+          onClose={() => setShowContactModal(false)}
+          listingId={currentListing.id}
+          listingTitle={currentListing.title || 'إعلان'}
+          sellerId={listingUserId}
         />
       )}
     </>
@@ -753,12 +747,5 @@ const createStyles = (theme: Theme) =>
     },
     actionButton: {
       flex: 1,
-    },
-    skeletonButton: {
-      height: 44,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.lg,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
     },
   });

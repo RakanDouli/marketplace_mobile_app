@@ -134,6 +134,13 @@ function RootContent() {
               presentation: 'card',
             }}
           />
+          <Stack.Screen
+            name="chat"
+            options={{
+              headerShown: false,
+              presentation: 'card',
+            }}
+          />
         </Stack>
       </AuthGuard>
     </View>
