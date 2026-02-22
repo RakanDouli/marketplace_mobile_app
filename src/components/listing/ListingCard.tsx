@@ -4,7 +4,7 @@
  * Delegates to separate components based on viewMode
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -48,7 +48,7 @@ export interface ListingCardProps {
   style?: ViewStyle;
 }
 
-export function ListingCard({
+export const ListingCard = memo(function ListingCard({
   id,
   title,
   price,
@@ -166,7 +166,10 @@ export function ListingCard({
       </View>
     </TouchableOpacity>
   );
-}
+});
+
+// Display name for debugging
+ListingCard.displayName = 'ListingCard';
 
 const createCompactStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -204,4 +207,4 @@ const createCompactStyles = (theme: Theme) =>
     },
   });
 
-export default ListingCard;
+export default memo(ListingCard);

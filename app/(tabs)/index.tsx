@@ -3,7 +3,7 @@
  * Re-exports the existing HomeScreen component with updated navigation
  */
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -116,26 +116,30 @@ export default function HomeTab() {
 
   const activeCategories = useMemo(() => categories.filter(cat => cat.isActive), [categories]);
 
-  // Navigation with expo-router
-  const goToCategory = (categorySlug: string, categoryName: string) => {
+  // Navigation with expo-router - memoized to prevent re-renders
+  const goToCategory = useCallback((categorySlug: string, categoryName: string) => {
     router.push(`/search/${categorySlug}`);
-  };
-  const goToListing = (listingId: string) => {
-    router.push({ pathname: '/listing/[id]', params: { id: listingId } });
-  };
-  const goToCreateListing = () => router.push('/(tabs)/create');
+  }, [router]);
 
-  const handleSearch = () => {
+  const goToListing = useCallback((listingId: string) => {
+    router.push({ pathname: '/listing/[id]', params: { id: listingId } });
+  }, [router]);
+
+  const goToCreateListing = useCallback(() => {
+    router.push('/(tabs)/create');
+  }, [router]);
+
+  const handleSearch = useCallback(() => {
     if (!selectedCategory) {
       // SearchBar component will handle showing dropdown
       return;
     }
     goToCategory(selectedCategory, '');
-  };
+  }, [selectedCategory, goToCategory]);
 
-  const handleCategorySelect = (slug: string) => {
+  const handleCategorySelect = useCallback((slug: string) => {
     setSelectedCategory(slug);
-  };
+  }, []);
 
   // Helpers - Format price with English numbers for consistency
   const formatPriceDisplay = (priceMinor: number) => `${(priceMinor / 100).toLocaleString('en-US')} ل.س`;

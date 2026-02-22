@@ -3,7 +3,7 @@
  * Provides theme values (colors, spacing, typography) to all components
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 import colors, { ThemeColors } from './colors';
 import { spacing, radius, layout, iconSize, shadows } from './spacing';
@@ -60,8 +60,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     ? systemColorScheme === 'dark'
     : themeMode === 'dark';
 
-  // Build full theme object
-  const theme: Theme = {
+  // Memoize theme object to prevent cascade re-renders
+  // Only recreates when isDark changes
+  const theme = useMemo<Theme>(() => ({
     colors: isDark ? colors.dark : colors.light,
     spacing,
     radius,
@@ -74,13 +75,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     lineHeight,
     textStyles,
     isDark,
-  };
+  }), [isDark]);
 
-  const contextValue: ThemeContextValue = {
+  // Memoize setThemeMode callback
+  const handleSetThemeMode = useCallback((mode: ThemeMode) => {
+    setThemeMode(mode);
+  }, []);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo<ThemeContextValue>(() => ({
     theme,
     themeMode,
-    setThemeMode,
-  };
+    setThemeMode: handleSetThemeMode,
+  }), [theme, themeMode, handleSetThemeMode]);
 
   return (
     <ThemeContext.Provider value={contextValue}>

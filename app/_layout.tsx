@@ -11,6 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 
 import { ThemeProvider, useTheme } from '../src/theme';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { useUserAuthStore } from '../src/stores/userAuthStore';
 import { useCategoriesStore } from '../src/stores/categoriesStore';
 import { useListingsStore } from '../src/stores/listingsStore';
@@ -189,9 +190,11 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider onLayout={onLayoutRootView}>
-      <ThemeProvider defaultMode="light">
-        <RootContent />
-      </ThemeProvider>
+      <ErrorBoundary>
+        <ThemeProvider defaultMode="light">
+          <RootContent />
+        </ThemeProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

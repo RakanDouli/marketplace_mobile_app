@@ -4,7 +4,7 @@
  * Clean design inspired by Dubizzle/Sahibinden
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -31,7 +31,7 @@ interface ListingCardListProps {
   isFeatured?: boolean;
 }
 
-export function ListingCardList({
+export const ListingCardList = memo(function ListingCardList({
   id,
   title,
   price,
@@ -134,7 +134,9 @@ export function ListingCardList({
       </View>
     </TouchableOpacity>
   );
-}
+});
+
+ListingCardList.displayName = 'ListingCardList';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -206,4 +208,4 @@ const createStyles = (theme: Theme) =>
     },
   });
 
-export default ListingCardList;
+export default memo(ListingCardList);

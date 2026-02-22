@@ -136,25 +136,40 @@ export default function CategoryListingsScreen() {
   // MOBILE CATALOG SELECTOR LOGIC
   // ============================================================
 
+  // Track if initial filter data has been loaded
+  // This prevents flash of listings before we know if category has brands
+  const [initialFilterLoadComplete, setInitialFilterLoadComplete] = useState(false);
+
+  // Mark initial load as complete when filter attributes are loaded
+  useEffect(() => {
+    if (filterAttributes.length > 0 && !initialFilterLoadComplete) {
+      setInitialFilterLoadComplete(true);
+    }
+  }, [filterAttributes.length, initialFilterLoadComplete]);
+
   // Check if category has brand-model support
   const hasBrandAttribute = useMemo(() => {
     return filterAttributes.some((attr) => attr.key === 'brandId');
   }, [filterAttributes]);
 
   // Determine catalog selector step based on URL params
-  type CatalogStep = 'brand' | 'variant' | null;
+  // Returns 'loading' when we don't know yet (prevents flash)
+  type CatalogStep = 'brand' | 'variant' | 'loading' | null;
   const catalogStep: CatalogStep = useMemo(() => {
     // Skip selector if showListings=true (user clicked "Show All")
     if (showListings === 'true') return null;
-    // Skip if category doesn't have brands
-    if (!hasBrandAttribute) return null;
     // If variant or model already selected, show listings
     if (variantId || modelId) return null;
     // If brand selected but no model/variant, show variant selector
     if (brandId) return 'variant';
+    // If we haven't loaded filter attributes yet, show loading
+    // This prevents flash of listings then catalog selector
+    if (!initialFilterLoadComplete && filterAttributes.length === 0) return 'loading';
+    // Skip if category doesn't have brands
+    if (!hasBrandAttribute) return null;
     // Otherwise, show brand selector
     return 'brand';
-  }, [hasBrandAttribute, brandId, modelId, variantId, showListings]);
+  }, [hasBrandAttribute, brandId, modelId, variantId, showListings, initialFilterLoadComplete, filterAttributes.length]);
 
   // Extract brand options from filter attributes
   const brandOptions: CatalogOption[] = useMemo(() => {
@@ -925,8 +940,31 @@ export default function CategoryListingsScreen() {
   // RENDER: CATALOG SELECTOR OR LISTINGS
   // ============================================================
 
+  // Show loading while determining if we need catalog selector
+  // This prevents flash of listings then catalog selector
+  if (catalogStep === 'loading') {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerBackButtonDisplayMode: 'minimal',
+            headerTitle: `${category?.nameAr || ''} ${listingTypeLabel}`,
+            headerStyle: {
+              backgroundColor: theme.colors.bg,
+            },
+            headerShadowVisible: false,
+          }}
+        />
+        <View style={styles.loadingContainer}>
+          <Loading type="svg" size="lg" />
+        </View>
+      </>
+    );
+  }
+
   // If catalogStep is set, show the MobileCatalogSelector instead of listings
-  if (catalogStep !== null) {
+  if (catalogStep === 'brand' || catalogStep === 'variant') {
     return (
       <>
         <Stack.Screen
@@ -997,7 +1035,7 @@ export default function CategoryListingsScreen() {
           <FlatList
             data={listings}
             renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
-            keyExtractor={(item, index) => `${item.id}-${index}`}
+            keyExtractor={(item) => item.id}
             numColumns={viewMode === 'grid' ? gridColumns : 1}
             key={`${viewMode}-${gridColumns}`} // Force re-render when view mode or columns change
             contentContainerStyle={[styles.listContent, { paddingTop: TOOLBAR_HEIGHT + theme.spacing.lg }]}

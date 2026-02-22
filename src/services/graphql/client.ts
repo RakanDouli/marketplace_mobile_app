@@ -82,16 +82,40 @@ export async function authGraphqlRequest<T = any>(
   return graphqlRequest<T>(document, variables, true);
 }
 
-// Simple in-memory cache for GraphQL responses
+// LRU Cache with size limit for GraphQL responses
+// Prevents memory leaks by limiting cache size and evicting oldest entries
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
 }
 
+const MAX_CACHE_SIZE = 100; // Maximum number of cache entries
 const cache = new Map<string, CacheEntry<any>>();
 
 /**
- * Make a cached GraphQL request
+ * LRU eviction - removes oldest entries when cache exceeds limit
+ * Uses Map insertion order (oldest first) for efficient LRU
+ */
+function evictOldestIfNeeded(): void {
+  if (cache.size >= MAX_CACHE_SIZE) {
+    // Remove oldest 20% of entries to avoid frequent evictions
+    const entriesToRemove = Math.ceil(MAX_CACHE_SIZE * 0.2);
+    const keys = Array.from(cache.keys()).slice(0, entriesToRemove);
+    keys.forEach((key) => cache.delete(key));
+  }
+}
+
+/**
+ * Move entry to end of Map (most recently used)
+ * This maintains LRU order where oldest entries are first
+ */
+function touchCacheEntry(key: string, entry: CacheEntry<any>): void {
+  cache.delete(key);
+  cache.set(key, entry);
+}
+
+/**
+ * Make a cached GraphQL request with LRU eviction
  * @param document GraphQL document
  * @param variables Query variables
  * @param ttl Cache time-to-live in milliseconds (default: 1 minute)
@@ -107,11 +131,21 @@ export async function cachedGraphqlRequest<T = any>(
   // Check cache
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < ttl) {
+    // Move to end (most recently used)
+    touchCacheEntry(cacheKey, cached);
     return cached.data;
+  }
+
+  // Remove expired entry if exists
+  if (cached) {
+    cache.delete(cacheKey);
   }
 
   // Make request
   const data = await graphqlRequest<T>(document, variables);
+
+  // Evict oldest entries if needed before adding new one
+  evictOldestIfNeeded();
 
   // Store in cache
   cache.set(cacheKey, { data, timestamp: Date.now() });
@@ -132,6 +166,13 @@ export function clearGraphqlCache(): void {
 export function clearCacheEntry(document: RequestDocument, variables?: Variables): void {
   const cacheKey = JSON.stringify({ document, variables });
   cache.delete(cacheKey);
+}
+
+/**
+ * Get current cache size (for debugging)
+ */
+export function getCacheSize(): number {
+  return cache.size;
 }
 
 export default graphqlClient;

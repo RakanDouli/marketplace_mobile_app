@@ -44,6 +44,9 @@ export type { ContainerProps } from './Container';
 export { Grid } from './Grid';
 export type { GridProps } from './Grid';
 
+export { Slider } from './Slider';
+export type { SliderProps } from './Slider';
+
 export { Collapsible } from './Collapsible';
 export type { CollapsibleProps } from './Collapsible';
 

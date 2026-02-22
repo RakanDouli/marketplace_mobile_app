@@ -1,14 +1,16 @@
 /**
  * Grid Component
- * CSS Grid-like layout - matches web frontend Grid
- * Responsive columns for mobile/tablet/iPad
+ * CSS Grid-like layout with RTL support
+ * Layout only - no data fetching
  */
 
 import React, { useMemo } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Container, ContainerProps } from './Container';
 import { Text } from './Text';
+import { Loading } from './Loading';
 
 export type GapSize = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -17,12 +19,18 @@ export interface GridProps {
   title?: string;
   titleAlign?: 'right' | 'center';
   action?: React.ReactNode;
+  /** View all text (shows if onViewAll provided) */
+  viewAllText?: string;
+  /** View all callback */
+  onViewAll?: () => void;
   columns?: 1 | 2 | 3 | 4 | 5 | 6;
   mobileColumns?: 1 | 2 | 3 | 4;
   tabletColumns?: 1 | 2 | 3 | 4;
   gap?: GapSize;
   paddingY?: ContainerProps['paddingY'];
   background?: ContainerProps['background'];
+  /** Loading state */
+  isLoading?: boolean;
 }
 
 export function Grid({
@@ -30,12 +38,15 @@ export function Grid({
   title,
   titleAlign = 'right',
   action,
+  viewAllText = 'عرض الكل',
+  onViewAll,
   columns = 4,
   mobileColumns = 2,
   tabletColumns,
   gap = 'lg',
   paddingY = 'xl',
   background = 'transparent',
+  isLoading = false,
 }: GridProps) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
@@ -70,7 +81,29 @@ export function Grid({
   const availableWidth = width - containerPadding * 2 - totalGapWidth;
   const itemWidth = availableWidth / effectiveColumns;
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <Container paddingY={paddingY} background={background}>
+        {title && (
+          <View style={styles.header}>
+            <Text variant="h3">{title}</Text>
+          </View>
+        )}
+        <View style={styles.loading}>
+          <Loading type="svg" size="md" />
+        </View>
+      </Container>
+    );
+  }
+
   const childrenArray = React.Children.toArray(children);
+
+  // Empty state
+  if (childrenArray.length === 0) {
+    return null;
+  }
+
   const gridItems = childrenArray.map((child, index) => (
     <View key={index} style={{ width: itemWidth }}>
       {child}
@@ -83,7 +116,10 @@ export function Grid({
     </View>
   );
 
-  if (title || action) {
+  // Header with title and/or view all button
+  const hasHeader = title || action || onViewAll;
+
+  if (hasHeader) {
     return (
       <Container paddingY={paddingY} background={background}>
         <View
@@ -92,8 +128,16 @@ export function Grid({
             titleAlign === 'center' && styles.headerCenter,
           ]}
         >
-          {title && <Text variant="h3">{title}</Text>}
+          {onViewAll && (
+            <TouchableOpacity onPress={onViewAll} style={styles.viewAllButton}>
+              <Text variant="paragraph" style={{ color: theme.colors.primary }}>
+                {viewAllText}
+              </Text>
+              <ChevronLeft size={16} color={theme.colors.primary} />
+            </TouchableOpacity>
+          )}
           {action}
+          {title && <Text variant="h3">{title}</Text>}
         </View>
         {gridElement}
       </Container>
@@ -106,17 +150,27 @@ export function Grid({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     grid: {
-      flexDirection: 'row',
+      flexDirection: 'row-reverse', // RTL support
       flexWrap: 'wrap',
       alignItems: 'flex-start',
     },
     header: {
-      flexDirection: 'row',
+      flexDirection: 'row-reverse', // RTL: title on right, action on left
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: theme.spacing.md,
     },
     headerCenter: {
+      justifyContent: 'center',
+    },
+    viewAllButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+    },
+    loading: {
+      paddingVertical: theme.spacing.xl,
+      alignItems: 'center',
       justifyContent: 'center',
     },
   });

@@ -57,3 +57,6 @@ export {
   formatFilteredSpecs,
 } from "./filterSpecs";
 export type { SpecsViewMode } from "./filterSpecs";
+
+// Analytics tracking
+export { trackListingView } from "./trackListingView";

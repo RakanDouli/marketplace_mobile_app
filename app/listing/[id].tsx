@@ -1,9 +1,10 @@
 /**
  * Listing Detail Screen
- * Shows full listing details with image gallery, specs, and seller info
+ * Complete listing details with all features from web frontend
+ * Uses native transparent header over image gallery
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,11 +12,10 @@ import {
   Dimensions,
   TouchableOpacity,
   Linking,
-  Share,
   FlatList,
   Image,
+  Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import {
   MapPin,
@@ -24,17 +24,30 @@ import {
   Heart,
   Phone,
   MessageCircle,
-  Share2,
   ChevronLeft,
   ChevronRight,
-  User,
-  Building2,
+  ArrowRight,
 } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, Theme } from '../../src/theme';
-import { Text, Button, Loading } from '../../src/components/slices';
+import { Text, Button, Loading, Collapsible } from '../../src/components/slices';
 import { useListingsStore } from '../../src/stores/listingsStore';
 import { useCurrencyStore } from '../../src/stores/currencyStore';
-import { formatPrice, formatLocation } from '../../src/utils';
+import { useRelatedListingsStore } from '../../src/stores/relatedListingsStore';
+import { useListingOwnerStore } from '../../src/stores/listingOwnerStore';
+import { useUserAuthStore } from '../../src/stores/userAuthStore';
+import { formatPrice, formatLocation, trackListingView } from '../../src/utils';
+
+// Components
+import { CarDamageViewer, fromBackendFormat } from '../../src/components/listing/CarDamageViewer';
+import { OwnerCard } from '../../src/components/listing/OwnerCard';
+import { LocationMap } from '../../src/components/listing/LocationMap';
+import { RelatedListings } from '../../src/components/listing/RelatedListings';
+import { ImagePreviewModal } from '../../src/components/listing/ImagePreviewModal';
+import { ReportModal } from '../../src/components/listing/ReportModal';
+import { ReviewsModal } from '../../src/components/listing/ReviewsModal';
+import { FavoriteButton } from '../../src/components/listing/FavoriteButton';
+import { ShareButton } from '../../src/components/listing/ShareButton';
 
 import { getCloudflareImageUrl } from '../../src/services/cloudflare/images';
 import { ENV } from '../../src/constants/env';
@@ -50,87 +63,105 @@ export default function ListingDetailScreen() {
 
   // State
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  // Store
+  // Stores
   const { currentListing, isLoading, error, fetchListingById } = useListingsStore();
   const preferredCurrency = useCurrencyStore((state) => state.preferredCurrency);
+  const { fetchAll: fetchRelated, clearRelated } = useRelatedListingsStore();
+  const { owner, isLoading: ownerLoading, clearOwner } = useListingOwnerStore();
+  const { profile: currentUserProfile } = useUserAuthStore();
 
   // Fetch listing on mount
   useEffect(() => {
     if (id) {
       fetchListingById(id);
     }
+    return () => {
+      clearRelated();
+      clearOwner();
+    };
+  }, [id]);
+
+  // Fetch related listings after main listing loads
+  useEffect(() => {
+    if (currentListing?.id) {
+      fetchRelated(currentListing.id);
+    }
+  }, [currentListing?.id]);
+
+  // Track view for analytics
+  useEffect(() => {
+    if (id) {
+      trackListingView(id);
+    }
   }, [id]);
 
   // Image navigation
-  const goToNextImage = () => {
+  const goToNextImage = useCallback(() => {
     if (!currentListing?.imageKeys) return;
     const nextIndex = (activeImageIndex + 1) % currentListing.imageKeys.length;
     setActiveImageIndex(nextIndex);
     flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-  };
+  }, [activeImageIndex, currentListing?.imageKeys]);
 
-  const goToPrevImage = () => {
+  const goToPrevImage = useCallback(() => {
     if (!currentListing?.imageKeys) return;
     const prevIndex = activeImageIndex === 0 ? currentListing.imageKeys.length - 1 : activeImageIndex - 1;
     setActiveImageIndex(prevIndex);
     flatListRef.current?.scrollToIndex({ index: prevIndex, animated: true });
-  };
+  }, [activeImageIndex, currentListing?.imageKeys]);
 
   // Handle call seller
-  const handleCallSeller = () => {
-    const phone = currentListing?.user?.contactPhone || currentListing?.user?.phone;
+  const handleCallSeller = useCallback(() => {
+    const phone = owner?.contactPhone || owner?.phone;
     if (phone) {
       Linking.openURL(`tel:${phone}`);
     }
-  };
+  }, [owner]);
 
   // Handle WhatsApp
-  const handleWhatsApp = () => {
-    const phone = currentListing?.user?.contactPhone || currentListing?.user?.phone;
-    if (phone) {
-      // Remove any non-digit characters for WhatsApp
+  const handleWhatsApp = useCallback(() => {
+    const phone = owner?.contactPhone || owner?.phone;
+    if (phone && currentListing) {
       const cleanPhone = phone.replace(/\D/g, '');
-      Linking.openURL(`whatsapp://send?phone=${cleanPhone}&text=مرحباً، رأيت إعلانك: ${currentListing?.title}`);
+      Linking.openURL(`whatsapp://send?phone=${cleanPhone}&text=مرحباً، رأيت إعلانك: ${currentListing.title}`);
     }
-  };
+  }, [owner, currentListing]);
 
-  // Handle share
-  const handleShare = async () => {
-    if (!currentListing) return;
-    try {
-      // Build share URL
-      const categorySlug = currentListing.category?.slug || 'cars';
-      const listingType = currentListing.listingType === 'rent' ? 'rent' : 'sell';
-      const shareUrl = `${ENV.WEB_URL}/${categorySlug}/${listingType}/${currentListing.id}`;
+  // Handle Message - Opens chat or shows placeholder
+  const handleMessage = useCallback(() => {
+    // TODO: Implement chat/messaging feature
+    // For now, show an alert
+    Alert.alert(
+      'إرسال رسالة',
+      'ميزة المراسلة قيد التطوير. يمكنك استخدام الاتصال أو واتساب للتواصل مع البائع.',
+      [{ text: 'حسناً', style: 'default' }]
+    );
+  }, []);
 
-      // Ensure all values are strings (defensive coding to prevent [object Object])
-      const title = typeof currentListing.title === 'string' ? currentListing.title : '';
-      const description = typeof currentListing.description === 'string'
-        ? currentListing.description.slice(0, 100)
-        : '';
-      const priceStr = formatPrice(currentListing.priceMinor, preferredCurrency);
+  // Build share metadata
+  const shareMetadata = useMemo(() => {
+    if (!currentListing) return null;
+    const categorySlug = currentListing.category?.slug || 'cars';
+    const listingType = currentListing.listingType === 'rent' ? 'rent' : 'sell';
+    const shareUrl = `${ENV.WEB_URL}/${categorySlug}/${listingType}/${currentListing.id}`;
+    const firstImage = currentListing.imageKeys?.[0];
 
-      const message = [
-        title,
-        description,
-        priceStr ? `السعر: ${priceStr}` : null,
-        shareUrl,
-      ].filter(Boolean).join('\n');
-
-      await Share.share({
-        message,
-        title: title || 'شام باي',
-        url: shareUrl, // iOS only
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  };
+    return {
+      title: currentListing.title || '',
+      description: currentListing.description?.slice(0, 100) || '',
+      url: shareUrl,
+      price: formatPrice(currentListing.priceMinor, preferredCurrency),
+      imageUrl: firstImage ? getCloudflareImageUrl(firstImage, 'card') : undefined,
+    };
+  }, [currentListing, preferredCurrency]);
 
   // Format date
-  const formatDate = (dateString?: string) => {
+  const formatDate = useCallback((dateString?: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('ar-SY', {
@@ -138,31 +169,71 @@ export default function ListingDetailScreen() {
       month: 'long',
       day: 'numeric',
     });
-  };
+  }, []);
 
-  // Build specs list from specsDisplay
-  const getSpecsList = () => {
+  // Build specs list from specsDisplay (excluding car_damage)
+  const specsList = useMemo(() => {
     if (!currentListing?.specsDisplay) return [];
-
     return Object.entries(currentListing.specsDisplay)
-      .filter(([, spec]: [string, any]) => spec?.label && spec?.value)
+      .filter(([key, spec]: [string, any]) =>
+        spec?.label && spec?.value && key !== 'car_damage'
+      )
       .map(([key, spec]: [string, any]) => ({
         key,
         label: spec.label,
-        value: spec.value,
+        value: typeof spec.value === 'object' ? JSON.stringify(spec.value) : spec.value,
       }));
-  };
+  }, [currentListing?.specsDisplay]);
+
+  // Check for car damage data
+  // Try specs first (raw data), then specsDisplay (processed data)
+  const carDamages = useMemo(() => {
+    // First check specs.car_damage (raw array from backend)
+    const rawDamageData = currentListing?.specs?.car_damage;
+    if (rawDamageData && Array.isArray(rawDamageData) && rawDamageData.length > 0) {
+      return fromBackendFormat(rawDamageData as string[]);
+    }
+    // Fallback to specsDisplay.car_damage.value
+    const displayDamageData = currentListing?.specsDisplay?.car_damage?.value;
+    if (!displayDamageData) return [];
+    return fromBackendFormat(displayDamageData);
+  }, [currentListing?.specs, currentListing?.specsDisplay]);
+
+  // Native header right component - must be defined before early returns
+  const headerRight = useCallback(() => {
+    if (!currentListing || !shareMetadata) return null;
+    return (
+      <View style={styles.headerActions}>
+        <ShareButton
+          metadata={shareMetadata}
+          size={22}
+          style="inline"
+        />
+        <FavoriteButton
+          listingId={currentListing.id}
+          listingUserId={currentListing.user?.id}
+          size={22}
+          style="inline"
+        />
+      </View>
+    );
+  }, [currentListing?.id, currentListing?.userId, shareMetadata, styles]);
 
   // Loading state
   if (isLoading) {
     return (
       <>
-        <Stack.Screen options={{ headerShown: false }} />
-        <SafeAreaView style={styles.container} edges={['top']}>
-          <View style={styles.loadingContainer}>
-            <Loading type="svg" size="lg" />
-          </View>
-        </SafeAreaView>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerTitle: '',
+            headerBackButtonDisplayMode: 'minimal',
+            headerTintColor: theme.colors.text,
+          }}
+        />
+        <View style={styles.loadingContainer}>
+          <Loading type="svg" size="lg" />
+        </View>
       </>
     );
   }
@@ -171,39 +242,69 @@ export default function ListingDetailScreen() {
   if (error || !currentListing) {
     return (
       <>
-        <Stack.Screen options={{ title: 'خطأ' }} />
-        <SafeAreaView style={styles.container} edges={['bottom']}>
-          <View style={styles.errorContainer}>
-            <Text variant="h4" color="secondary">
-              {error || 'لم يتم العثور على الإعلان'}
-            </Text>
-            <Button variant="primary" onPress={() => router.back()} style={{ marginTop: 16 }}>
-              العودة
-            </Button>
-          </View>
-        </SafeAreaView>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerTitle: 'خطأ',
+            headerBackButtonDisplayMode: 'minimal',
+            headerTintColor: theme.colors.text,
+          }}
+        />
+        <View style={styles.errorContainer}>
+          <Text variant="h4" color="secondary">
+            {error || 'لم يتم العثور على الإعلان'}
+          </Text>
+          <Button variant="primary" onPress={() => router.back()} style={{ marginTop: 16 }}>
+            العودة
+          </Button>
+        </View>
       </>
     );
   }
 
   const images = currentListing.imageKeys || [];
-  const specsList = getSpecsList();
   const location = formatLocation(currentListing.location);
-  const hasPhone = currentListing.user?.showPhone && (currentListing.user?.phone || currentListing.user?.contactPhone);
-  const isWhatsApp = currentListing.user?.phoneIsWhatsApp;
+  const hasPhone = owner?.showPhone && (owner?.phone || owner?.contactPhone);
+  const isWhatsApp = owner?.phoneIsWhatsApp;
+
+  // Get userId from user object (GraphQL returns user.id, not userId)
+  const listingUserId = currentListing.user?.id;
+
+  // Check if this is user's own listing (don't show contact buttons or report for own listings)
+  const isOwnListing = !!(currentUserProfile?.id && listingUserId && currentUserProfile.id === listingUserId);
+
+  // Prepare location for LocationMap
+  // Priority: link → coordinates → address → province only
+  const locationForMap = currentListing.location ? {
+    province: currentListing.location.province,
+    city: currentListing.location.city,
+    area: currentListing.location.area,
+    link: currentListing.location.link,
+    coordinates: currentListing.location.coordinates,
+  } : undefined;
 
   return (
     <>
       <Stack.Screen
         options={{
-          headerShown: false,
+          headerShown: true,
+          headerTitle: '',
+          headerStyle: { backgroundColor: theme.colors.bg },
+          headerShadowVisible: true,
+          headerBackVisible: true,
+          headerBackButtonDisplayMode: 'minimal',
+          headerTintColor: theme.colors.text,
+          headerRight: headerRight,
         }}
       />
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* Image Gallery */}
-          <View style={styles.imageGallery}>
-            {images.length > 0 ? (
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Image Gallery */}
+        <View style={styles.imageGallery}>
+          {images.length > 0 ? (
               <>
                 <FlatList
                   ref={flatListRef}
@@ -216,13 +317,18 @@ export default function ListingDetailScreen() {
                     setActiveImageIndex(index);
                   }}
                   renderItem={({ item }) => (
-                    <Image
-                      source={{ uri: getCloudflareImageUrl(item, 'large') }}
-                      style={styles.galleryImage}
-                      resizeMode="cover"
-                    />
+                    <TouchableOpacity
+                      activeOpacity={0.95}
+                      onPress={() => setShowImagePreview(true)}
+                    >
+                      <Image
+                        source={{ uri: getCloudflareImageUrl(item, 'large') }}
+                        style={styles.galleryImage}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
                   )}
-                  keyExtractor={(item, index) => `${item}-${index}`}
+                  keyExtractor={(item) => item}
                 />
 
                 {/* Navigation arrows */}
@@ -257,16 +363,6 @@ export default function ListingDetailScreen() {
                 <Text variant="paragraph" color="muted">لا توجد صور</Text>
               </View>
             )}
-
-            {/* Back button */}
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <ChevronRight size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-
-            {/* Share button */}
-            <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-              <Share2 size={20} color="#FFFFFF" />
-            </TouchableOpacity>
           </View>
 
           {/* Content */}
@@ -281,7 +377,7 @@ export default function ListingDetailScreen() {
               {currentListing.title}
             </Text>
 
-            {/* Meta info - icons before text in RTL */}
+            {/* Meta info */}
             <View style={styles.metaRow}>
               {location && (
                 <View style={styles.metaItem}>
@@ -301,7 +397,7 @@ export default function ListingDetailScreen() {
               )}
             </View>
 
-            {/* Stats - icons before text in RTL */}
+            {/* Stats */}
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <Text variant="small" color="muted">
@@ -317,91 +413,176 @@ export default function ListingDetailScreen() {
               </View>
             </View>
 
-            {/* Specs */}
+            {/* Specifications - Collapsible */}
             {specsList.length > 0 && (
               <View style={styles.section}>
-                <Text variant="h4" style={styles.sectionTitle}>
-                  المواصفات
-                </Text>
-                <View style={styles.specsGrid}>
-                  {specsList.map((spec) => (
-                    <View key={spec.key} style={styles.specItem}>
-                      <Text variant="small" color="muted">
-                        {spec.label}
-                      </Text>
-                      <Text variant="body" bold>
-                        {spec.value}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
+                <Collapsible title="المواصفات" defaultOpen variant="bordered">
+                  <View style={styles.specsGrid}>
+                    {specsList.map((spec) => (
+                      <View key={spec.key} style={styles.specItem}>
+                        <Text variant="small" color="muted">
+                          {spec.label}
+                        </Text>
+                        <Text variant="body" bold>
+                          {spec.value}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </Collapsible>
               </View>
             )}
 
-            {/* Description */}
+            {/* Car Damage Viewer */}
+            {carDamages.length > 0 && (
+              <View style={styles.section}>
+                <Collapsible title="حالة السيارة" defaultOpen={false} variant="bordered">
+                  <CarDamageViewer damages={carDamages} />
+                </Collapsible>
+              </View>
+            )}
+
+            {/* Description - Collapsible */}
             {currentListing.description && (
               <View style={styles.section}>
-                <Text variant="h4" style={styles.sectionTitle}>
-                  الوصف
-                </Text>
-                <Text variant="paragraph" color="secondary" style={styles.description}>
-                  {currentListing.description}
-                </Text>
+                <Collapsible title="الوصف" defaultOpen variant="bordered">
+                  <Text variant="paragraph" color="secondary" style={styles.description}>
+                    {currentListing.description}
+                  </Text>
+                </Collapsible>
               </View>
             )}
 
             {/* Seller Info */}
-            <View style={styles.section}>
-              <Text variant="h4" style={styles.sectionTitle}>
-                معلومات البائع
-              </Text>
-              <View style={styles.sellerCard}>
-                <View style={styles.sellerAvatar}>
-                  {currentListing.user?.accountType === 'business' ? (
-                    <Building2 size={28} color={theme.colors.primary} />
-                  ) : (
-                    <User size={28} color={theme.colors.primary} />
-                  )}
-                </View>
-                <View style={styles.sellerInfo}>
-                  <Text variant="body" bold>
-                    {currentListing.user?.companyName || currentListing.user?.name || 'البائع'}
-                  </Text>
-                  {currentListing.user?.accountType === 'business' && (
-                    <Text variant="small" color="secondary">
-                      حساب تجاري
-                    </Text>
-                  )}
-                </View>
+            {listingUserId && (
+              <View style={styles.section}>
+                <Text variant="h4" style={styles.sectionTitle}>
+                  معلومات البائع
+                </Text>
+                <OwnerCard
+                  userId={listingUserId}
+                  onViewReviews={() => setShowReviewsModal(true)}
+                  onReport={isOwnListing ? undefined : () => setShowReportModal(true)}
+                />
               </View>
-            </View>
-          </View>
-        </ScrollView>
+            )}
 
-        {/* Bottom Actions */}
-        {hasPhone && (
-          <View style={styles.bottomActions}>
-            <Button
-              variant="primary"
-              icon={<Phone size={18} color="#FFFFFF" />}
-              onPress={handleCallSeller}
-              style={styles.actionButton}
-            >
-              اتصال
-            </Button>
-            {isWhatsApp && (
-              <Button
-                variant="success"
-                icon={<MessageCircle size={18} color="#FFFFFF" />}
-                onPress={handleWhatsApp}
-                style={styles.actionButton}
-              >
-                واتساب
-              </Button>
+            {/* Location Map */}
+            {locationForMap && (
+              <View style={styles.section}>
+                <Text variant="h4" style={styles.sectionTitle}>
+                  الموقع
+                </Text>
+                <LocationMap
+                  location={locationForMap}
+                  title={currentListing.title}
+                />
+              </View>
             )}
           </View>
+
+          {/* Related Listings - By Brand (Slider) */}
+          <RelatedListings
+            listingId={currentListing.id}
+            type="brand"
+            title="من نفس الماركة"
+            layout="slider"
+          />
+
+          {/* Related Listings - By Price (Grid) */}
+          <RelatedListings
+            listingId={currentListing.id}
+            type="price"
+            title="بسعر مشابه"
+            layout="grid"
+          />
+
+          {/* Bottom spacing for action bar */}
+          <View style={{ height: isOwnListing ? 20 : 100 }} />
+        </ScrollView>
+
+        {/* Bottom Actions - Fixed at bottom */}
+        {/* Always show for other's listings, hide for own listings */}
+        {!isOwnListing && (
+          <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}>
+            <View style={styles.bottomActions}>
+              {/* Message Button - Always visible */}
+              <Button
+                variant="primary"
+                icon={<MessageCircle size={18} color="#FFFFFF" />}
+                onPress={handleMessage}
+                style={styles.actionButton}
+              >
+                رسالة
+              </Button>
+
+              {/* Show skeleton buttons while owner data is loading */}
+              {/* This prevents layout shift when phone buttons appear */}
+              {ownerLoading ? (
+                <>
+                  {/* Placeholder for Call button */}
+                  <View style={[styles.actionButton, styles.skeletonButton]} />
+                  {/* Placeholder for WhatsApp button */}
+                  <View style={[styles.actionButton, styles.skeletonButton]} />
+                </>
+              ) : (
+                <>
+                  {/* Call Button - Only if phone is available */}
+                  {hasPhone && (
+                    <Button
+                      variant="outline"
+                      icon={<Phone size={18} color={theme.colors.primary} />}
+                      onPress={handleCallSeller}
+                      style={styles.actionButton}
+                    >
+                      اتصال
+                    </Button>
+                  )}
+
+                  {/* WhatsApp Button - Only if phone is WhatsApp */}
+                  {hasPhone && isWhatsApp && (
+                    <Button
+                      variant="success"
+                      icon={<MessageCircle size={18} color="#FFFFFF" />}
+                      onPress={handleWhatsApp}
+                      style={styles.actionButton}
+                    >
+                      واتساب
+                    </Button>
+                  )}
+                </>
+              )}
+            </View>
+          </SafeAreaView>
         )}
-      </SafeAreaView>
+
+      {/* Modals */}
+      <ImagePreviewModal
+        visible={showImagePreview}
+        onClose={() => setShowImagePreview(false)}
+        images={images}
+        initialIndex={activeImageIndex}
+      />
+
+      {listingUserId && (
+        <ReportModal
+          visible={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          entityType="listing"
+          entityId={currentListing.id}
+          reportedUserId={listingUserId}
+          sellerName={owner?.name}
+        />
+      )}
+
+      {listingUserId && (
+        <ReviewsModal
+          visible={showReviewsModal}
+          onClose={() => setShowReviewsModal(false)}
+          userId={listingUserId}
+          userName={owner?.name}
+        />
+      )}
     </>
   );
 }
@@ -414,6 +595,10 @@ const createStyles = (theme: Theme) =>
     },
     scrollView: {
       flex: 1,
+      backgroundColor: theme.colors.bg,
+    },
+    scrollContent: {
+      flexGrow: 1,
     },
     loadingContainer: {
       flex: 1,
@@ -425,6 +610,13 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       alignItems: 'center',
       padding: theme.spacing.lg,
+    },
+
+    // Native Header Actions (headerRight)
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
     },
 
     // Image Gallery
@@ -464,7 +656,7 @@ const createStyles = (theme: Theme) =>
     imageCounter: {
       position: 'absolute',
       bottom: theme.spacing.md,
-      right: theme.spacing.md,
+      left: theme.spacing.md,
       backgroundColor: 'rgba(0,0,0,0.6)',
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
@@ -472,28 +664,6 @@ const createStyles = (theme: Theme) =>
     },
     imageCounterText: {
       color: '#FFFFFF',
-    },
-    backButton: {
-      position: 'absolute',
-      top: theme.spacing.md,
-      right: theme.spacing.md,
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    shareButton: {
-      position: 'absolute',
-      top: theme.spacing.md,
-      left: theme.spacing.md,
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
     },
 
     // Content
@@ -509,7 +679,7 @@ const createStyles = (theme: Theme) =>
       textAlign: 'right',
     },
     metaRow: {
-      flexDirection: 'row',
+      flexDirection: 'row-reverse',
       flexWrap: 'wrap',
       marginTop: theme.spacing.md,
       gap: theme.spacing.md,
@@ -520,10 +690,10 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
     },
     metaText: {
-      marginLeft: 4,
+      marginRight: 4,
     },
     statsRow: {
-      flexDirection: 'row',
+      flexDirection: 'row-reverse',
       marginTop: theme.spacing.md,
       paddingTop: theme.spacing.md,
       borderTopWidth: 1,
@@ -539,9 +709,6 @@ const createStyles = (theme: Theme) =>
     // Section
     section: {
       marginTop: theme.spacing.lg,
-      paddingTop: theme.spacing.lg,
-      borderTopWidth: 1,
-      borderTopColor: theme.colors.border,
     },
     sectionTitle: {
       marginBottom: theme.spacing.md,
@@ -556,7 +723,7 @@ const createStyles = (theme: Theme) =>
     },
     specItem: {
       width: '48%',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.bg,
       padding: theme.spacing.md,
       borderRadius: theme.radius.lg,
       alignItems: 'flex-end',
@@ -568,33 +735,17 @@ const createStyles = (theme: Theme) =>
       lineHeight: 24,
     },
 
-    // Seller
-    sellerCard: {
-      flexDirection: 'row-reverse',
-      alignItems: 'center',
-      backgroundColor: theme.colors.surface,
-      padding: theme.spacing.md,
-      borderRadius: theme.radius.lg,
-      gap: theme.spacing.md,
+    // Bottom Actions - Fixed at bottom
+    bottomSafeArea: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: theme.colors.bg,
     },
-    sellerAvatar: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      backgroundColor: theme.colors.primaryLight,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    sellerInfo: {
-      flex: 1,
-      alignItems: 'flex-end',
-    },
-
-    // Bottom Actions
     bottomActions: {
       flexDirection: 'row-reverse',
       padding: theme.spacing.md,
-      paddingBottom: theme.spacing.lg,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
       backgroundColor: theme.colors.bg,
@@ -602,5 +753,12 @@ const createStyles = (theme: Theme) =>
     },
     actionButton: {
       flex: 1,
+    },
+    skeletonButton: {
+      height: 44,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
     },
   });

@@ -3,7 +3,7 @@
  * Vertical grid view card for listings
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -33,7 +33,7 @@ interface ListingCardGridProps {
   style?: ViewStyle;
 }
 
-export function ListingCardGrid({
+export const ListingCardGrid = memo(function ListingCardGrid({
   id,
   title,
   price,
@@ -122,7 +122,9 @@ export function ListingCardGrid({
       </View>
     </TouchableOpacity>
   );
-}
+});
+
+ListingCardGrid.displayName = 'ListingCardGrid';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -190,4 +192,4 @@ const createStyles = (theme: Theme) =>
     },
   });
 
-export default ListingCardGrid;
+export default memo(ListingCardGrid);

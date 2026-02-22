@@ -201,6 +201,7 @@ export function SearchBar({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
+      flex: 1,
       backgroundColor: theme.colors.bg,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.md,
