@@ -203,18 +203,31 @@ export default function ChatScreen() {
 
       try {
         const { uploadUrl, assetKey } = await createImageUploadUrl();
-        const response = await fetch(image.uri);
-        const blob = await response.blob();
 
+        // React Native: Create FormData with file object (not blob)
         const formData = new FormData();
-        formData.append('file', blob);
+        const filename = image.uri.split('/').pop() || 'image.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+        // React Native FormData expects this format
+        formData.append('file', {
+          uri: image.uri,
+          name: filename,
+          type: type,
+        } as any);
 
         const uploadResponse = await fetch(uploadUrl, {
           method: 'POST',
           body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         });
 
         if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          console.error('Upload response error:', errorText);
           throw new Error('Upload failed');
         }
 
