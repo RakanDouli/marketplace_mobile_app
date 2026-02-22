@@ -37,7 +37,6 @@ export default function SearchLayout() {
           headerShown: false,
         }}
       />
-      {/* Filters screen as modal (hides tab bar) */}
       <Stack.Screen
         name="[categorySlug]/filters"
         options={{

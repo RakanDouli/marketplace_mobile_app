@@ -14,6 +14,7 @@ import { ThemeProvider, useTheme } from '../src/theme';
 import { useUserAuthStore } from '../src/stores/userAuthStore';
 import { useCategoriesStore } from '../src/stores/categoriesStore';
 import { useListingsStore } from '../src/stores/listingsStore';
+import { useCurrencyStore } from '../src/stores/currencyStore';
 
 // Keep splash screen visible while loading
 SplashScreen.preventAutoHideAsync();
@@ -126,13 +127,6 @@ function RootContent() {
             }}
           />
           <Stack.Screen
-            name="category/[slug]"
-            options={{
-              headerShown: true,
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen
             name="seller/[id]"
             options={{
               headerShown: true,
@@ -169,6 +163,9 @@ export default function RootLayout() {
           useCategoriesStore.getState().fetchCategories(),
           useListingsStore.getState().fetchFeaturedListings(),
           useListingsStore.getState().fetchListings({}, 1),
+          // Load currency preferences and exchange rates
+          useCurrencyStore.getState().loadPreferredCurrency(),
+          useCurrencyStore.getState().fetchExchangeRates(),
         ]);
       } catch (error) {
         console.error('Error during app initialization:', error);

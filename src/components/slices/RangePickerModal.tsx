@@ -1,26 +1,23 @@
 /**
  * RangePickerModal - Two-column range picker (min/max)
+ * Uses native wheel picker for iOS, modal Select for Android
  * Used for price, year, mileage filters
- * Similar to Marktplaats/AutoScout24 UX
  */
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Modal,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  Dimensions,
   Pressable,
+  Platform,
 } from 'react-native';
-import { X } from 'lucide-react-native';
+import { Picker } from '@react-native-picker/picker';
+import { X, Trash2 } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text } from './Text';
-
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-const ITEM_HEIGHT = 48;
-const VISIBLE_ITEMS = 5;
+import { Select } from './Select';
 
 export interface RangeOption {
   key: string;
@@ -58,99 +55,62 @@ export const RangePickerModal: React.FC<RangePickerModalProps> = ({
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Local state for selection
-  const [selectedMin, setSelectedMin] = useState<string | undefined>(minValue);
-  const [selectedMax, setSelectedMax] = useState<string | undefined>(maxValue);
-
-  // Refs for scroll views
-  const minScrollRef = useRef<ScrollView>(null);
-  const maxScrollRef = useRef<ScrollView>(null);
+  // Local state for selection (use empty string for "All")
+  const [selectedMin, setSelectedMin] = useState<string>(minValue || '');
+  const [selectedMax, setSelectedMax] = useState<string>(maxValue || '');
 
   // Reset state when modal opens
   useEffect(() => {
     if (visible) {
-      setSelectedMin(minValue);
-      setSelectedMax(maxValue);
+      setSelectedMin(minValue || '');
+      setSelectedMax(maxValue || '');
     }
   }, [visible, minValue, maxValue]);
 
-  // Scroll to selected values when modal opens
-  useEffect(() => {
-    if (visible) {
-      setTimeout(() => {
-        if (selectedMin) {
-          const minIndex = options.findIndex(o => o.key === selectedMin);
-          if (minIndex >= 0 && minScrollRef.current) {
-            minScrollRef.current.scrollTo({
-              y: minIndex * ITEM_HEIGHT,
-              animated: false,
-            });
-          }
-        }
-        if (selectedMax) {
-          const maxIndex = options.findIndex(o => o.key === selectedMax);
-          if (maxIndex >= 0 && maxScrollRef.current) {
-            maxScrollRef.current.scrollTo({
-              y: maxIndex * ITEM_HEIGHT,
-              animated: false,
-            });
-          }
-        }
-      }, 100);
-    }
-  }, [visible, options]);
-
   // Handle confirm
   const handleConfirm = () => {
-    onConfirm(selectedMin, selectedMax);
-    onClose();
+    onConfirm(
+      selectedMin || undefined,
+      selectedMax || undefined
+    );
   };
 
   // Handle clear/delete filter
   const handleClear = () => {
-    setSelectedMin(undefined);
-    setSelectedMax(undefined);
+    onConfirm(undefined, undefined);
   };
 
-  // Get display value
+  // Get display value for selection summary
   const getDisplayValue = (value: string) => {
+    if (!value) return 'الكل';
     if (formatValue) return formatValue(value);
     const option = options.find(o => o.key === value);
     return option?.value || value;
   };
 
-  // Render option item
-  const renderOptionItem = (
-    option: RangeOption | null, // null = "All" option
-    isSelected: boolean,
-    onSelect: () => void,
-    isMin: boolean
-  ) => {
-    const isAll = option === null;
-    const displayText = isAll ? 'الكل' : (formatValue ? formatValue(option.key) : option.value);
+  // Build picker items for iOS (native Picker)
+  const pickerItems = useMemo(() => {
+    const items = [{ key: '', value: 'الكل' }];
+    options.forEach(opt => {
+      items.push({
+        key: opt.key,
+        value: formatValue ? formatValue(opt.key) : opt.value,
+      });
+    });
+    return items;
+  }, [options, formatValue]);
 
-    return (
-      <TouchableOpacity
-        key={isAll ? 'all' : option.key}
-        style={[
-          styles.optionItem,
-          isSelected && styles.optionItemSelected,
-        ]}
-        onPress={onSelect}
-        activeOpacity={0.7}
-      >
-        <Text
-          variant="body"
-          style={[
-            styles.optionText,
-            isSelected && styles.optionTextSelected,
-          ]}
-        >
-          {displayText}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
+  // Build select options for Android (Select component)
+  const selectOptions = useMemo(() => {
+    const items = [{ value: '', label: 'الكل' }];
+    options.forEach(opt => {
+      items.push({
+        value: opt.key,
+        label: formatValue ? formatValue(opt.key) : opt.value,
+      });
+    });
+    return items;
+  }, [options, formatValue]);
 
   return (
     <Modal
@@ -160,15 +120,15 @@ export const RangePickerModal: React.FC<RangePickerModalProps> = ({
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.container} onPress={() => {}}>
-          {/* Header: Close left, Title center, Clear right */}
+        <Pressable style={styles.container} onPress={() => { }}>
+          {/* Header: Close on left, Title center, Delete on right */}
           <View style={styles.header}>
             <TouchableOpacity onPress={onClose} style={styles.headerButton}>
               <X size={24} color={theme.colors.text} />
             </TouchableOpacity>
             <Text variant="h3" style={styles.headerTitle}>{title}</Text>
             <TouchableOpacity onPress={handleClear} style={styles.headerButton}>
-              <Text variant="body" color="primary">مسح</Text>
+              <Trash2 size={20} color={theme.colors.error} />
             </TouchableOpacity>
           </View>
 
@@ -182,70 +142,90 @@ export const RangePickerModal: React.FC<RangePickerModalProps> = ({
             </View>
           </View>
 
-          {/* Two columns - RTL: من (min) on right, إلى (max) on left */}
-          <View style={styles.columnsContainer}>
-            {/* Max column (left side in RTL) */}
-            <ScrollView
-              ref={maxScrollRef}
-              style={styles.column}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.columnContent}
-            >
-              {/* "All" option */}
-              {renderOptionItem(
-                null,
-                selectedMax === undefined,
-                () => setSelectedMax(undefined),
-                false
-              )}
-              {/* Options */}
-              {options.map((option) =>
-                renderOptionItem(
-                  option,
-                  selectedMax === option.key,
-                  () => setSelectedMax(option.key),
-                  false
-                )
-              )}
-            </ScrollView>
+          {/* Platform-specific pickers */}
+          {Platform.OS === 'ios' ? (
+            // iOS: Native wheel pickers side by side
+            <View style={styles.pickersContainer}>
+              {/* Max picker (left side in RTL) */}
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  selectedValue={selectedMax}
+                  onValueChange={(value) => setSelectedMax(String(value))}
+                  style={styles.picker}
+                  itemStyle={styles.pickerItem}
+                >
+                  {pickerItems.map((item) => (
+                    <Picker.Item
+                      key={`max-${item.key}`}
+                      label={item.value}
+                      value={item.key}
+                      color={theme.colors.text}
+                    />
+                  ))}
+                </Picker>
+              </View>
 
-            {/* Divider */}
-            <View style={styles.columnDivider} />
+              {/* Divider */}
+              <View style={styles.divider} />
 
-            {/* Min column (right side in RTL) */}
-            <ScrollView
-              ref={minScrollRef}
-              style={styles.column}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.columnContent}
-            >
-              {/* "All" option */}
-              {renderOptionItem(
-                null,
-                selectedMin === undefined,
-                () => setSelectedMin(undefined),
-                true
-              )}
-              {/* Options */}
-              {options.map((option) =>
-                renderOptionItem(
-                  option,
-                  selectedMin === option.key,
-                  () => setSelectedMin(option.key),
-                  true
-                )
-              )}
-            </ScrollView>
-          </View>
+              {/* Min picker (right side in RTL) */}
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  selectedValue={selectedMin}
+                  onValueChange={(value) => setSelectedMin(String(value))}
+                  style={styles.picker}
+                  itemStyle={styles.pickerItem}
+                >
+                  {pickerItems.map((item) => (
+                    <Picker.Item
+                      key={`min-${item.key}`}
+                      label={item.value}
+                      value={item.key}
+                      color={theme.colors.text}
+                    />
+                  ))}
+                </Picker>
+              </View>
+            </View>
+          ) : (
+            // Android: Use Select component (modal-based, no native dropdown issues)
+            <View style={styles.androidSelectContainer}>
+              <View style={styles.androidSelectRow}>
+                {/* Max select (left side in RTL) */}
+                <View style={styles.androidSelectWrapper}>
+                  <Select
+                    placeholder="الكل"
+                    options={selectOptions}
+                    value={selectedMax}
+                    onChange={setSelectedMax}
+                    searchable={false}
+                    containerStyle={styles.androidSelect}
+                  />
+                </View>
+
+                {/* Min select (right side in RTL) */}
+                <View style={styles.androidSelectWrapper}>
+                  <Select
+                    placeholder="الكل"
+                    options={selectOptions}
+                    value={selectedMin}
+                    onChange={setSelectedMin}
+                    searchable={false}
+                    containerStyle={styles.androidSelect}
+                  />
+                </View>
+              </View>
+            </View>
+          )}
 
           {/* Selected values display */}
           <View style={styles.selectionDisplay}>
             <Text variant="body" color="secondary">
-              {selectedMin && selectedMax
+              {selectedMin !== '' && selectedMax !== ''
                 ? `${getDisplayValue(selectedMin)} - ${getDisplayValue(selectedMax)}`
-                : selectedMin
+                : selectedMin !== ''
                   ? `من ${getDisplayValue(selectedMin)}`
-                  : selectedMax
+                  : selectedMax !== ''
                     ? `إلى ${getDisplayValue(selectedMax)}`
                     : 'الكل'
               }
@@ -277,24 +257,27 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'flex-end',
     },
     container: {
-      backgroundColor: theme.colors.bg,
+      backgroundColor: theme.colors.surface,
       borderTopLeftRadius: theme.radius.lg,
       borderTopRightRadius: theme.radius.lg,
-      maxHeight: SCREEN_HEIGHT * 0.7,
-      paddingBottom: theme.spacing.xl,
+      paddingBottom: theme.spacing.lg,
     },
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: theme.spacing.lg,
+      padding: theme.spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
     },
     headerButton: {
       minWidth: 44,
+      minHeight: 44,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: theme.colors.bg,
+      borderRadius: theme.radius.full,
+      padding: theme.spacing.sm,
     },
     headerTitle: {
       flex: 1,
@@ -311,39 +294,48 @@ const createStyles = (theme: Theme) =>
       flex: 1,
       alignItems: 'center',
     },
-    columnsContainer: {
+    // iOS: Native wheel pickers
+    pickersContainer: {
       flexDirection: 'row',
-      height: ITEM_HEIGHT * VISIBLE_ITEMS,
+      height: 180,
     },
-    column: {
+    pickerWrapper: {
       flex: 1,
+      justifyContent: 'center',
+      overflow: 'hidden',
     },
-    columnContent: {
-      paddingVertical: theme.spacing.xs,
+    picker: {
+      width: '100%',
+      height: 180,
     },
-    columnDivider: {
+    pickerItem: {
+      fontFamily: theme.fontFamily.body,
+      fontSize: theme.fontSize.base,
+      height: 180,
+    },
+    divider: {
       width: 1,
       backgroundColor: theme.colors.border,
     },
-    optionItem: {
-      height: ITEM_HEIGHT,
-      justifyContent: 'center',
-      alignItems: 'center',
+    // Android: Select component layout
+    androidSelectContainer: {
       paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.lg,
     },
-    optionItemSelected: {
-      backgroundColor: theme.colors.primaryLight || `${theme.colors.primary}15`,
+    androidSelectRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.md,
     },
-    optionText: {
-      textAlign: 'center',
+    androidSelectWrapper: {
+      flex: 1,
     },
-    optionTextSelected: {
-      color: theme.colors.primary,
-      fontWeight: '600',
+    androidSelect: {
+      marginBottom: 0,
     },
+    // Common
     selectionDisplay: {
       alignItems: 'center',
-      paddingVertical: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
     },

@@ -38,6 +38,7 @@ export const GET_CATEGORY_ATTRIBUTES_QUERY = `
 `;
 
 // Get listing aggregations for filter counts and options
+// Includes nameAr/logoUrl for brands directly from aggregations
 export const GET_LISTING_AGGREGATIONS_QUERY = `
   query GetListingAggregations($filter: ListingFilterInput) {
     listingsAggregations(filter: $filter) {
@@ -55,6 +56,8 @@ export const GET_LISTING_AGGREGATIONS_QUERY = `
           key
           modelId
           modelName
+          nameAr
+          logoUrl
         }
       }
     }

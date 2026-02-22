@@ -14,6 +14,7 @@ import {
   Pressable,
   ScrollView,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Search, LayoutGrid, X } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import { useTheme, Theme } from '../../theme';
@@ -35,6 +36,8 @@ export interface SearchBarProps {
   categories?: Category[];
   selectedCategory?: string | null;
   onCategorySelect?: (slug: string) => void;
+  /** If true, navigate immediately when category is selected (default: true) */
+  navigateOnCategorySelect?: boolean;
   showCategorySelector?: boolean;
   // Style prop
   style?: any;
@@ -48,10 +51,12 @@ export function SearchBar({
   categories = [],
   selectedCategory,
   onCategorySelect,
+  navigateOnCategorySelect = true,
   showCategorySelector = true,
   style,
 }: SearchBarProps) {
   const theme = useTheme();
+  const router = useRouter();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -84,6 +89,11 @@ export function SearchBar({
   const handleCategoryPress = (slug: string) => {
     setShowDropdown(false);
     onCategorySelect?.(slug);
+
+    // Navigate to search page immediately if enabled
+    if (navigateOnCategorySelect) {
+      router.push(`/search/${slug}`);
+    }
   };
 
   return (

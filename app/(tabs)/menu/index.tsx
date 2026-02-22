@@ -31,6 +31,7 @@ import {
 import { useTheme, useThemeMode } from '../../../src/theme';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
 import { useCurrencyStore, CURRENCY_SYMBOLS, CURRENCY_LABELS, type Currency } from '../../../src/stores/currencyStore';
+import { TrendingUp } from 'lucide-react-native';
 
 interface MenuItem {
   icon: React.ReactNode;
@@ -44,7 +45,11 @@ export default function MenuScreen() {
   const { themeMode, setThemeMode } = useThemeMode();
   const router = useRouter();
   const { user, signOut, isAuthenticated } = useUserAuthStore();
-  const { preferredCurrency, setPreferredCurrency } = useCurrencyStore();
+  const { preferredCurrency, setPreferredCurrency, exchangeRates } = useCurrencyStore();
+
+  // Get exchange rates for display (post-2024 redenomination rates)
+  const usdToSyp = exchangeRates['USD_SYP'] || 114;
+  const eurToSyp = exchangeRates['EUR_SYP'] || 124;
 
   const styles = createStyles(theme);
 
@@ -225,6 +230,14 @@ export default function MenuScreen() {
           ))}
         </View>
       </View>
+
+      {/* Exchange Rates Display */}
+      <View style={styles.exchangeRatesRow}>
+        <TrendingUp size={14} color={theme.colors.textMuted} />
+        <Text style={styles.exchangeRateText}>
+          $1 = {Math.round(usdToSyp).toLocaleString('en-US')} ل.س  •  €1 = {Math.round(eurToSyp).toLocaleString('en-US')} ل.س
+        </Text>
+      </View>
     </View>
   );
 
@@ -275,12 +288,8 @@ export default function MenuScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* User Profile Header - RTL: Chevron left, info middle, avatar right */}
-        <TouchableOpacity
-          style={styles.header}
-          onPress={() => router.push('/menu/edit-profile')}
-        >
-          <ChevronLeft size={24} color={theme.colors.textMuted} />
+        {/* User Profile Header - Display only (no navigation) */}
+        <View style={styles.header}>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
               {user?.user_metadata?.full_name || 'المستخدم'}
@@ -297,7 +306,7 @@ export default function MenuScreen() {
               <User size={40} color={theme.colors.primary} />
             )}
           </View>
-        </TouchableOpacity>
+        </View>
 
         {/* Theme & Currency Settings */}
         {renderSettingsSection()}
@@ -511,5 +520,20 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: theme.fontSize.sm,
       fontFamily: theme.fontFamily.bodyMedium,
       color: theme.colors.textMuted,
+    },
+    exchangeRatesRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingHorizontal: theme.spacing.md,
+      paddingTop: theme.spacing.xs,
+      paddingBottom: theme.spacing.sm,
+    },
+    exchangeRateText: {
+      fontSize: theme.fontSize.xs,
+      fontFamily: theme.fontFamily.body,
+      color: theme.colors.textMuted,
+      textAlign: 'center',
     },
   });

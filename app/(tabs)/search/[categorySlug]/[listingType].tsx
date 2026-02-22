@@ -1,7 +1,9 @@
 /**
  * Category Listings Screen
  * Shows listings for a specific category and listing type (sale/rent)
- * Supports grid and list view modes with filters
+ * Supports:
+ * - MobileCatalogSelector for brand/model drill-down
+ * - Grid and list view modes with filters
  */
 
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
@@ -31,6 +33,11 @@ import { useTheme, Theme } from '../../../../src/theme';
 import { Text, Loading, Button } from '../../../../src/components/slices';
 import { ListingCard } from '../../../../src/components/listing';
 import { SearchBar } from '../../../../src/components/search';
+import {
+  MobileCatalogSelector,
+  type CatalogOption,
+  type ModelOption,
+} from '../../../../src/components/MobileCatalogSelector';
 import { useCategoriesStore } from '../../../../src/stores/categoriesStore';
 import { useListingsStore, type Listing } from '../../../../src/stores/listingsStore';
 import { useCurrencyStore } from '../../../../src/stores/currencyStore';
@@ -39,6 +46,7 @@ import { useFiltersStore, type ActiveFilter } from '../../../../src/stores/filte
 import { formatPrice } from '../../../../src/utils/formatPrice';
 import { filterSpecsByViewMode } from '../../../../src/utils/filterSpecs';
 import { getListingImageUrl } from '../../../../src/services/cloudflare/images';
+import { convertToUSD, parsePrice, type Currency } from '../../../../src/utils/currency';
 
 // Filter chip type for display
 interface FilterChip {
@@ -62,11 +70,25 @@ export default function CategoryListingsScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
-  const { categorySlug, listingType, appliedFilters: appliedFiltersParam, search: searchParam } = useLocalSearchParams<{
+  const {
+    categorySlug,
+    listingType,
+    appliedFilters: appliedFiltersParam,
+    search: searchParam,
+    // MobileCatalogSelector params
+    brandId,
+    modelId,
+    variantId,
+    showListings,
+  } = useLocalSearchParams<{
     categorySlug: string;
     listingType: string;
     appliedFilters?: string;
     search?: string;
+    brandId?: string;
+    modelId?: string;
+    variantId?: string;
+    showListings?: string;
   }>();
 
   // Responsive breakpoints - lower values to support Android tablets (dp values vary)
@@ -97,24 +119,132 @@ export default function CategoryListingsScreen() {
     loadMoreListings,
     clearListings,
   } = useListingsStore();
-  const preferredCurrency = useCurrencyStore((state) => state.preferredCurrency);
+  const { preferredCurrency } = useCurrencyStore();
   const { provinces, fetchLocationMetadata } = useMetadataStore();
   const {
     attributes: filterAttributes,
+    totalResults: filterTotalResults,
+    isLoading: filtersLoading,
     fetchFilterData,
+    updateFiltersWithCascading,
     appliedFilters,
     setAppliedFilters,
     clearFilters: storeClearFilters,
   } = useFiltersStore();
 
+  // ============================================================
+  // MOBILE CATALOG SELECTOR LOGIC
+  // ============================================================
+
+  // Check if category has brand-model support
+  const hasBrandAttribute = useMemo(() => {
+    return filterAttributes.some((attr) => attr.key === 'brandId');
+  }, [filterAttributes]);
+
+  // Determine catalog selector step based on URL params
+  type CatalogStep = 'brand' | 'variant' | null;
+  const catalogStep: CatalogStep = useMemo(() => {
+    // Skip selector if showListings=true (user clicked "Show All")
+    if (showListings === 'true') return null;
+    // Skip if category doesn't have brands
+    if (!hasBrandAttribute) return null;
+    // If variant or model already selected, show listings
+    if (variantId || modelId) return null;
+    // If brand selected but no model/variant, show variant selector
+    if (brandId) return 'variant';
+    // Otherwise, show brand selector
+    return 'brand';
+  }, [hasBrandAttribute, brandId, modelId, variantId, showListings]);
+
+  // Extract brand options from filter attributes
+  const brandOptions: CatalogOption[] = useMemo(() => {
+    const brandAttr = filterAttributes.find((attr) => attr.key === 'brandId');
+    if (!brandAttr) return [];
+
+    return brandAttr.processedOptions
+      .filter((opt) => opt.count > 0)
+      .map((opt) => ({
+        id: opt.key,
+        name: opt.value,
+        count: opt.count,
+        nameAr: opt.nameAr,
+        logoUrl: opt.logoUrl,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [filterAttributes]);
+
+  // Extract variant options (grouped by model)
+  const variantOptions: CatalogOption[] = useMemo(() => {
+    const variantAttr = filterAttributes.find((attr) => attr.key === 'variantId');
+    if (!variantAttr) return [];
+
+    return variantAttr.processedOptions
+      .filter((opt) => opt.count > 0)
+      .map((opt) => ({
+        id: opt.key,
+        name: opt.value,
+        count: opt.count,
+        modelId: opt.modelId,
+        modelName: opt.modelName,
+      }));
+  }, [filterAttributes]);
+
+  // Extract model options (for models without variants)
+  const modelOptions: ModelOption[] = useMemo(() => {
+    const modelAttr = filterAttributes.find((attr) => attr.key === 'modelId');
+    if (!modelAttr) return [];
+
+    return modelAttr.processedOptions
+      .filter((opt) => opt.count > 0)
+      .map((opt) => ({
+        id: opt.key,
+        name: opt.value,
+        count: opt.count,
+      }));
+  }, [filterAttributes]);
+
+  // Get selected brand name for display
+  const selectedBrandName = useMemo(() => {
+    if (!brandId) return undefined;
+    const brand = brandOptions.find((b) => b.id === brandId);
+    return brand?.name;
+  }, [brandId, brandOptions]);
+
+  // Fetch variant/model data when brand is selected
+  useEffect(() => {
+    if (categorySlug && listingType && brandId && catalogStep === 'variant') {
+      updateFiltersWithCascading(categorySlug, listingType.toUpperCase(), { brandId });
+    }
+  }, [categorySlug, listingType, brandId, catalogStep]);
+
+  // Handle catalog selector back navigation
+  const handleCatalogBack = useCallback(() => {
+    if (catalogStep === 'variant') {
+      // Go back to brand selection (remove brandId)
+      router.push(`/search/${categorySlug}/${listingType}`);
+    } else {
+      // Go back to sell/rent selection
+      router.push(`/search/${categorySlug}`);
+    }
+  }, [catalogStep, categorySlug, listingType, router]);
+
+  // ============================================================
+  // END CATALOG SELECTOR LOGIC
+  // ============================================================
+
   // Derive activeFilters object from shared store's appliedFilters array
+  // Also include catalog URL params (brandId, modelId, variantId)
   const activeFilters = useMemo(() => {
     const filtersMap: Record<string, any> = {};
     appliedFilters.forEach(f => {
       filtersMap[f.key] = f.value;
     });
+    // Add catalog params from URL (these override store values)
+    if (brandId) filtersMap.brandId = brandId;
+    if (modelId) filtersMap.modelId = modelId;
+    if (variantId) filtersMap.variantId = variantId;
     return filtersMap;
-  }, [appliedFilters]);
+  }, [appliedFilters, brandId, modelId, variantId]);
 
   // Helper: Get province Arabic name from key
   const getProvinceArabicName = useCallback((provinceKey: string | undefined): string => {
@@ -241,7 +371,8 @@ export default function CategoryListingsScreen() {
   // Compute filter chips from local state
   const filterChips = useMemo((): FilterChip[] => {
     const chips: FilterChip[] = [];
-    const specialKeys = ['search', 'province', 'priceMinMinor', 'priceMaxMinor'];
+    // Special keys that are handled separately (not shown as individual chips)
+    const specialKeys = ['search', 'province', 'priceMinMinor', 'priceMaxMinor', 'priceCurrency'];
 
     if (activeFilters.search) {
       chips.push({ key: 'search', value: activeFilters.search, label: `"${activeFilters.search}"` });
@@ -251,10 +382,23 @@ export default function CategoryListingsScreen() {
       chips.push({ key: 'province', value: activeFilters.province, label: getProvinceArabicName(activeFilters.province) });
     }
 
+    // Price chip with currency symbol
     if (activeFilters.priceMinMinor || activeFilters.priceMaxMinor) {
-      const min = activeFilters.priceMinMinor ? `${activeFilters.priceMinMinor}` : '';
-      const max = activeFilters.priceMaxMinor ? `${activeFilters.priceMaxMinor}` : '';
-      chips.push({ key: 'price', value: `${min}-${max}`, label: `${min} - ${max}` });
+      const min = activeFilters.priceMinMinor ? Number(activeFilters.priceMinMinor).toLocaleString('en-US') : '';
+      const max = activeFilters.priceMaxMinor ? Number(activeFilters.priceMaxMinor).toLocaleString('en-US') : '';
+      // Get currency symbol from stored priceCurrency or fallback to current
+      const priceCurrency = activeFilters.priceCurrency || preferredCurrency;
+      const symbol = priceCurrency === 'USD' ? '$' : priceCurrency === 'EUR' ? '€' : 'ل.س';
+
+      let priceLabel = '';
+      if (min && max) {
+        priceLabel = `${min} - ${max} ${symbol}`;
+      } else if (min) {
+        priceLabel = `من ${min} ${symbol}`;
+      } else if (max) {
+        priceLabel = `حتى ${max} ${symbol}`;
+      }
+      chips.push({ key: 'price', value: `${min}-${max}`, label: priceLabel });
     }
 
     // Add attribute filters (brandId, modelId, fuel_type, etc.)
@@ -267,7 +411,7 @@ export default function CategoryListingsScreen() {
     });
 
     return chips;
-  }, [activeFilters, getProvinceArabicName, getAttributeValueLabel]);
+  }, [activeFilters, getProvinceArabicName, getAttributeValueLabel, preferredCurrency]);
 
   // Check if there are any active filters (including search)
   const hasActiveFilters = useMemo(() => {
@@ -276,28 +420,74 @@ export default function CategoryListingsScreen() {
     );
   }, [activeFilters]);
 
-  // Remove a single filter - uses shared store
+  // Remove a single filter - handles both store filters and URL params
   const removeFilter = useCallback((filterKey: string) => {
     if (filterKey === 'search') {
       setSearchQuery('');
     }
-    const updated = appliedFilters.filter(f => f.key !== filterKey);
-    setAppliedFilters(updated);
-  }, [appliedFilters, setAppliedFilters]);
 
-  // Clear all filters - uses shared store (no URL update needed, store is source of truth)
+    // Check if this is a URL param filter (brandId, modelId, variantId)
+    if (filterKey === 'brandId' || filterKey === 'modelId' || filterKey === 'variantId') {
+      // Use replace to avoid animation - just update URL params in place
+      router.replace(`/search/${categorySlug}/${listingType}?showListings=true`);
+      return;
+    }
+
+    let updated = appliedFilters.filter(f => f.key !== filterKey);
+    // When removing price chip, also remove all price-related filters
+    if (filterKey === 'price') {
+      updated = updated.filter(f =>
+        f.key !== 'priceMinMinor' &&
+        f.key !== 'priceMaxMinor' &&
+        f.key !== 'priceCurrency'
+      );
+    }
+    setAppliedFilters(updated);
+  }, [appliedFilters, setAppliedFilters, categorySlug, listingType, router]);
+
+  // Clear all filters - clears both store filters and URL params
   const clearAllFilters = useCallback(() => {
     storeClearFilters();
     setSearchQuery('');
-  }, [storeClearFilters]);
+    // If we have URL params (brandId, modelId, variantId), use replace to avoid animation
+    if (brandId || modelId || variantId) {
+      router.replace(`/search/${categorySlug}/${listingType}?showListings=true`);
+    }
+  }, [storeClearFilters, brandId, modelId, variantId, categorySlug, listingType, router]);
 
-  // Navigate to filters screen - pass current appliedFilters from store
+  // Navigate to filters screen - pass current appliedFilters from store + URL params
   const openFilters = () => {
-    // Use appliedFilters from store (already in correct format)
-    // Exclude 'search' as it's handled separately in the search bar
+    // Start with store filters (exclude 'search' as it's handled separately)
     const filtersArray = appliedFilters
       .filter(f => f.key !== 'search')
       .map(f => ({ key: f.key, value: f.value, label: f.label, valueLabel: f.valueLabel }));
+
+    // Add URL params (brandId, modelId, variantId) if not already in store
+    if (brandId && !filtersArray.some(f => f.key === 'brandId')) {
+      filtersArray.push({
+        key: 'brandId',
+        value: brandId,
+        label: 'الماركة',
+        valueLabel: selectedBrandName || brandId,
+      });
+    }
+    if (modelId && !filtersArray.some(f => f.key === 'modelId')) {
+      filtersArray.push({
+        key: 'modelId',
+        value: modelId,
+        label: 'الموديل',
+        valueLabel: modelId,
+      });
+    }
+    if (variantId && !filtersArray.some(f => f.key === 'variantId')) {
+      filtersArray.push({
+        key: 'variantId',
+        value: variantId,
+        label: 'الفئة',
+        valueLabel: variantId,
+      });
+    }
+
     const filtersJson = JSON.stringify(filtersArray);
     router.push(`/search/${categorySlug}/filters?listingType=${listingType}&filters=${encodeURIComponent(filtersJson)}`);
   };
@@ -354,38 +544,72 @@ export default function CategoryListingsScreen() {
     return Object.keys(specs).length > 0 ? specs : undefined;
   }, []);
 
-  // Extract price min/max from filters (price is stored as "min-max" format)
-  const extractPriceFilters = useCallback((filters: Record<string, any>) => {
-    const priceValue = filters.price;
-    if (!priceValue) return { priceMinMinor: undefined, priceMaxMinor: undefined };
+  // Extract price min/max from filters and convert to USD
+  // Price is stored in user's selected currency (at time of filter selection)
+  // Backend expects USD, so we convert using the stored priceCurrency
+  const extractPriceFilters = useCallback(async (filters: Record<string, any>): Promise<{
+    priceMinMinor: number | undefined;
+    priceMaxMinor: number | undefined;
+  }> => {
+    // Check both separate keys and combined "price" key
+    let minValue = filters.priceMinMinor;
+    let maxValue = filters.priceMaxMinor;
 
-    const strValue = String(priceValue);
-    if (strValue.includes('-')) {
-      const [minStr, maxStr] = strValue.split('-');
-      const min = minStr && minStr !== '0' ? parseInt(minStr, 10) : undefined;
-      const max = maxStr && maxStr !== '999999999' ? parseInt(maxStr, 10) : undefined;
-      return { priceMinMinor: min, priceMaxMinor: max };
+    // Also check "price" format (legacy)
+    const priceValue = filters.price;
+    if (priceValue && !minValue && !maxValue) {
+      const strValue = String(priceValue);
+      if (strValue.includes('-')) {
+        const [minStr, maxStr] = strValue.split('-');
+        minValue = minStr && minStr !== '0' ? minStr : undefined;
+        maxValue = maxStr && maxStr !== '999999999' ? maxStr : undefined;
+      }
     }
-    return { priceMinMinor: undefined, priceMaxMinor: undefined };
-  }, []);
+
+    // Get the currency that was used when setting the price filter
+    // This ensures correct conversion even if user changes currency later
+    const priceCurrency = (filters.priceCurrency || preferredCurrency) as Currency;
+
+    // Parse prices
+    const min = minValue ? parsePrice(String(minValue)) : undefined;
+    const max = maxValue ? parsePrice(String(maxValue)) : undefined;
+
+    // Convert from stored currency to USD for backend using GraphQL
+    let minUSD: number | undefined;
+    let maxUSD: number | undefined;
+
+    if (min !== undefined) {
+      minUSD = await convertToUSD(min, priceCurrency);
+    }
+    if (max !== undefined) {
+      maxUSD = await convertToUSD(max, priceCurrency);
+    }
+
+    return { priceMinMinor: minUSD, priceMaxMinor: maxUSD };
+  }, [preferredCurrency]);
 
   // Fetch listings when filters or sort change
   useEffect(() => {
     if (!categorySlug || !listingType) return;
 
-    const { priceMinMinor, priceMaxMinor } = extractPriceFilters(activeFilters);
-    clearListings();
-    fetchListings({
-      categoryId: categorySlug,
-      listingType: listingType.toUpperCase(),
-      search: activeFilters.search,
-      province: activeFilters.province,
-      priceMinMinor,
-      priceMaxMinor,
-      specs: buildSpecsFromFilters(activeFilters),
-      sort: sortBy,
-    });
-  }, [categorySlug, listingType, filterKey, sortBy, buildSpecsFromFilters, extractPriceFilters]);
+    const fetchWithFilters = async () => {
+      const { priceMinMinor, priceMaxMinor } = await extractPriceFilters(activeFilters);
+      clearListings();
+      fetchListings({
+        categoryId: categorySlug,
+        listingType: listingType.toUpperCase(),
+        search: activeFilters.search,
+        province: activeFilters.province,
+        priceMinMinor,
+        priceMaxMinor,
+        specs: buildSpecsFromFilters(activeFilters),
+        sort: sortBy,
+      });
+    };
+
+    fetchWithFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categorySlug, listingType, filterKey, sortBy]);
 
   // Handle search from search bar - uses shared store
   const handleSearch = useCallback(() => {
@@ -405,7 +629,7 @@ export default function CategoryListingsScreen() {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     if (categorySlug && listingType) {
-      const { priceMinMinor, priceMaxMinor } = extractPriceFilters(activeFilters);
+      const { priceMinMinor, priceMaxMinor } = await extractPriceFilters(activeFilters);
       clearListings();
       await fetchListings({
         categoryId: categorySlug,
@@ -697,6 +921,46 @@ export default function CategoryListingsScreen() {
     </Animated.View>
   );
 
+  // ============================================================
+  // RENDER: CATALOG SELECTOR OR LISTINGS
+  // ============================================================
+
+  // If catalogStep is set, show the MobileCatalogSelector instead of listings
+  if (catalogStep !== null) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerBackButtonDisplayMode: 'minimal',
+            headerTitle: catalogStep === 'brand'
+              ? `${category?.nameAr || ''} ${listingTypeLabel}`
+              : selectedBrandName || '',
+            headerStyle: {
+              backgroundColor: theme.colors.bg,
+            },
+            headerShadowVisible: false,
+          }}
+        />
+
+        <MobileCatalogSelector
+          step={catalogStep}
+          categorySlug={categorySlug || ''}
+          listingType={listingType || 'sell'}
+          categoryNameAr={category?.nameAr || ''}
+          options={catalogStep === 'brand' ? brandOptions : variantOptions}
+          modelOptions={modelOptions}
+          selectedBrandId={brandId}
+          selectedBrandName={selectedBrandName}
+          totalCount={filterTotalResults || totalResults}
+          isLoading={filtersLoading || isLoading}
+          onBack={handleCatalogBack}
+        />
+      </>
+    );
+  }
+
+  // Otherwise, show normal listings view
   return (
     <>
       <Stack.Screen
@@ -719,9 +983,6 @@ export default function CategoryListingsScreen() {
           headerShadowVisible: false,
         }}
       />
-
-      {/* Header Bottom Border */}
-      <View style={styles.headerBorder} />
 
       <View style={styles.container}>
         {/* Animated Toolbar - Fixed position, hides on scroll down */}
@@ -783,12 +1044,6 @@ const createStyles = (
       paddingVertical: 0,
       paddingHorizontal: 0,
       backgroundColor: 'transparent',
-    },
-
-    // Header bottom border (since headerStyle border doesn't always work)
-    headerBorder: {
-      height: 1,
-      backgroundColor: theme.colors.border,
     },
 
     // Animated toolbar - fixed position, hides on scroll

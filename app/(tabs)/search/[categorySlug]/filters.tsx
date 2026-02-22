@@ -31,6 +31,7 @@ import {
   type ActiveFilter,
   type AttributeWithCounts,
 } from '../../../../src/stores/filtersStore';
+import { useCurrencyStore, CURRENCY_SYMBOLS, type Currency } from '../../../../src/stores/currencyStore';
 
 // Range attribute types that use drill-down min/max pattern
 const RANGE_TYPES = ['range_selector', 'range', 'currency'];
@@ -42,10 +43,10 @@ type FilterScreen =
   | { type: 'range-select'; attribute: AttributeWithCounts; field: 'min' | 'max' };
 
 /**
- * Generate price options based on category type (matches web)
- * Returns array of USD values
+ * Generate base price options based on category type (matches web)
+ * Returns array of USD base values
  */
-function generatePriceOptions(categorySlug?: string): number[] {
+function getBasePriceOptions(categorySlug?: string): number[] {
   const options: number[] = [];
 
   const isVehicle = categorySlug?.includes('car') || categorySlug?.includes('vehicle') || categorySlug?.includes('سيار');
@@ -74,6 +75,35 @@ function generatePriceOptions(categorySlug?: string): number[] {
   return options;
 }
 
+/**
+ * Generate currency-aware price options (matches web PriceFilter.tsx)
+ * Converts USD base options to user's preferred currency
+ */
+function generatePriceOptions(
+  categorySlug: string | undefined,
+  rate: number,
+  currencySymbol: string
+): { key: string; value: string }[] {
+  const baseOptions = getBasePriceOptions(categorySlug);
+
+  // Calculate zero multiplier for currencies with large rates (e.g., SYP)
+  // This adds appropriate zeros to make prices sensible
+  let zeroMultiplier = 1;
+  if (rate > 2) {
+    const magnitude = Math.floor(Math.log10(rate));
+    zeroMultiplier = Math.pow(10, magnitude);
+  }
+
+  return baseOptions.map((usdValue) => {
+    const displayValue = usdValue * zeroMultiplier;
+    const formattedValue = displayValue.toLocaleString('en-US');
+    return {
+      key: String(displayValue),
+      value: `${formattedValue} ${currencySymbol}`,
+    };
+  });
+}
+
 export default function FiltersScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -96,6 +126,23 @@ export default function FiltersScreen() {
     clearFilters: storeClearFilters,
   } = useFiltersStore();
 
+  // Currency store for price filtering
+  // Subscribe to exchangeRates AND preferredCurrency to ensure re-render when either changes
+  const { preferredCurrency, exchangeRates } = useCurrencyStore();
+  const currencySymbol = CURRENCY_SYMBOLS[preferredCurrency];
+
+  // Calculate currency rate with useMemo for proper reactivity
+  const currencyRate = useMemo(() => {
+    if (preferredCurrency === 'USD') return 1;
+    return exchangeRates[`USD_${preferredCurrency}`] || 1;
+  }, [preferredCurrency, exchangeRates]);
+
+  // Generate currency-aware price options with useMemo
+  // Recalculated when currency, rate, or category changes
+  const priceOptions = useMemo(() => {
+    return generatePriceOptions(categorySlug, currencyRate, currencySymbol);
+  }, [categorySlug, currencyRate, currencySymbol]);
+
   // Loading state for cascading updates
   const [isUpdatingCounts, setIsUpdatingCounts] = useState(false);
 
@@ -106,6 +153,7 @@ export default function FiltersScreen() {
   // Range picker modal state
   const [rangeModalVisible, setRangeModalVisible] = useState(false);
   const [rangeModalAttribute, setRangeModalAttribute] = useState<AttributeWithCounts | null>(null);
+
 
   // Initialize filters from URL params
   useEffect(() => {
@@ -149,7 +197,7 @@ export default function FiltersScreen() {
 
   // Update cascading counts when filters change
   useEffect(() => {
-    if (categorySlug && listingType && isInitialized && appliedFilters.length > 0) {
+    if (categorySlug && listingType && isInitialized) {
       const filtersMap: Record<string, string> = {};
       appliedFilters.forEach(f => {
         filtersMap[f.key] = f.value;
@@ -160,6 +208,24 @@ export default function FiltersScreen() {
         .finally(() => setIsUpdatingCounts(false));
     }
   }, [appliedFilters, categorySlug, listingType, isInitialized]);
+
+  // Clear price filters when currency changes (values are currency-specific)
+  const prevCurrencyRef = React.useRef(preferredCurrency);
+  useEffect(() => {
+    if (prevCurrencyRef.current !== preferredCurrency && isInitialized) {
+      // Clear price filters because the old values don't apply to new currency
+      const hasPriceFilters = appliedFilters.some(f =>
+        f.key === 'priceMinMinor' || f.key === 'priceMaxMinor'
+      );
+      if (hasPriceFilters) {
+        const updated = appliedFilters.filter(f =>
+          f.key !== 'priceMinMinor' && f.key !== 'priceMaxMinor'
+        );
+        setAppliedFilters(updated);
+      }
+      prevCurrencyRef.current = preferredCurrency;
+    }
+  }, [preferredCurrency, isInitialized, appliedFilters, setAppliedFilters]);
 
   // ===== HELPERS =====
 
@@ -186,6 +252,13 @@ export default function FiltersScreen() {
       });
   }, [attributes]);
 
+  // Format price with currency symbol
+  const formatPriceDisplay = useCallback((value: string) => {
+    const numValue = Number(value);
+    if (isNaN(numValue)) return value;
+    return `${numValue.toLocaleString('en-US')} ${currencySymbol}`;
+  }, [currencySymbol]);
+
   // Get display value for a filter
   const getValueDisplay = useCallback((attr: AttributeWithCounts): string | null => {
     const filter = appliedFilters.find(f => f.key === attr.key);
@@ -197,15 +270,15 @@ export default function FiltersScreen() {
         if (minFilter || maxFilter) {
           const min = minFilter?.value;
           const max = maxFilter?.value;
-          if (min && max) return `$${min} - $${max}`;
-          if (min) return `من $${min}`;
-          if (max) return `حتى $${max}`;
+          if (min && max) return `${formatPriceDisplay(min)} - ${formatPriceDisplay(max)}`;
+          if (min) return `من ${formatPriceDisplay(min)}`;
+          if (max) return `حتى ${formatPriceDisplay(max)}`;
         }
       }
       return null;
     }
     return filter.valueLabel;
-  }, [appliedFilters]);
+  }, [appliedFilters, formatPriceDisplay]);
 
   // Get range field value
   const getRangeFieldValue = useCallback((attrKey: string, field: 'min' | 'max'): string | null => {
@@ -258,13 +331,28 @@ export default function FiltersScreen() {
   // Set range filter value
   const setRangeValue = useCallback((attrKey: string, attrLabel: string, field: 'min' | 'max', value: string | undefined) => {
     if (attrKey === 'price') {
-      // Price uses separate keys
+      // Price uses separate keys - update atomically
+      let updated = [...appliedFilters];
       const key = field === 'min' ? 'priceMinMinor' : 'priceMaxMinor';
+
+      // Remove existing value for this field
+      updated = updated.filter(f => f.key !== key);
+
       if (value) {
-        addFilter(key, attrLabel, value, `$${value}`);
-      } else {
-        removeFilter(key);
+        updated.push({ key, label: attrLabel, value, valueLabel: formatPriceDisplay(value) });
       }
+
+      // Check if we still have any price values
+      const hasMin = updated.some(f => f.key === 'priceMinMinor');
+      const hasMax = updated.some(f => f.key === 'priceMaxMinor');
+
+      // Update priceCurrency: add if we have prices, remove if we don't
+      updated = updated.filter(f => f.key !== 'priceCurrency');
+      if (hasMin || hasMax) {
+        updated.push({ key: 'priceCurrency', label: 'العملة', value: preferredCurrency, valueLabel: currencySymbol });
+      }
+
+      setAppliedFilters(updated);
       return;
     }
 
@@ -295,48 +383,15 @@ export default function FiltersScreen() {
       else if (maxVal) valueLabel = `حتى ${maxVal}`;
       addFilter(attrKey, attrLabel, newValue, valueLabel);
     }
-  }, [appliedFilters, addFilter, removeFilter]);
+  }, [appliedFilters, addFilter, removeFilter, formatPriceDisplay, preferredCurrency, currencySymbol, setAppliedFilters]);
 
-  // Set both min and max range values at once (for modal)
-  const setRangeValues = useCallback((attrKey: string, attrLabel: string, minValue: string | undefined, maxValue: string | undefined, isCurrency: boolean) => {
-    if (isCurrency) {
-      // Price uses separate keys
-      if (minValue) {
-        addFilter('priceMinMinor', attrLabel, minValue, `$${minValue}`);
-      } else {
-        removeFilter('priceMinMinor');
-      }
-      if (maxValue) {
-        addFilter('priceMaxMinor', attrLabel, maxValue, `$${maxValue}`);
-      } else {
-        removeFilter('priceMaxMinor');
-      }
-      return;
-    }
-
-    // Other range filters use "min-max" format
-    if (!minValue && !maxValue) {
-      removeFilter(attrKey);
-    } else {
-      const newValue = `${minValue || ''}-${maxValue || ''}`;
-      let valueLabel = '';
-      if (minValue && maxValue) valueLabel = `${minValue} - ${maxValue}`;
-      else if (minValue) valueLabel = `من ${minValue}`;
-      else if (maxValue) valueLabel = `حتى ${maxValue}`;
-      addFilter(attrKey, attrLabel, newValue, valueLabel);
-    }
-  }, [addFilter, removeFilter]);
-
-  // Get range options for modal
+  // Get range options for range picker
   const getRangeOptions = useCallback((attribute: AttributeWithCounts) => {
     const isCurrency = attribute.type?.toLowerCase() === 'currency';
 
     if (isCurrency) {
-      const priceOptions = generatePriceOptions(categorySlug);
-      return priceOptions.map(price => ({
-        key: String(price),
-        value: `$${price.toLocaleString()}`,
-      }));
+      // Use pre-calculated currency-aware price options
+      return priceOptions;
     }
 
     // Use attribute options
@@ -344,7 +399,7 @@ export default function FiltersScreen() {
       key: opt.key,
       value: opt.value,
     }));
-  }, [categorySlug]);
+  }, [priceOptions]);
 
   // Get current range values for modal
   const getRangeCurrentValues = useCallback((attribute: AttributeWithCounts) => {
@@ -357,23 +412,64 @@ export default function FiltersScreen() {
     };
   }, [getRangeFieldValue]);
 
+  // Open range picker modal
+  const openRangeModal = useCallback((attribute: AttributeWithCounts) => {
+    setRangeModalAttribute(attribute);
+    setRangeModalVisible(true);
+  }, []);
+
   // Handle range modal confirm
   const handleRangeModalConfirm = useCallback((min: string | undefined, max: string | undefined) => {
     if (!rangeModalAttribute) return;
 
     const isCurrency = rangeModalAttribute.type?.toLowerCase() === 'currency';
     const attrKey = isCurrency ? 'price' : rangeModalAttribute.key;
+    const attrLabel = rangeModalAttribute.name;
 
-    setRangeValues(attrKey, rangeModalAttribute.name, min, max, isCurrency);
+    // Update filters atomically to avoid stale state issues
+    let updated = [...appliedFilters];
+
+    if (isCurrency) {
+      // Price uses separate keys - update all at once
+      // Remove existing price filters first (including currency)
+      updated = updated.filter(f =>
+        f.key !== 'priceMinMinor' &&
+        f.key !== 'priceMaxMinor' &&
+        f.key !== 'priceCurrency'
+      );
+
+      // Add new values with currency formatting
+      if (min) {
+        updated.push({ key: 'priceMinMinor', label: attrLabel, value: min, valueLabel: formatPriceDisplay(min) });
+      }
+      if (max) {
+        updated.push({ key: 'priceMaxMinor', label: attrLabel, value: max, valueLabel: formatPriceDisplay(max) });
+      }
+      // Always store the currency used for these price values
+      if (min || max) {
+        updated.push({ key: 'priceCurrency', label: 'العملة', value: preferredCurrency, valueLabel: currencySymbol });
+      }
+    } else {
+      // Other range filters use "min-max" format
+      // Remove existing filter first
+      updated = updated.filter(f => f.key !== attrKey);
+
+      if (min || max) {
+        const newValue = `${min || ''}-${max || ''}`;
+        let valueLabel = '';
+        if (min && max) valueLabel = `${min} - ${max}`;
+        else if (min) valueLabel = `من ${min}`;
+        else if (max) valueLabel = `حتى ${max}`;
+        updated.push({ key: attrKey, label: attrLabel, value: newValue, valueLabel });
+      }
+    }
+
+    setAppliedFilters(updated);
+
+    // Close modal and clear attribute
     setRangeModalVisible(false);
     setRangeModalAttribute(null);
-  }, [rangeModalAttribute, setRangeValues]);
-
-  // Open range modal for an attribute
-  const openRangeModal = useCallback((attribute: AttributeWithCounts) => {
-    setRangeModalAttribute(attribute);
-    setRangeModalVisible(true);
-  }, []);
+  }, [rangeModalAttribute, appliedFilters, setAppliedFilters, formatPriceDisplay]);
 
   // Check if attribute is disabled
   // Brand → Variant flow (variant requires brand to be selected first)
@@ -425,7 +521,7 @@ export default function FiltersScreen() {
         const isRange = isRangeAttribute(attr.type);
         const hasNoOptions = !isRange && (!attr.processedOptions || attr.processedOptions.length === 0);
 
-        // Handle press - range filters open modal, others navigate to detail
+        // Handle press - range filters open native picker, others navigate to detail
         const handlePress = () => {
           if (disabled || hasNoOptions) return;
           if (isRange) {
@@ -476,12 +572,13 @@ export default function FiltersScreen() {
 
     // Range filters: show "من" and "إلى" sub-menu
     if (isRange) {
+      const isCurrency = attribute.type?.toLowerCase() === 'currency';
       const minDisplay = getRangeFieldValue(
-        attribute.type?.toLowerCase() === 'currency' ? 'price' : attribute.key,
+        isCurrency ? 'price' : attribute.key,
         'min'
       );
       const maxDisplay = getRangeFieldValue(
-        attribute.type?.toLowerCase() === 'currency' ? 'price' : attribute.key,
+        isCurrency ? 'price' : attribute.key,
         'max'
       );
 
@@ -496,7 +593,7 @@ export default function FiltersScreen() {
               <Text variant="body" style={styles.filterItemName}>من</Text>
               {minDisplay && (
                 <Text variant="small" color="primary">
-                  {attribute.type?.toLowerCase() === 'currency' ? `$${minDisplay}` : minDisplay}
+                  {isCurrency ? formatPriceDisplay(minDisplay) : minDisplay}
                 </Text>
               )}
             </View>
@@ -512,7 +609,7 @@ export default function FiltersScreen() {
               <Text variant="body" style={styles.filterItemName}>إلى</Text>
               {maxDisplay && (
                 <Text variant="small" color="primary">
-                  {attribute.type?.toLowerCase() === 'currency' ? `$${maxDisplay}` : maxDisplay}
+                  {isCurrency ? formatPriceDisplay(maxDisplay) : maxDisplay}
                 </Text>
               )}
             </View>
@@ -632,7 +729,7 @@ export default function FiltersScreen() {
                         <Text variant="body" style={isSelected && styles.optionTextSelected}>
                           {option.value}
                         </Text>
-                        <Text variant="small" color="secondary">({option.count})</Text>
+                        <Text variant="small" color="secondary" style={styles.optionCount}>{option.count}</Text>
                       </View>
                       {isSelected && <Check size={20} color={theme.colors.primary} />}
                     </TouchableOpacity>
@@ -671,7 +768,7 @@ export default function FiltersScreen() {
                       <Text variant="body" style={isSelected && styles.optionTextSelected}>
                         {model.value}
                       </Text>
-                      <Text variant="small" color="secondary">({model.count})</Text>
+                      <Text variant="small" color="secondary" style={styles.optionCount}>{model.count}</Text>
                     </View>
                     {isSelected && <Check size={20} color={theme.colors.primary} />}
                   </TouchableOpacity>
@@ -716,7 +813,7 @@ export default function FiltersScreen() {
                 <Text variant="body" style={isSelected && styles.optionTextSelected}>
                   {option.value}
                 </Text>
-                <Text variant="small" color="secondary">({option.count})</Text>
+                <Text variant="small" color="secondary" style={styles.optionCount}>{option.count}</Text>
               </View>
               {isSelected && <Check size={20} color={theme.colors.primary} />}
             </TouchableOpacity>
@@ -736,12 +833,8 @@ export default function FiltersScreen() {
     let options: { key: string; value: string; count?: number }[] = [];
 
     if (isCurrency) {
-      // Price: generate category-specific options
-      const priceOptions = generatePriceOptions(categorySlug);
-      options = priceOptions.map(price => ({
-        key: String(price),
-        value: `$${price.toLocaleString()}`,
-      }));
+      // Price: use pre-calculated currency-aware category-specific options
+      options = priceOptions;
     } else if (attribute.processedOptions && attribute.processedOptions.length > 0) {
       // Range selector: use attribute options
       options = attribute.processedOptions;
@@ -843,8 +936,13 @@ export default function FiltersScreen() {
                   <TouchableOpacity
                     onPress={() => {
                       if (screen.attribute.type?.toLowerCase() === 'currency') {
-                        removeFilter('priceMinMinor');
-                        removeFilter('priceMaxMinor');
+                        // Clear all price-related filters atomically
+                        const updated = appliedFilters.filter(f =>
+                          f.key !== 'priceMinMinor' &&
+                          f.key !== 'priceMaxMinor' &&
+                          f.key !== 'priceCurrency'
+                        );
+                        setAppliedFilters(updated);
                       } else {
                         removeFilter(screen.attribute.key);
                       }
@@ -887,20 +985,22 @@ export default function FiltersScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Range Picker Modal */}
+        {/* Range Picker Modal - key forces re-render when currency changes */}
         {rangeModalAttribute && (
           <RangePickerModal
+            key={`range-modal-${preferredCurrency}`}
             visible={rangeModalVisible}
-            onClose={() => {
-              setRangeModalVisible(false);
-              setRangeModalAttribute(null);
-            }}
+            onClose={() => setRangeModalVisible(false)}
             onConfirm={handleRangeModalConfirm}
             title={rangeModalAttribute.name}
             options={getRangeOptions(rangeModalAttribute)}
             minValue={getRangeCurrentValues(rangeModalAttribute).min}
             maxValue={getRangeCurrentValues(rangeModalAttribute).max}
-            formatValue={rangeModalAttribute.type?.toLowerCase() === 'currency' ? (v) => `$${Number(v).toLocaleString()}` : undefined}
+            formatValue={
+              rangeModalAttribute.type?.toLowerCase() === 'currency'
+                ? (v) => `${Number(v).toLocaleString('en-US')} ${currencySymbol}`
+                : undefined
+            }
           />
         )}
       </SafeAreaView>
@@ -928,7 +1028,7 @@ const createStyles = (theme: Theme) =>
 
     // Filter list items
     filterItem: {
-      flexDirection: 'row',
+      flexDirection: 'row-reverse',
       alignItems: 'center',
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.lg,
@@ -953,7 +1053,7 @@ const createStyles = (theme: Theme) =>
 
     // Options list
     optionItem: {
-      flexDirection: 'row',
+      flexDirection: 'row-reverse',
       alignItems: 'center',
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.lg,
@@ -967,11 +1067,18 @@ const createStyles = (theme: Theme) =>
       flex: 1,
       flexDirection: 'row-reverse',
       alignItems: 'center',
-      gap: theme.spacing.sm,
+      justifyContent: 'space-between',
     },
     optionTextSelected: {
       fontWeight: '600',
       color: theme.colors.primary,
+    },
+    optionCount: {
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.radius.md,
     },
 
     // Section headers (for grouped variants by model)

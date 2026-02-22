@@ -49,6 +49,9 @@ export interface AttributeOptionWithCount extends AttributeOption {
   count: number;
   modelId?: string;   // For variant options - parent model ID
   modelName?: string; // For variant options - parent model name for grouping
+  // Brand-specific fields
+  nameAr?: string;    // Arabic name for brands
+  logoUrl?: string;   // Logo URL for brands
 }
 
 export interface AttributeWithCounts extends Attribute {
@@ -209,7 +212,7 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
 
       const rawAttributes: Attribute[] = attributesData.getAttributesByCategorySlug || [];
 
-      // Fetch aggregations for counts
+      // Fetch aggregations for counts (includes nameAr/logoUrl for brands)
       const aggregationFilter = listingType ? { listingType: listingType.toUpperCase() } : undefined;
       const aggregations = await getListingAggregations(categorySlug, aggregationFilter);
 
@@ -219,7 +222,7 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
         .map((attr) => {
           let processedOptions: AttributeOptionWithCount[] = [];
 
-          // Special handling for brandId, modelId, variantId - get from raw aggregations
+          // brandId, modelId, variantId - get from raw aggregations (includes nameAr/logoUrl for brands)
           if (attr.key === 'brandId' || attr.key === 'modelId' || attr.key === 'variantId') {
             const rawAttributeData = aggregations.rawAggregations?.attributes?.find(
               (a: any) => a.field === attr.key
@@ -232,7 +235,10 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
                 sortOrder: 0,
                 isActive: true,
                 count: option.count,
-                // Include model info for variant grouping
+                // Brand-specific fields (from aggregations)
+                nameAr: option.nameAr,
+                logoUrl: option.logoUrl,
+                // Model info for variant grouping
                 modelId: option.modelId,
                 modelName: option.modelName,
               }));
@@ -314,12 +320,32 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
         specs: {},
       };
 
+      // Range fields that should be converted to [min, max] array format
+      const rangeFields = ['year', 'mileage'];
+
       // Add applied filters to specs
       Object.entries(appliedFiltersMap).forEach(([key, value]) => {
         if (key === 'province') {
           filter.province = value;
+        } else if (key === 'priceMinMinor') {
+          // Price min - top-level filter key
+          filter.priceMinMinor = parseInt(value, 10);
+        } else if (key === 'priceMaxMinor') {
+          // Price max - top-level filter key
+          filter.priceMaxMinor = parseInt(value, 10);
         } else if (value) {
-          filter.specs[key] = value;
+          const strValue = String(value);
+          // Check if this is a range value (format: "min-max")
+          if (rangeFields.includes(key) && strValue.includes('-')) {
+            const [minStr, maxStr] = strValue.split('-');
+            const min = minStr ? parseInt(minStr, 10) : undefined;
+            const max = maxStr ? parseInt(maxStr, 10) : undefined;
+            if (min !== undefined || max !== undefined) {
+              filter.specs[key] = [min, max]; // Store as array [min, max] for backend
+            }
+          } else {
+            filter.specs[key] = value;
+          }
         }
       });
 
@@ -339,8 +365,9 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
         let processedOptions: AttributeOptionWithCount[];
 
         if (attr.key === 'brandId') {
-          // IMPORTANT: Keep ALL brand options, just update counts
+          // IMPORTANT: Keep ALL brand options with their details, just update counts
           // This allows user to switch brands even after selecting one
+          // Also preserves nameAr and logoUrl from initial fetch
           const rawAttributeData = aggregations.rawAggregations?.attributes?.find(
             (a: any) => a.field === attr.key
           );
@@ -350,7 +377,7 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
               countMap.set(option.key || option.value, option.count);
             });
           }
-          // Keep existing options, update counts (0 if not in aggregation)
+          // Keep existing options (with nameAr/logoUrl), update counts (0 if not in aggregation)
           processedOptions = attr.processedOptions.map(opt => ({
             ...opt,
             count: countMap.get(opt.key) ?? 0,
