@@ -16,20 +16,22 @@ import { useUserAuthStore } from '../src/stores/userAuthStore';
 import { useCategoriesStore } from '../src/stores/categoriesStore';
 import { useListingsStore } from '../src/stores/listingsStore';
 import { useCurrencyStore } from '../src/stores/currencyStore';
+import { useLanguageStore } from '../src/stores/languageStore';
 
 // Keep splash screen visible while loading
 SplashScreen.preventAutoHideAsync();
 
 /**
- * Configure RTL for Arabic
+ * Configure RTL based on language
  * Note: On Android, RTL changes require an app restart to take effect.
  * This is set once and persisted by React Native.
  */
-const configureRTL = (): void => {
-  // Always force RTL for Arabic app
-  if (!I18nManager.isRTL) {
-    I18nManager.allowRTL(true);
-    I18nManager.forceRTL(true);
+const configureRTL = (direction: 'rtl' | 'ltr'): void => {
+  const shouldBeRTL = direction === 'rtl';
+
+  if (I18nManager.isRTL !== shouldBeRTL) {
+    I18nManager.allowRTL(shouldBeRTL);
+    I18nManager.forceRTL(shouldBeRTL);
     // RTL will take effect after app restart on Android
     // On iOS, it takes effect immediately
   }
@@ -157,8 +159,12 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        // Configure RTL first (persisted, requires restart on Android)
-        configureRTL();
+        // Load language preference first
+        await useLanguageStore.getState().loadLanguage();
+
+        // Configure RTL based on language (persisted, requires restart on Android)
+        const direction = useLanguageStore.getState().direction;
+        configureRTL(direction);
 
         // Load fonts
         await loadFonts();

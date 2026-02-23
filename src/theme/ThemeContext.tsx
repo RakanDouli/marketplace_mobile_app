@@ -1,6 +1,7 @@
 /**
  * Theme Context Provider for Shambay Mobile App
  * Provides theme values (colors, spacing, typography) to all components
+ * Includes RTL/LTR direction support for internationalization
  */
 
 import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
@@ -8,6 +9,7 @@ import { useColorScheme } from 'react-native';
 import colors, { ThemeColors } from './colors';
 import { spacing, radius, layout, iconSize, shadows } from './spacing';
 import { fontFamily, fontSize, fontWeight, lineHeight, textStyles } from './typography';
+import { useLanguageStore, type Direction } from '../stores/languageStore';
 
 // Theme mode type
 type ThemeMode = 'light' | 'dark' | 'system';
@@ -26,6 +28,9 @@ export interface Theme {
   lineHeight: typeof lineHeight;
   textStyles: typeof textStyles;
   isDark: boolean;
+  // i18n support
+  direction: Direction;
+  isRTL: boolean;
 }
 
 // Context value type
@@ -55,13 +60,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   const systemColorScheme = useColorScheme();
   const [themeMode, setThemeMode] = useState<ThemeMode>(defaultMode);
 
+  // Get direction from language store
+  const direction = useLanguageStore((state) => state.direction);
+
   // Determine actual theme based on mode
   const isDark = themeMode === 'system'
     ? systemColorScheme === 'dark'
     : themeMode === 'dark';
 
   // Memoize theme object to prevent cascade re-renders
-  // Only recreates when isDark changes
+  // Only recreates when isDark or direction changes
   const theme = useMemo<Theme>(() => ({
     colors: isDark ? colors.dark : colors.light,
     spacing,
@@ -75,7 +83,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     lineHeight,
     textStyles,
     isDark,
-  }), [isDark]);
+    // i18n support
+    direction,
+    isRTL: direction === 'rtl',
+  }), [isDark, direction]);
 
   // Memoize setThemeMode callback
   const handleSetThemeMode = useCallback((mode: ThemeMode) => {
