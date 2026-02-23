@@ -309,7 +309,7 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.lg,
     },
     actions: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
     },
     actionButton: {

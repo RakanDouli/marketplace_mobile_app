@@ -299,7 +299,7 @@ const createStyles = (theme: Theme) =>
 
     // Header
     header: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: theme.spacing.md,
@@ -368,7 +368,7 @@ const createStyles = (theme: Theme) =>
 
     // Rating Bar
     ratingBar: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -395,7 +395,7 @@ const createStyles = (theme: Theme) =>
     },
     ratingBarCount: {
       width: 24,
-      textAlign: 'left',
+      textAlign: theme.isRTL ? 'left' : 'right',
     },
 
     // Tag Summary
@@ -410,12 +410,12 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.sm,
     },
     tagHeader: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
     tags: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.xs,
     },
@@ -439,7 +439,7 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.xl,
     },
     reviewsTitle: {
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
       marginBottom: theme.spacing.md,
     },
     reviewItem: {
@@ -449,7 +449,7 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.sm,
     },
     reviewerRow: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -468,13 +468,13 @@ const createStyles = (theme: Theme) =>
     },
     reviewerInfo: {
       flex: 1,
-      alignItems: 'flex-end',
+      alignItems: theme.isRTL ? 'flex-end' : 'flex-start',
     },
     reviewRating: {
       flexDirection: 'row',
     },
     reviewTags: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.xs,
       marginTop: theme.spacing.sm,

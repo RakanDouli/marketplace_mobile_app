@@ -106,13 +106,12 @@ export function SearchBar({
             style={{ marginStart: theme.spacing.xs }}
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { textAlign: theme.isRTL ? 'right' : 'left' }]}
             value={value}
             onChangeText={onChangeText}
             onSubmitEditing={onSubmitEditing}
             placeholder={placeholder}
             placeholderTextColor={theme.colors.textSecondary}
-            textAlign="right"
             returnKeyType="search"
           />
 
@@ -201,13 +200,12 @@ export function SearchBar({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
-      flex: 1,
       backgroundColor: theme.colors.bg,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.md,
     },
     searchBarInner: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
       alignItems: 'center',
       gap: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
@@ -224,7 +222,7 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.text,
       paddingVertical: theme.spacing.xs,
       paddingHorizontal: theme.spacing.sm,
-      textAlign: 'right',
+      // textAlign applied dynamically
     },
     iconButton: {
       width: 40,
@@ -260,7 +258,7 @@ const createStyles = (theme: Theme) =>
       maxHeight: '60%',
     },
     dropdownHeader: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: theme.spacing.md,
@@ -274,7 +272,7 @@ const createStyles = (theme: Theme) =>
       padding: theme.spacing.sm,
     },
     dropdownOption: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.md,
       padding: theme.spacing.md,

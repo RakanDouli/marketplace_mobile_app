@@ -1,11 +1,16 @@
 /**
  * Date Formatting Utilities
  *
- * All dates are formatted with Arabic locale (ar-EG)
- * for proper Arabic month names and number formatting.
+ * Dates are formatted with the current app locale (ar-EG or en-US)
+ * based on the language setting in the language store.
  */
 
-const ARABIC_LOCALE = "ar-EG";
+import { useLanguageStore } from "../stores/languageStore";
+
+// Get the current locale from language store
+const getLocale = (): string => {
+  return useLanguageStore.getState().locale;
+};
 
 /**
  * Format date to full Arabic date
@@ -22,7 +27,7 @@ export function formatDate(
 
   if (isNaN(dateObj.getTime())) return "";
 
-  return dateObj.toLocaleDateString(ARABIC_LOCALE, {
+  return dateObj.toLocaleDateString(getLocale(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -42,7 +47,7 @@ export function formatDateShort(date: string | Date | null | undefined): string 
 
   if (isNaN(dateObj.getTime())) return "";
 
-  return dateObj.toLocaleDateString(ARABIC_LOCALE, {
+  return dateObj.toLocaleDateString(getLocale(), {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -61,7 +66,7 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 
   if (isNaN(dateObj.getTime())) return "";
 
-  return dateObj.toLocaleString(ARABIC_LOCALE, {
+  return dateObj.toLocaleString(getLocale(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -83,7 +88,7 @@ export function formatDayName(date: string | Date | null | undefined): string {
 
   if (isNaN(dateObj.getTime())) return "";
 
-  return dateObj.toLocaleDateString(ARABIC_LOCALE, {
+  return dateObj.toLocaleDateString(getLocale(), {
     weekday: "long",
   });
 }
@@ -100,7 +105,7 @@ export function formatMonthYear(date: string | Date | null | undefined): string 
 
   if (isNaN(dateObj.getTime())) return "";
 
-  return dateObj.toLocaleDateString(ARABIC_LOCALE, {
+  return dateObj.toLocaleDateString(getLocale(), {
     year: "numeric",
     month: "long",
   });
@@ -118,7 +123,7 @@ export function formatTime(date: string | Date | null | undefined): string {
 
   if (isNaN(dateObj.getTime())) return "";
 
-  return dateObj.toLocaleTimeString(ARABIC_LOCALE, {
+  return dateObj.toLocaleTimeString(getLocale(), {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
@@ -128,13 +133,17 @@ export function formatTime(date: string | Date | null | undefined): string {
 /**
  * Format relative time (smart human-readable)
  *
- * Examples:
+ * Examples (Arabic):
  * - "منذ لحظات" (just now)
  * - "منذ 5 دقائق" (5 minutes ago)
  * - "منذ ساعتين" (2 hours ago)
  * - "منذ 3 أيام" (3 days ago)
- * - "منذ أسبوع" (a week ago)
- * - "منذ شهر" (a month ago)
+ *
+ * Examples (English):
+ * - "just now"
+ * - "5 minutes ago"
+ * - "2 hours ago"
+ * - "3 days ago"
  */
 export function formatRelativeTime(date: string | Date | null | undefined): string {
   if (!date) return "";
@@ -142,6 +151,8 @@ export function formatRelativeTime(date: string | Date | null | undefined): stri
   const dateObj = typeof date === "string" ? new Date(date) : date;
 
   if (isNaN(dateObj.getTime())) return "";
+
+  const isArabic = useLanguageStore.getState().language === 'ar';
 
   const now = new Date();
   const diffMs = now.getTime() - dateObj.getTime();
@@ -160,53 +171,77 @@ export function formatRelativeTime(date: string | Date | null | undefined): stri
 
   // Just now
   if (diffSeconds < 60) {
-    return "منذ لحظات";
+    return isArabic ? "منذ لحظات" : "just now";
   }
 
   // Minutes
   if (diffMinutes < 60) {
-    if (diffMinutes === 1) return "منذ دقيقة";
-    if (diffMinutes === 2) return "منذ دقيقتين";
-    if (diffMinutes <= 10) return `منذ ${diffMinutes} دقائق`;
-    return `منذ ${diffMinutes} دقيقة`;
+    if (isArabic) {
+      if (diffMinutes === 1) return "منذ دقيقة";
+      if (diffMinutes === 2) return "منذ دقيقتين";
+      if (diffMinutes <= 10) return `منذ ${diffMinutes} دقائق`;
+      return `منذ ${diffMinutes} دقيقة`;
+    } else {
+      return diffMinutes === 1 ? "1 minute ago" : `${diffMinutes} minutes ago`;
+    }
   }
 
   // Hours
   if (diffHours < 24) {
-    if (diffHours === 1) return "منذ ساعة";
-    if (diffHours === 2) return "منذ ساعتين";
-    if (diffHours <= 10) return `منذ ${diffHours} ساعات`;
-    return `منذ ${diffHours} ساعة`;
+    if (isArabic) {
+      if (diffHours === 1) return "منذ ساعة";
+      if (diffHours === 2) return "منذ ساعتين";
+      if (diffHours <= 10) return `منذ ${diffHours} ساعات`;
+      return `منذ ${diffHours} ساعة`;
+    } else {
+      return diffHours === 1 ? "1 hour ago" : `${diffHours} hours ago`;
+    }
   }
 
   // Days
   if (diffDays < 7) {
-    if (diffDays === 1) return "منذ يوم";
-    if (diffDays === 2) return "منذ يومين";
-    if (diffDays <= 10) return `منذ ${diffDays} أيام`;
-    return `منذ ${diffDays} يوم`;
+    if (isArabic) {
+      if (diffDays === 1) return "منذ يوم";
+      if (diffDays === 2) return "منذ يومين";
+      if (diffDays <= 10) return `منذ ${diffDays} أيام`;
+      return `منذ ${diffDays} يوم`;
+    } else {
+      return diffDays === 1 ? "1 day ago" : `${diffDays} days ago`;
+    }
   }
 
   // Weeks
   if (diffWeeks < 4) {
-    if (diffWeeks === 1) return "منذ أسبوع";
-    if (diffWeeks === 2) return "منذ أسبوعين";
-    return `منذ ${diffWeeks} أسابيع`;
+    if (isArabic) {
+      if (diffWeeks === 1) return "منذ أسبوع";
+      if (diffWeeks === 2) return "منذ أسبوعين";
+      return `منذ ${diffWeeks} أسابيع`;
+    } else {
+      return diffWeeks === 1 ? "1 week ago" : `${diffWeeks} weeks ago`;
+    }
   }
 
   // Months
   if (diffMonths < 12) {
-    if (diffMonths === 1) return "منذ شهر";
-    if (diffMonths === 2) return "منذ شهرين";
-    if (diffMonths <= 10) return `منذ ${diffMonths} أشهر`;
-    return `منذ ${diffMonths} شهر`;
+    if (isArabic) {
+      if (diffMonths === 1) return "منذ شهر";
+      if (diffMonths === 2) return "منذ شهرين";
+      if (diffMonths <= 10) return `منذ ${diffMonths} أشهر`;
+      return `منذ ${diffMonths} شهر`;
+    } else {
+      return diffMonths === 1 ? "1 month ago" : `${diffMonths} months ago`;
+    }
   }
 
   // Years
-  if (diffYears === 1) return "منذ سنة";
-  if (diffYears === 2) return "منذ سنتين";
-  if (diffYears <= 10) return `منذ ${diffYears} سنوات`;
-  return `منذ ${diffYears} سنة`;
+  if (isArabic) {
+    if (diffYears === 1) return "منذ سنة";
+    if (diffYears === 2) return "منذ سنتين";
+    if (diffYears <= 10) return `منذ ${diffYears} سنوات`;
+    return `منذ ${diffYears} سنة`;
+  } else {
+    return diffYears === 1 ? "1 year ago" : `${diffYears} years ago`;
+  }
 }
 
 /**
@@ -241,10 +276,17 @@ export function isYesterday(date: string | Date): boolean {
 /**
  * Format date for chat messages (smart display)
  *
+ * Arabic:
  * - Today: "03:30 م"
  * - Yesterday: "الأمس، 03:30 م"
  * - This week: "الجمعة، 03:30 م"
  * - Older: "14 فبراير، 03:30 م"
+ *
+ * English:
+ * - Today: "3:30 PM"
+ * - Yesterday: "Yesterday, 3:30 PM"
+ * - This week: "Friday, 3:30 PM"
+ * - Older: "Feb 14, 3:30 PM"
  */
 export function formatChatDate(date: string | Date | null | undefined): string {
   if (!date) return "";
@@ -253,6 +295,8 @@ export function formatChatDate(date: string | Date | null | undefined): string {
 
   if (isNaN(dateObj.getTime())) return "";
 
+  const isArabic = useLanguageStore.getState().language === 'ar';
+  const separator = isArabic ? "، " : ", ";
   const time = formatTime(dateObj);
 
   if (isToday(dateObj)) {
@@ -260,7 +304,8 @@ export function formatChatDate(date: string | Date | null | undefined): string {
   }
 
   if (isYesterday(dateObj)) {
-    return `الأمس، ${time}`;
+    const yesterday = isArabic ? "الأمس" : "Yesterday";
+    return `${yesterday}${separator}${time}`;
   }
 
   const now = new Date();
@@ -270,8 +315,8 @@ export function formatChatDate(date: string | Date | null | undefined): string {
 
   if (diffDays < 7) {
     const dayName = formatDayName(dateObj);
-    return `${dayName}، ${time}`;
+    return `${dayName}${separator}${time}`;
   }
 
-  return `${formatDate(dateObj, { month: "short", day: "numeric" })}، ${time}`;
+  return `${formatDate(dateObj, { month: "short", day: "numeric" })}${separator}${time}`;
 }

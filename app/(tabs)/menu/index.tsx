@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { Text, Button } from '../../../src/components/slices';
+import { Text, Button, ListItem } from '../../../src/components/slices';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -14,7 +14,6 @@ import {
   Heart,
   Settings,
   LogOut,
-  ChevronLeft,
   CreditCard,
   Megaphone,
   Mail,
@@ -27,15 +26,16 @@ import {
   BarChart3,
   Receipt,
   Crown,
+  TrendingUp,
 } from 'lucide-react-native';
 import { useTheme, useThemeMode } from '../../../src/theme';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
-import { useCurrencyStore, CURRENCY_SYMBOLS, CURRENCY_LABELS, type Currency } from '../../../src/stores/currencyStore';
-import { TrendingUp } from 'lucide-react-native';
+import { useCurrencyStore, CURRENCY_SYMBOLS, type Currency } from '../../../src/stores/currencyStore';
+import { useTranslation } from '../../../src/hooks/useTranslation';
 
 interface MenuItem {
   icon: React.ReactNode;
-  label: string;
+  labelKey: string;
   route: string;
   dividerAfter?: boolean;
 }
@@ -46,6 +46,7 @@ export default function MenuScreen() {
   const router = useRouter();
   const { user, signOut, isAuthenticated } = useUserAuthStore();
   const { preferredCurrency, setPreferredCurrency, exchangeRates } = useCurrencyStore();
+  const { t } = useTranslation();
 
   // Get exchange rates for display (post-2024 redenomination rates)
   const usdToSyp = exchangeRates['USD_SYP'] || 114;
@@ -54,10 +55,10 @@ export default function MenuScreen() {
   const styles = createStyles(theme);
 
   // Theme options
-  const themeOptions: { mode: 'light' | 'dark' | 'system'; icon: React.ReactNode; label: string }[] = [
-    { mode: 'light', icon: <Sun size={18} color={themeMode === 'light' ? theme.colors.primary : theme.colors.textMuted} />, label: 'فاتح' },
-    { mode: 'dark', icon: <Moon size={18} color={themeMode === 'dark' ? theme.colors.primary : theme.colors.textMuted} />, label: 'داكن' },
-    { mode: 'system', icon: <Monitor size={18} color={themeMode === 'system' ? theme.colors.primary : theme.colors.textMuted} />, label: 'تلقائي' },
+  const themeOptions: { mode: 'light' | 'dark' | 'system'; icon: React.ReactNode; labelKey: string }[] = [
+    { mode: 'light', icon: <Sun size={18} color={themeMode === 'light' ? theme.colors.primary : theme.colors.textMuted} />, labelKey: 'menu.themeLight' },
+    { mode: 'dark', icon: <Moon size={18} color={themeMode === 'dark' ? theme.colors.primary : theme.colors.textMuted} />, labelKey: 'menu.themeDark' },
+    { mode: 'system', icon: <Monitor size={18} color={themeMode === 'system' ? theme.colors.primary : theme.colors.textMuted} />, labelKey: 'menu.themeAuto' },
   ];
 
   // Currency options
@@ -70,38 +71,38 @@ export default function MenuScreen() {
   const accountMenuItems: MenuItem[] = [
     {
       icon: <User size={22} color={theme.colors.text} />,
-      label: 'معلومات الحساب',
+      labelKey: 'menu.accountInfo',
       route: '/menu/edit-profile',
     },
     {
       icon: <FileText size={22} color={theme.colors.text} />,
-      label: 'إعلاناتي',
+      labelKey: 'menu.myListings',
       route: '/menu/my-listings',
     },
     {
       icon: <Heart size={22} color={theme.colors.text} />,
-      label: 'المفضلة',
+      labelKey: 'menu.wishlist',
       route: '/menu/wishlist',
     },
     {
       icon: <Ban size={22} color={theme.colors.text} />,
-      label: 'قائمة الحظر',
+      labelKey: 'menu.blockedUsers',
       route: '/menu/blocked-users',
     },
     {
       icon: <CreditCard size={22} color={theme.colors.text} />,
-      label: 'الاشتراك',
+      labelKey: 'menu.subscription',
       route: '/menu/subscriptions',
     },
     // Analytics - only if subscription includes analytics access
     ...(hasAnalyticsAccess ? [{
       icon: <BarChart3 size={22} color={theme.colors.text} />,
-      label: 'الإحصائيات',
+      labelKey: 'menu.analytics',
       route: '/menu/analytics',
     }] : []),
     {
       icon: <Receipt size={22} color={theme.colors.text} />,
-      label: 'المدفوعات',
+      labelKey: 'menu.payments',
       route: '/menu/payments',
       dividerAfter: true,
     },
@@ -111,12 +112,12 @@ export default function MenuScreen() {
   const advertisingMenuItems: MenuItem[] = [
     {
       icon: <Crown size={22} color={theme.colors.text} />,
-      label: 'باقات الاشتراك',
+      labelKey: 'menu.subscriptionPlans',
       route: '/user-subscriptions',
     },
     {
       icon: <Megaphone size={22} color={theme.colors.text} />,
-      label: 'أعلن معنا',
+      labelKey: 'menu.advertise',
       route: '/menu/advertise',
       dividerAfter: true,
     },
@@ -125,44 +126,39 @@ export default function MenuScreen() {
   const supportMenuItems: MenuItem[] = [
     {
       icon: <Mail size={22} color={theme.colors.text} />,
-      label: 'تواصل معنا',
+      labelKey: 'menu.contact',
       route: '/menu/contact',
     },
     {
       icon: <HelpCircle size={22} color={theme.colors.text} />,
-      label: 'المساعدة',
+      labelKey: 'menu.help',
       route: '/menu/help',
     },
     {
       icon: <Shield size={22} color={theme.colors.text} />,
-      label: 'سياسة الخصوصية',
+      labelKey: 'menu.privacy',
       route: '/menu/privacy',
     },
     {
       icon: <FileText size={22} color={theme.colors.text} />,
-      label: 'الشروط والأحكام',
+      labelKey: 'menu.terms',
       route: '/menu/terms',
     },
     {
       icon: <Settings size={22} color={theme.colors.text} />,
-      label: 'الإعدادات',
+      labelKey: 'menu.settings',
       route: '/menu/settings',
     },
   ];
 
   const renderMenuItem = (item: MenuItem, index: number) => (
     <React.Fragment key={index}>
-      <TouchableOpacity
-        style={styles.menuItem}
+      <ListItem
+        icon={item.icon}
+        label={t(item.labelKey as any)}
         onPress={() => router.push(item.route as any)}
-      >
-        {/* RTL Layout: Chevron left, content right */}
-        <ChevronLeft size={20} color={theme.colors.textMuted} />
-        <View style={styles.menuItemContent}>
-          <Text style={styles.menuItemLabel}>{item.label}</Text>
-          {item.icon}
-        </View>
-      </TouchableOpacity>
+        showBorder={!item.dividerAfter}
+      />
       {item.dividerAfter && <View style={styles.divider} />}
     </React.Fragment>
   );
@@ -172,7 +168,9 @@ export default function MenuScreen() {
     <View style={styles.settingsSection}>
       {/* Theme Toggle */}
       <View style={styles.settingRow}>
-        <Text style={styles.settingLabel}>المظهر</Text>
+        <Text style={[styles.settingLabel, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+          {t('menu.theme')}
+        </Text>
         <View style={styles.toggleGroup}>
           {themeOptions.map((option) => (
             <TouchableOpacity
@@ -190,7 +188,7 @@ export default function MenuScreen() {
                   themeMode === option.mode && styles.toggleButtonTextActive,
                 ]}
               >
-                {option.label}
+                {t(option.labelKey as any)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -199,7 +197,9 @@ export default function MenuScreen() {
 
       {/* Currency Selector */}
       <View style={styles.settingRow}>
-        <Text style={styles.settingLabel}>العملة</Text>
+        <Text style={[styles.settingLabel, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+          {t('menu.currency')}
+        </Text>
         <View style={styles.toggleGroup}>
           {currencyOptions.map((currency) => (
             <TouchableOpacity
@@ -246,12 +246,14 @@ export default function MenuScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Guest Header - RTL: info left, avatar right */}
-          <View style={styles.guestHeader}>
+          {/* Guest Header */}
+          <View style={[styles.guestHeader, { flexDirection: theme.isRTL ? 'row' : 'row-reverse' }]}>
             <View style={styles.guestInfo}>
-              <Text style={styles.guestTitle}>مرحباً بك!</Text>
-              <Text style={styles.guestSubtitle}>
-                قم بتسجيل الدخول للوصول إلى جميع الميزات
+              <Text style={[styles.guestTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+                {t('menu.welcome')}
+              </Text>
+              <Text style={[styles.guestSubtitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+                {t('menu.loginPrompt')}
               </Text>
             </View>
             <View style={styles.avatar}>
@@ -266,7 +268,7 @@ export default function MenuScreen() {
             fullWidth
             style={{ marginHorizontal: theme.spacing.md, marginBottom: theme.spacing.md }}
           >
-            تسجيل الدخول
+            {t('menu.login')}
           </Button>
 
           {/* Theme & Currency Settings */}
@@ -274,7 +276,9 @@ export default function MenuScreen() {
 
           {/* Support & Info Menu */}
           <View style={styles.menuSection}>
-            <Text style={styles.sectionTitle}>المساعدة والدعم</Text>
+            <Text style={[styles.sectionTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+              {t('menu.helpAndSettings')}
+            </Text>
             <View style={styles.menu}>
               {supportMenuItems.map(renderMenuItem)}
             </View>
@@ -289,12 +293,14 @@ export default function MenuScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* User Profile Header - Display only (no navigation) */}
-        <View style={styles.header}>
+        <View style={[styles.header, { flexDirection: theme.isRTL ? 'row' : 'row-reverse' }]}>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>
-              {user?.user_metadata?.full_name || 'المستخدم'}
+            <Text style={[styles.userName, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+              {user?.user_metadata?.full_name || t('chat.user')}
             </Text>
-            <Text style={styles.userEmail}>{user?.email}</Text>
+            <Text style={[styles.userEmail, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+              {user?.email}
+            </Text>
           </View>
           <View style={styles.avatar}>
             {user?.user_metadata?.avatar_url ? (
@@ -313,7 +319,9 @@ export default function MenuScreen() {
 
         {/* Account Menu */}
         <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>حسابي</Text>
+          <Text style={[styles.sectionTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+            {t('menu.myAccount')}
+          </Text>
           <View style={styles.menu}>
             {accountMenuItems.map(renderMenuItem)}
           </View>
@@ -321,7 +329,9 @@ export default function MenuScreen() {
 
         {/* Subscriptions & Advertising Menu */}
         <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>الباقات والإعلانات</Text>
+          <Text style={[styles.sectionTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+            {t('menu.packagesAndAds')}
+          </Text>
           <View style={styles.menu}>
             {advertisingMenuItems.map(renderMenuItem)}
           </View>
@@ -329,7 +339,9 @@ export default function MenuScreen() {
 
         {/* Support & Settings Menu */}
         <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>المساعدة والإعدادات</Text>
+          <Text style={[styles.sectionTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+            {t('menu.helpAndSettings')}
+          </Text>
           <View style={styles.menu}>
             {supportMenuItems.map(renderMenuItem)}
           </View>
@@ -338,16 +350,16 @@ export default function MenuScreen() {
         {/* Logout Button */}
         <Button
           variant="danger"
-          icon={<LogOut size={20} color="#FFFFFF" />}
+          iconStart={<LogOut size={20} color="#FFFFFF" />}
           onPress={signOut}
           fullWidth
           style={{ marginHorizontal: theme.spacing.md, marginTop: theme.spacing.sm }}
         >
-          تسجيل الخروج
+          {t('menu.logout')}
         </Button>
 
         {/* Version Info */}
-        <Text style={styles.versionText}>الإصدار 1.0.0</Text>
+        <Text style={styles.versionText}>{t('menu.version')} 1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -361,14 +373,14 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     },
     // Header styles
     header: {
-      flexDirection: 'row',
+      // flexDirection applied dynamically
       alignItems: 'center',
       padding: theme.spacing.md,
       backgroundColor: theme.colors.bg, // Clickable card = bg
       marginBottom: theme.spacing.md,
     },
     guestHeader: {
-      flexDirection: 'row',
+      // flexDirection applied dynamically
       alignItems: 'center',
       padding: theme.spacing.md,
       backgroundColor: theme.colors.bg, // Clickable card = bg
@@ -400,26 +412,26 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: theme.fontSize.lg,
       fontFamily: theme.fontFamily.header,
       color: theme.colors.text,
-      textAlign: 'right',
+      // textAlign applied dynamically
     },
     userEmail: {
       fontSize: theme.fontSize.sm,
       fontFamily: theme.fontFamily.body,
       color: theme.colors.textSecondary,
-      textAlign: 'right',
+      // textAlign applied dynamically
       marginTop: 2,
     },
     guestTitle: {
       fontSize: theme.fontSize.lg,
       fontFamily: theme.fontFamily.header,
       color: theme.colors.text,
-      textAlign: 'right',
+      // textAlign applied dynamically
     },
     guestSubtitle: {
       fontSize: theme.fontSize.sm,
       fontFamily: theme.fontFamily.body,
       color: theme.colors.textSecondary,
-      textAlign: 'right',
+      // textAlign applied dynamically
       marginTop: 2,
     },
     // Menu section styles
@@ -432,30 +444,10 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       color: theme.colors.textMuted,
       paddingHorizontal: theme.spacing.md,
       marginBottom: theme.spacing.sm,
+      // textAlign applied dynamically
     },
     menu: {
       backgroundColor: theme.colors.bg, // Clickable items = bg
-    },
-    menuItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingVertical: 14,
-      paddingHorizontal: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    menuItemContent: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-end', // RTL: content aligned to right
-      gap: theme.spacing.lg,
-    },
-    menuItemLabel: {
-      fontSize: theme.fontSize.base,
-      fontFamily: theme.fontFamily.body,
-      color: theme.colors.text,
     },
     divider: {
       height: theme.spacing.sm,
@@ -484,7 +476,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontFamily: theme.fontFamily.bodyMedium,
       color: theme.colors.textMuted,
       marginBottom: theme.spacing.sm,
-      textAlign: 'right',
+      // textAlign applied dynamically
     },
     toggleGroup: {
       flexDirection: 'row',

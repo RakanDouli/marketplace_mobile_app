@@ -291,7 +291,7 @@ const createStyles = (theme: Theme) =>
 
     // Thread Item
     threadItem: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
       alignItems: 'center',
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.md,
@@ -336,15 +336,15 @@ const createStyles = (theme: Theme) =>
     threadInfo: {
       flex: 1,
       gap: 2,
-      alignItems: 'flex-end', // RTL: align content to right
+      alignItems: theme.isRTL ? 'flex-end' : 'flex-start',
     },
     listingTitle: {
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     userName: {
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     timeText: {
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
   });

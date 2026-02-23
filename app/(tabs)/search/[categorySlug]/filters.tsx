@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import {
   ChevronLeft,
+  ChevronRight,
   X,
   Trash2,
   Check,
@@ -556,10 +557,17 @@ export default function FiltersScreen() {
                 <Text variant="xs" color="muted">اختر العلامة أولاً</Text>
               )}
             </View>
-            <ChevronLeft
-              size={20}
-              color={(disabled || hasNoOptions) ? theme.colors.border : theme.colors.textSecondary}
-            />
+            {theme.isRTL ? (
+              <ChevronLeft
+                size={20}
+                color={(disabled || hasNoOptions) ? theme.colors.border : theme.colors.textSecondary}
+              />
+            ) : (
+              <ChevronRight
+                size={20}
+                color={(disabled || hasNoOptions) ? theme.colors.border : theme.colors.textSecondary}
+              />
+            )}
           </TouchableOpacity>
         );
       })}
@@ -597,7 +605,11 @@ export default function FiltersScreen() {
                 </Text>
               )}
             </View>
-            <ChevronLeft size={20} color={theme.colors.textSecondary} />
+            {theme.isRTL ? (
+              <ChevronLeft size={20} color={theme.colors.textSecondary} />
+            ) : (
+              <ChevronRight size={20} color={theme.colors.textSecondary} />
+            )}
           </TouchableOpacity>
 
           {/* Max selector */}
@@ -613,7 +625,11 @@ export default function FiltersScreen() {
                 </Text>
               )}
             </View>
-            <ChevronLeft size={20} color={theme.colors.textSecondary} />
+            {theme.isRTL ? (
+              <ChevronLeft size={20} color={theme.colors.textSecondary} />
+            ) : (
+              <ChevronRight size={20} color={theme.colors.textSecondary} />
+            )}
           </TouchableOpacity>
         </ScrollView>
       );
@@ -1028,7 +1044,7 @@ const createStyles = (theme: Theme) =>
 
     // Filter list items
     filterItem: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.lg,
@@ -1040,10 +1056,11 @@ const createStyles = (theme: Theme) =>
     },
     filterItemContent: {
       flex: 1,
-      alignItems: 'flex-end',
+      alignItems: theme.isRTL ? 'flex-end' : 'flex-start',
     },
     filterItemName: {
       fontWeight: '500',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Icon grid
@@ -1053,7 +1070,7 @@ const createStyles = (theme: Theme) =>
 
     // Options list
     optionItem: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.lg,
@@ -1065,7 +1082,7 @@ const createStyles = (theme: Theme) =>
     },
     optionContent: {
       flex: 1,
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
     },
@@ -1092,7 +1109,7 @@ const createStyles = (theme: Theme) =>
     sectionHeaderText: {
       fontWeight: '600',
       color: theme.colors.text,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Section divider (between grouped variants and standalone models)

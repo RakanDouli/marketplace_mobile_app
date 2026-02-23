@@ -572,13 +572,13 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Header */}
+      {/* Header - Back button stays on left, content area changes direction */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ChevronLeft size={28} color={theme.colors.text} />
         </TouchableOpacity>
 
-        {/* Listing Info - Clickable (RTL: text left, image right) */}
+        {/* Listing Info - Clickable, image always on left */}
         <TouchableOpacity
           style={styles.headerInfo}
           onPress={() => {
@@ -587,20 +587,20 @@ export default function ChatScreen() {
             }
           }}
         >
-          <View style={styles.headerText}>
-            <Text variant="body" weight="semibold" numberOfLines={1}>
-              {thread.listing?.title || 'إعلان محذوف'}
-            </Text>
-            <Text variant="small" color="secondary" numberOfLines={1}>
-              {otherUserName}
-            </Text>
-          </View>
           {thread.listing?.images?.[0] && (
             <RNImage
               source={{ uri: getCloudflareImageUrl(thread.listing.images[0], 'thumbnail') }}
               style={styles.listingThumbnail}
             />
           )}
+          <View style={[styles.headerText, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
+            <Text variant="body" weight="semibold" numberOfLines={1} style={{ textAlign: theme.isRTL ? 'right' : 'left' }}>
+              {thread.listing?.title || 'إعلان محذوف'}
+            </Text>
+            <Text variant="small" color="secondary" numberOfLines={1} style={{ textAlign: theme.isRTL ? 'right' : 'left' }}>
+              {otherUserName}
+            </Text>
+          </View>
         </TouchableOpacity>
 
         {/* Header Actions Dropdown */}
@@ -866,13 +866,13 @@ const createStyles = (theme: Theme) =>
     },
     headerInfo: {
       flex: 1,
-      flexDirection: 'row',
+      flexDirection: 'row', // Image always on left, text on right
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
     headerText: {
       flex: 1,
-      alignItems: 'flex-end', // RTL: align text to right
+      // alignItems applied dynamically
     },
     listingThumbnail: {
       width: 40,
@@ -978,7 +978,7 @@ const createStyles = (theme: Theme) =>
     },
     messageText: {
       color: theme.colors.text,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     ownMessageText: {
       color: '#FFFFFF',
@@ -992,16 +992,16 @@ const createStyles = (theme: Theme) =>
     },
     messageTime: {
       color: theme.colors.textMuted,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
       fontSize: 10,
     },
     ownMessageTime: {
       color: 'rgba(255, 255, 255, 0.7)',
     },
-    // Message images - simple grid like WhatsApp (RTL: start from right)
+    // Message images - simple grid like WhatsApp
     messageImagesContainer: {
-      flexDirection: 'row-reverse',
-      flexWrap: 'wrap-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
+      flexWrap: theme.isRTL ? 'wrap-reverse' : 'wrap',
       gap: 4,
       marginBottom: theme.spacing.xs,
     },
@@ -1065,10 +1065,10 @@ const createStyles = (theme: Theme) =>
     },
     imageCount: {
       marginTop: theme.spacing.xs,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
-    // Input
+    // Input - Standard layout: attachment left, input middle, send right
     inputContainer: {
       flexDirection: 'row',
       alignItems: 'flex-end',
@@ -1110,7 +1110,7 @@ const createStyles = (theme: Theme) =>
       fontFamily: theme.fontFamily.body,
       fontSize: theme.fontSize.body,
       color: theme.colors.text,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     sendButton: {
       width: 40,

@@ -2,21 +2,20 @@
  * MobileCatalogSelector - Step-by-step Brand → Model → Variant selector
  * Used for browsing/filtering listings on category pages
  *
- * Styling matches filters.tsx for consistency
+ * Uses ListItem component for consistent navigation items
  */
 
 import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight, Car } from 'lucide-react-native';
+import { Car } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
-import { Text, Loading } from '../slices';
+import { Text, Loading, ListItem } from '../slices';
 
 // ============ TYPES ============
 
@@ -173,6 +172,36 @@ export const MobileCatalogSelector: React.FC<MobileCatalogSelectorProps> = ({
     });
   };
 
+  // Render count badge as endContent
+  const renderCountBadge = (count?: number) => {
+    if (count === undefined) return undefined;
+    return (
+      <Text variant="small" color="secondary" style={styles.countBadge}>
+        {count}
+      </Text>
+    );
+  };
+
+  // Render brand icon with logo
+  const renderBrandIcon = (option: CatalogOption) => {
+    if (option.logoUrl) {
+      return (
+        <View style={styles.brandLogoContainer}>
+          <Image
+            source={{ uri: option.logoUrl }}
+            style={styles.brandLogo}
+            resizeMode="contain"
+          />
+        </View>
+      );
+    }
+    return (
+      <View style={styles.brandLogoContainer}>
+        <Car size={24} color={theme.colors.textMuted} />
+      </View>
+    );
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -190,24 +219,14 @@ export const MobileCatalogSelector: React.FC<MobileCatalogSelectorProps> = ({
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Show All Button - matches filter item style with primary highlight */}
-        <TouchableOpacity
-          style={styles.showAllItem}
+        {/* Show All Button - highlighted primary item */}
+        <ListItem
+          label={step === 'brand' ? 'عرض كل الإعلانات' : `عرض كل طرازات ${selectedBrandName}`}
           onPress={handleShowAll}
-          activeOpacity={0.7}
-        >
-          <View style={styles.showAllContent}>
-            <Text variant="body" color="primary" style={styles.showAllText}>
-              {step === 'brand' ? 'عرض كل الإعلانات' : `عرض كل طرازات ${selectedBrandName}`}
-            </Text>
-            {totalCount !== undefined && (
-              <Text variant="small" style={styles.countBadge}>
-                {totalCount}
-              </Text>
-            )}
-          </View>
-          <ChevronLeft size={20} color={theme.colors.primary} />
-        </TouchableOpacity>
+          endContent={renderCountBadge(totalCount)}
+          style={styles.showAllItem}
+          showBorder={true}
+        />
 
         {/* Divider */}
         <View style={styles.sectionDivider}>
@@ -224,29 +243,20 @@ export const MobileCatalogSelector: React.FC<MobileCatalogSelectorProps> = ({
               <View key={group.modelName}>
                 {/* Model Section Header */}
                 <View style={styles.sectionHeader}>
-                  <Text variant="h4" style={styles.sectionHeaderText}>
+                  <Text variant="h4" style={[styles.sectionHeaderText, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
                     {group.modelName}
                   </Text>
                 </View>
 
                 {/* Variants under this model */}
-                {group.variants.map((option) => (
-                  <TouchableOpacity
+                {group.variants.map((option, index) => (
+                  <ListItem
                     key={option.id}
-                    style={styles.optionItem}
+                    label={option.name}
                     onPress={() => handleOptionSelect(option)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.optionContent}>
-                      <Text variant="body">{option.name}</Text>
-                      {option.count !== undefined && (
-                        <Text variant="small" color="secondary" style={styles.countBadge}>
-                          {option.count}
-                        </Text>
-                      )}
-                    </View>
-                    <ChevronLeft size={20} color={theme.colors.textSecondary} />
-                  </TouchableOpacity>
+                    endContent={renderCountBadge(option.count)}
+                    showBorder={index < group.variants.length - 1}
+                  />
                 ))}
               </View>
             ))}
@@ -260,23 +270,14 @@ export const MobileCatalogSelector: React.FC<MobileCatalogSelectorProps> = ({
                     <Text variant="small" color="secondary">موديلات أخرى</Text>
                   </View>
                 )}
-                {processedDisplay.standaloneModels.map((model) => (
-                  <TouchableOpacity
+                {processedDisplay.standaloneModels.map((model, index) => (
+                  <ListItem
                     key={model.id}
-                    style={styles.optionItem}
+                    label={model.name}
                     onPress={() => handleModelSelect(model)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.optionContent}>
-                      <Text variant="body">{model.name}</Text>
-                      {model.count !== undefined && (
-                        <Text variant="small" color="secondary" style={styles.countBadge}>
-                          {model.count}
-                        </Text>
-                      )}
-                    </View>
-                    <ChevronLeft size={20} color={theme.colors.textSecondary} />
-                  </TouchableOpacity>
+                    endContent={renderCountBadge(model.count)}
+                    showBorder={index < processedDisplay.standaloneModels.length - 1}
+                  />
                 ))}
               </View>
             )}
@@ -293,47 +294,16 @@ export const MobileCatalogSelector: React.FC<MobileCatalogSelectorProps> = ({
         ) : (
           // Brand step: flat list with logos
           <>
-            {options.map((option) => (
-              <TouchableOpacity
+            {options.map((option, index) => (
+              <ListItem
                 key={option.id}
-                style={styles.optionItem}
+                label={option.nameAr || option.name}
+                subtitle={option.nameAr && option.nameAr !== option.name ? option.name : undefined}
+                icon={renderBrandIcon(option)}
                 onPress={() => handleOptionSelect(option)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.brandOptionContent}>
-                  {/* Brand Logo */}
-                  <View style={styles.brandLogoContainer}>
-                    {option.logoUrl ? (
-                      <Image
-                        source={{ uri: option.logoUrl }}
-                        style={styles.brandLogo}
-                        resizeMode="contain"
-                      />
-                    ) : (
-                      <Car size={24} color={theme.colors.textMuted} />
-                    )}
-                  </View>
-                  {/* Brand Name (Arabic preferred, fallback to English) */}
-                  <View style={styles.brandTextContent}>
-                    <Text variant="body" style={styles.brandName}>
-                      {option.nameAr || option.name}
-                    </Text>
-                    {/* Show English name as secondary if Arabic exists */}
-                    {option.nameAr && option.nameAr !== option.name && (
-                      <Text variant="small" color="secondary">
-                        {option.name}
-                      </Text>
-                    )}
-                  </View>
-                  {/* Count badge */}
-                  {option.count !== undefined && (
-                    <Text variant="small" color="secondary" style={styles.countBadge}>
-                      {option.count}
-                    </Text>
-                  )}
-                </View>
-                <ChevronLeft size={20} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
+                endContent={renderCountBadge(option.count)}
+                showBorder={index < options.length - 1}
+              />
             ))}
 
             {/* Empty state */}
@@ -370,22 +340,7 @@ const createStyles = (theme: Theme) =>
 
     // Show All button (highlighted item at top)
     showAllItem: {
-      flexDirection: 'row-reverse',
-      alignItems: 'center',
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
       backgroundColor: theme.colors.primaryLight || `${theme.colors.primary}10`,
-    },
-    showAllContent: {
-      flex: 1,
-      flexDirection: 'row-reverse',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    showAllText: {
-      fontWeight: '500',
     },
 
     // Section divider (between show all and options)
@@ -412,32 +367,9 @@ const createStyles = (theme: Theme) =>
     sectionHeaderText: {
       fontWeight: '600',
       color: theme.colors.text,
-      textAlign: 'right',
     },
 
-    // Options list items (matches filters.tsx optionItem)
-    optionItem: {
-      flexDirection: 'row-reverse',
-      alignItems: 'center',
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    optionContent: {
-      flex: 1,
-      flexDirection: 'row-reverse',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-
-    // Brand-specific option content (with logo)
-    brandOptionContent: {
-      flex: 1,
-      flexDirection: 'row-reverse',
-      alignItems: 'center',
-      gap: theme.spacing.sm,
-    },
+    // Brand logo container
     brandLogoContainer: {
       width: 40,
       height: 40,
@@ -451,15 +383,8 @@ const createStyles = (theme: Theme) =>
       width: 32,
       height: 32,
     },
-    brandTextContent: {
-      flex: 1,
-      alignItems: 'flex-end',
-    },
-    brandName: {
-      fontWeight: '500',
-    },
 
-    // Count badge (matches filters.tsx optionCount)
+    // Count badge
     countBadge: {
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,

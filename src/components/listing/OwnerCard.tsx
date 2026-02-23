@@ -75,9 +75,9 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
   if (isLoading || !owner) {
     return (
       <View style={styles.container}>
-        <View style={styles.skeleton}>
+        <View style={[styles.skeleton, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
           <View style={styles.skeletonAvatar} />
-          <View style={styles.skeletonText}>
+          <View style={[styles.skeletonText, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
             <View style={[styles.skeletonLine, { width: '60%' }]} />
             <View style={[styles.skeletonLine, { width: '40%' }]} />
           </View>
@@ -93,7 +93,7 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
   return (
     <View style={styles.container}>
       {/* Header Row */}
-      <View style={styles.header}>
+      <View style={[styles.header, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
         {/* Avatar */}
         <View style={styles.avatarContainer}>
           {hasAvatar ? (
@@ -118,7 +118,7 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
         </View>
 
         {/* Info */}
-        <View style={styles.info}>
+        <View style={[styles.info, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
           <View style={styles.nameRow}>
             <Text variant="body" bold numberOfLines={1} style={styles.name}>
               {displayName}
@@ -134,7 +134,7 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
           {/* Rating */}
           {owner.reviewCount != null && owner.reviewCount > 0 ? (
             <TouchableOpacity
-              style={styles.ratingRow}
+              style={[styles.ratingRow, { flexDirection: theme.isRTL ? 'row' : 'row-reverse' }]}
               onPress={onViewReviews}
               activeOpacity={0.7}
             >
@@ -144,7 +144,11 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
               <Text variant="xs" color="secondary" style={styles.ratingText}>
                 {`${(owner.averageRating || 0).toFixed(1)} (${owner.reviewCount} تقييم)`}
               </Text>
-              <ChevronLeft size={14} color={theme.colors.textMuted} />
+              <ChevronLeft
+                size={14}
+                color={theme.colors.textMuted}
+                style={{ transform: [{ scaleX: theme.isRTL ? 1 : -1 }] }}
+              />
             </TouchableOpacity>
           ) : (
             <Text variant="xs" color="muted" style={styles.noReviews}>
@@ -154,7 +158,7 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
 
           {/* Member since */}
           {owner.createdAt && (
-            <View style={styles.memberSince}>
+            <View style={[styles.memberSince, { flexDirection: theme.isRTL ? 'row' : 'row-reverse' }]}>
               <Text variant="xs" color="muted">
                 {`عضو منذ ${formatMemberSince(owner.createdAt)}`}
               </Text>
@@ -205,7 +209,6 @@ const createStyles = (theme: Theme) =>
 
     // Header
     header: {
-      flexDirection: 'row-reverse',
       gap: theme.spacing.md,
     },
 
@@ -238,7 +241,6 @@ const createStyles = (theme: Theme) =>
     // Info
     info: {
       flex: 1,
-      alignItems: 'flex-end',
     },
     nameRow: {
       flexDirection: 'row',
@@ -252,7 +254,6 @@ const createStyles = (theme: Theme) =>
       marginTop: 2,
     },
     ratingRow: {
-      flexDirection: 'row',
       alignItems: 'center',
       marginTop: theme.spacing.xs,
       gap: theme.spacing.xs,
@@ -268,7 +269,6 @@ const createStyles = (theme: Theme) =>
       marginTop: theme.spacing.xs,
     },
     memberSince: {
-      flexDirection: 'row',
       alignItems: 'center',
       marginTop: theme.spacing.xs,
       gap: theme.spacing.xs,
@@ -291,7 +291,6 @@ const createStyles = (theme: Theme) =>
 
     // Skeleton
     skeleton: {
-      flexDirection: 'row-reverse',
       gap: theme.spacing.md,
     },
     skeletonAvatar: {
@@ -302,7 +301,6 @@ const createStyles = (theme: Theme) =>
     },
     skeletonText: {
       flex: 1,
-      alignItems: 'flex-end',
       gap: theme.spacing.sm,
     },
     skeletonLine: {

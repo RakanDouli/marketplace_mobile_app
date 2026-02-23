@@ -47,9 +47,12 @@ export function Text({
   numberOfLines,
   bold = false,
   center = false,
-  right = true, // Default to right for Arabic RTL
+  right, // If not specified, uses theme direction
 }: TextProps) {
   const theme = useTheme();
+
+  // Determine text alignment based on direction
+  const shouldAlignRight = right !== undefined ? right : theme.isRTL;
 
   const variantStyles: Record<TextVariant, TextStyle> = {
     h1: {
@@ -126,8 +129,9 @@ export function Text({
         { color: color ? colorStyles[color] : theme.colors.text },
         bold && { fontWeight: 'bold' },
         center && { textAlign: 'center' },
-        right && { textAlign: 'right' },
-        { writingDirection: 'rtl' },
+        !center && shouldAlignRight && { textAlign: 'right' },
+        !center && !shouldAlignRight && { textAlign: 'left' },
+        { writingDirection: theme.direction },
         style,
       ]}
       numberOfLines={numberOfLines}

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ShoppingBag, Key, ChevronLeft } from 'lucide-react-native';
+import { ShoppingBag, Key, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme, Theme } from '../../../../src/theme';
 import { Text, Loading } from '../../../../src/components/slices';
 import { useCategoriesStore } from '../../../../src/stores/categoriesStore';
@@ -97,10 +97,10 @@ export default function ListingTypeSelectionScreen() {
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
-            <Text variant="h2" style={styles.headerTitle}>
+            <Text variant="h2" style={[styles.headerTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
               ماذا تريد أن تفعل؟
             </Text>
-            <Text variant="paragraph" color="secondary" style={styles.headerSubtitle}>
+            <Text variant="paragraph" color="secondary" style={[styles.headerSubtitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
               اختر نوع الإعلانات التي تريد تصفحها في {category.nameAr}
             </Text>
           </View>
@@ -109,42 +109,50 @@ export default function ListingTypeSelectionScreen() {
           <View style={styles.optionsContainer}>
             {/* Sale Option */}
             <TouchableOpacity
-              style={styles.optionCard}
+              style={[styles.optionCard, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}
               onPress={() => handleTypePress('sale')}
               activeOpacity={0.8}
             >
               <View style={[styles.optionIcon, { backgroundColor: theme.colors.primaryLight }]}>
                 <ShoppingBag size={40} color={theme.colors.primary} />
               </View>
-              <View style={styles.optionContent}>
+              <View style={[styles.optionContent, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
                 <Text variant="h3" style={styles.optionTitle}>
                   للبيع
                 </Text>
-                <Text variant="paragraph" color="secondary" style={styles.optionDescription}>
+                <Text variant="paragraph" color="secondary" style={[styles.optionDescription, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
                   تصفح {category.nameAr} المعروضة للبيع
                 </Text>
               </View>
-              <ChevronLeft size={24} color={theme.colors.textMuted} />
+              {theme.isRTL ? (
+                <ChevronLeft size={24} color={theme.colors.textMuted} />
+              ) : (
+                <ChevronRight size={24} color={theme.colors.textMuted} />
+              )}
             </TouchableOpacity>
 
             {/* Rent Option */}
             <TouchableOpacity
-              style={styles.optionCard}
+              style={[styles.optionCard, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}
               onPress={() => handleTypePress('rent')}
               activeOpacity={0.8}
             >
               <View style={[styles.optionIcon, { backgroundColor: theme.colors.successLight || '#E8F5E9' }]}>
                 <Key size={40} color={theme.colors.success} />
               </View>
-              <View style={styles.optionContent}>
+              <View style={[styles.optionContent, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
                 <Text variant="h3" style={styles.optionTitle}>
                   للإيجار
                 </Text>
-                <Text variant="paragraph" color="secondary" style={styles.optionDescription}>
+                <Text variant="paragraph" color="secondary" style={[styles.optionDescription, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
                   تصفح {category.nameAr} المعروضة للإيجار
                 </Text>
               </View>
-              <ChevronLeft size={24} color={theme.colors.textMuted} />
+              {theme.isRTL ? (
+                <ChevronLeft size={24} color={theme.colors.textMuted} />
+              ) : (
+                <ChevronRight size={24} color={theme.colors.textMuted} />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -172,17 +180,17 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.xl,
     },
     headerTitle: {
-      textAlign: 'right',
+      // textAlign applied dynamically
       marginBottom: theme.spacing.sm,
     },
     headerSubtitle: {
-      textAlign: 'right',
+      // textAlign applied dynamically
     },
     optionsContainer: {
       gap: theme.spacing.md,
     },
     optionCard: {
-      flexDirection: 'row-reverse',
+      // flexDirection applied dynamically
       alignItems: 'center',
       backgroundColor: theme.colors.bg,
       padding: theme.spacing.lg,
@@ -200,12 +208,12 @@ const createStyles = (theme: Theme) =>
     },
     optionContent: {
       flex: 1,
-      alignItems: 'flex-end',
+      // alignItems applied dynamically
     },
     optionTitle: {
       marginBottom: theme.spacing.xs,
     },
     optionDescription: {
-      textAlign: 'right',
+      // textAlign applied dynamically
     },
   });

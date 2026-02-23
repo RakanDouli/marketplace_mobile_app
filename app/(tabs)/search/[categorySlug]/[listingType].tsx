@@ -730,7 +730,7 @@ export default function CategoryListingsScreen() {
   // Render listing card for grid view
   const renderGridItem = ({ item, index }: { item: Listing; index: number }) => {
     const formatted = formatListingForCard(item);
-    // Calculate which column this item is in (RTL: columnIndex 0 is rightmost)
+    // Calculate which column this item is in
     const columnIndex = index % gridColumns;
     const isLastColumn = columnIndex === gridColumns - 1;
 
@@ -738,8 +738,8 @@ export default function CategoryListingsScreen() {
       <View style={[
         styles.gridCardWrapper,
         { width: cardWidth },
-        // RTL with row-reverse: add marginLeft for gap (except leftmost column)
-        !isLastColumn && { marginLeft: CARD_GAP },
+        // Add gap margin: RTL uses marginLeft, LTR uses marginRight (except last column)
+        !isLastColumn && (theme.isRTL ? { marginLeft: CARD_GAP } : { marginRight: CARD_GAP }),
       ]}>
         <ListingCard
           id={formatted.id}
@@ -1098,7 +1098,7 @@ const createStyles = (
 
     // Chips Row - container with filter button fixed, chips scrollable
     chipsRow: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.bg,
       paddingHorizontal: horizontalPadding,
@@ -1112,11 +1112,11 @@ const createStyles = (
     chipsContent: {
       flexDirection: 'row',
       flexGrow: 1,
-      justifyContent: 'flex-end',
+      justifyContent: theme.isRTL ? 'flex-end' : 'flex-start',
       gap: theme.spacing.sm,
     },
     filterButton: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.primary,
       paddingHorizontal: theme.spacing.md,
@@ -1134,14 +1134,15 @@ const createStyles = (
       height: 20,
       justifyContent: 'center',
       alignItems: 'center',
-      marginLeft: theme.spacing.xs,
+      marginLeft: theme.isRTL ? theme.spacing.xs : 0,
+      marginRight: theme.isRTL ? 0 : theme.spacing.xs,
     },
     filterBadgeText: {
       color: theme.colors.primary,
       fontWeight: '600',
     },
     filterChip: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.surface,
       paddingHorizontal: theme.spacing.md,
@@ -1154,7 +1155,7 @@ const createStyles = (
 
     // Toolbar Row
     toolbar: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: horizontalPadding,
@@ -1164,7 +1165,7 @@ const createStyles = (
       borderBottomColor: theme.colors.border,
     },
     sortButton: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -1184,7 +1185,7 @@ const createStyles = (
       backgroundColor: theme.colors.surface,
     },
     viewToggle: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.lg,
       borderWidth: 1,
@@ -1216,7 +1217,7 @@ const createStyles = (
       paddingBottom: theme.spacing.xxl + theme.spacing.xxl,
     },
     row: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'flex-start',
       marginBottom: CARD_GAP,
     },

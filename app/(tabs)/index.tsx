@@ -19,7 +19,6 @@ import { SvgXml } from 'react-native-svg';
 import {
   Search,
   LayoutGrid,
-  ChevronLeft,
   Shield,
   Tag,
   Zap,
@@ -36,6 +35,7 @@ import {
   FeatureCard,
   PromoCard,
   PromoBanner,
+  Button,
 } from '../../src/components/slices';
 import { formatLocation } from '../../src/utils';
 
@@ -231,12 +231,16 @@ export default function HomeTab() {
 
         {/* Featured Listings */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <TouchableOpacity style={styles.seeAllButton} onPress={() => goToCategory('cars', 'سيارات')}>
-              <ChevronLeft size={16} color={theme.colors.primary} />
-              <Text variant="paragraph" style={{ color: theme.colors.primary }}>عرض الكل</Text>
-            </TouchableOpacity>
+          <View style={[styles.sectionHeader, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
             <Text variant="h3">عروض لك</Text>
+            <Button
+              variant="link"
+              size="sm"
+              onPress={() => goToCategory('cars', 'سيارات')}
+              arrowForward
+            >
+              عرض الكل
+            </Button>
           </View>
           {listingsLoading && featuredListings.length === 0 ? (
             <View style={styles.loadingContainer}><Loading type="dots" size="sm" /></View>
@@ -268,12 +272,16 @@ export default function HomeTab() {
 
         {/* New Listings Grid */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <TouchableOpacity style={styles.seeAllButton} onPress={() => goToCategory('cars', 'سيارات')}>
-              <Text variant="paragraph" style={{ color: theme.colors.primary }}>عرض الكل</Text>
-              <ChevronLeft size={16} color={theme.colors.primary} />
-            </TouchableOpacity>
+          <View style={[styles.sectionHeader, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
             <Text variant="h3">إعلانات جديدة</Text>
+            <Button
+              variant="link"
+              size="sm"
+              onPress={() => goToCategory('cars', 'سيارات')}
+              arrowForward
+            >
+              عرض الكل
+            </Button>
           </View>
           {listingsLoading && listings.length === 0 ? (
             <View style={styles.loadingContainer}><Loading type="dots" size="sm" /></View>
@@ -387,8 +395,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, i
     categoryCard: { width: categoryCardWidth, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: theme.spacing.md, backgroundColor: theme.colors.bg, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.lg, minHeight: 100, gap: theme.spacing.sm, ...theme.shadows.sm },
     categoryCardIcon: { width: 48, height: 48, borderRadius: theme.radius.lg, backgroundColor: theme.colors.surface, justifyContent: 'center', alignItems: 'center' },
     section: { paddingVertical: theme.spacing.md },
-    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: horizontalPadding, marginBottom: theme.spacing.md },
-    seeAllButton: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs },
+    sectionHeader: { justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: horizontalPadding, marginBottom: theme.spacing.md },
     listingsScroll: { paddingHorizontal: horizontalPadding },
     listingsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: horizontalPadding, gap: gridGap },
     gridCard: { width: gridCardWidth, backgroundColor: theme.colors.bg, borderRadius: theme.radius.lg, borderWidth: 1, borderColor: theme.colors.border, overflow: 'hidden', marginBottom: theme.spacing.sm },

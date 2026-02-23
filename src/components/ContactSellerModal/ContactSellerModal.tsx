@@ -113,11 +113,12 @@ export function ContactSellerModal({
               <X size={24} color={theme.colors.text} />
             </TouchableOpacity>
             <View style={styles.headerText}>
-              <Text variant="h4">تواصل مع صاحب الإعلان</Text>
-              <Text variant="small" color="secondary" numberOfLines={1}>
+              <Text variant="h4" center>تواصل مع صاحب الإعلان</Text>
+              <Text variant="small" color="secondary" numberOfLines={1} center>
                 {listingTitle}
               </Text>
             </View>
+            <View style={styles.placeholder} />
           </View>
 
           <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
@@ -228,19 +229,24 @@ const createStyles = (theme: Theme) =>
 
     // Header
     header: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
-      gap: theme.spacing.md,
     },
     closeButton: {
       padding: theme.spacing.xs,
+      width: 40,
     },
     headerText: {
       flex: 1,
+      alignItems: 'center',
+    },
+    placeholder: {
+      width: 40,
     },
 
     // Body
@@ -250,7 +256,7 @@ const createStyles = (theme: Theme) =>
     },
     sectionLabel: {
       marginBottom: theme.spacing.md,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Templates
@@ -272,7 +278,7 @@ const createStyles = (theme: Theme) =>
     },
     templateText: {
       color: theme.colors.text,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     templateTextSelected: {
       color: theme.colors.primary,
@@ -281,7 +287,7 @@ const createStyles = (theme: Theme) =>
     // Input
     inputLabel: {
       marginBottom: theme.spacing.sm,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     input: {
       minHeight: 120,
@@ -294,7 +300,7 @@ const createStyles = (theme: Theme) =>
       fontFamily: theme.fontFamily.body,
       fontSize: theme.fontSize.body,
       color: theme.colors.text,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     inputError: {
       borderColor: theme.colors.error,
@@ -302,12 +308,12 @@ const createStyles = (theme: Theme) =>
     errorText: {
       color: theme.colors.error,
       marginTop: theme.spacing.xs,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Actions
     actions: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
       borderTopWidth: 1,

@@ -170,16 +170,16 @@ const createStyles = (theme: Theme) =>
     },
     title: {
       marginBottom: theme.spacing.xs,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     price: {
       marginBottom: theme.spacing.xs,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     location: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
+      justifyContent: 'flex-start',
       alignItems: 'center',
-      justifyContent: 'flex-end',
       gap: theme.spacing.xs,
     },
     locationText: {
@@ -188,7 +188,7 @@ const createStyles = (theme: Theme) =>
     specs: {
       marginBottom: theme.spacing.xs,
       opacity: 0.8,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
   });
 

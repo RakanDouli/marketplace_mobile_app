@@ -48,6 +48,17 @@ export const ListingCardList = memo(function ListingCardList({
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // Direction-aware styles
+  const cardDirection = theme.isRTL ? 'row-reverse' : 'row';
+  const textAlign = theme.isRTL ? 'right' : 'left';
+  const locationDirection = theme.isRTL ? 'row' : 'row-reverse';
+  const locationJustify = theme.isRTL ? 'flex-end' : 'flex-start';
+  const imageCornerStyle = theme.isRTL
+    ? { borderTopRightRadius: theme.radius.lg, borderBottomRightRadius: theme.radius.lg }
+    : { borderTopLeftRadius: theme.radius.lg, borderBottomLeftRadius: theme.radius.lg };
+  const badgePosition = theme.isRTL ? { right: theme.spacing.xs } : { left: theme.spacing.xs };
+  const favoritePosition = theme.isRTL ? { right: theme.spacing.xs } : { left: theme.spacing.xs };
+
   // Get the image source
   const imageSrc = useMemo(() => {
     if (imageUrlProp) return imageUrlProp;
@@ -58,12 +69,12 @@ export const ListingCardList = memo(function ListingCardList({
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { flexDirection: cardDirection }]}
       onPress={onPress}
       activeOpacity={0.9}
     >
-      {/* Image - 35% width, full card height, rounded on right side (RTL) */}
-      <View style={styles.imageContainer}>
+      {/* Image - 35% width, full card height, rounded on start side */}
+      <View style={[styles.imageContainer, imageCornerStyle]}>
         <Image
           src={imageSrc}
           variant="small"
@@ -72,14 +83,14 @@ export const ListingCardList = memo(function ListingCardList({
           borderRadius={0}
         />
         {isFeatured && (
-          <View style={styles.featuredBadge}>
+          <View style={[styles.featuredBadge, badgePosition]}>
             <Text variant="xs" bold style={styles.featuredBadgeText}>
               مميز
             </Text>
           </View>
         )}
-        {/* Favorite button - bottom right of image */}
-        <View style={styles.favoriteButtonWrapper}>
+        {/* Favorite button - bottom of image on start side */}
+        <View style={[styles.favoriteButtonWrapper, favoritePosition]}>
           <FavoriteButton
             listingId={id}
             listingUserId={userId}
@@ -91,18 +102,18 @@ export const ListingCardList = memo(function ListingCardList({
       {/* Content area */}
       <View style={styles.content}>
         {/* Title */}
-        <Text variant="body" numberOfLines={2} style={styles.title}>
+        <Text variant="body" numberOfLines={2} style={[styles.title, { textAlign }]}>
           {title}
         </Text>
 
         {/* Price */}
-        <Text variant="h4" color="primary" style={styles.price}>
+        <Text variant="h4" color="primary" style={[styles.price, { textAlign }]}>
           {price}
         </Text>
 
         {/* Specs - backend decides what to show */}
         {specsDisplay && Object.keys(specsDisplay).length > 0 ? (
-          <Text variant="xs" color="secondary" numberOfLines={2} style={styles.specs}>
+          <Text variant="xs" color="secondary" numberOfLines={2} style={[styles.specs, { textAlign }]}>
             {[...new Set(
               Object.entries(specsDisplay)
                 .filter(([key]) => key !== 'accountType' && key !== 'account_type')
@@ -117,14 +128,14 @@ export const ListingCardList = memo(function ListingCardList({
               .join(' | ')}
           </Text>
         ) : specs ? (
-          <Text variant="xs" color="secondary" numberOfLines={2} style={styles.specs}>
+          <Text variant="xs" color="secondary" numberOfLines={2} style={[styles.specs, { textAlign }]}>
             {specs}
           </Text>
         ) : null}
 
-        {/* Location - icon before text in RTL */}
+        {/* Location - icon position based on direction */}
         {location && (
-          <View style={styles.location}>
+          <View style={[styles.location, { flexDirection: locationDirection, justifyContent: locationJustify }]}>
             <Text variant="xs" color="muted" numberOfLines={1}>
               {location}
             </Text>
@@ -141,7 +152,7 @@ ListingCardList.displayName = 'ListingCardList';
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     card: {
-      flexDirection: 'row-reverse',
+      // flexDirection applied dynamically
       backgroundColor: theme.colors.bg,
       borderRadius: theme.radius.lg,
       overflow: 'hidden',
@@ -157,14 +168,12 @@ const createStyles = (theme: Theme) =>
       overflow: 'hidden',
       position: 'relative',
       backgroundColor: theme.colors.surface,
-      // Rounded corners on right side (RTL image is on right)
-      borderTopRightRadius: theme.radius.lg,
-      borderBottomRightRadius: theme.radius.lg,
+      // Border radius applied dynamically based on direction
     },
     featuredBadge: {
       position: 'absolute',
       top: theme.spacing.xs,
-      right: theme.spacing.xs,
+      // left/right applied dynamically
       backgroundColor: theme.colors.primary,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 2,
@@ -181,30 +190,29 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
     },
     title: {
-      textAlign: 'right',
+      // textAlign applied dynamically
       marginBottom: theme.spacing.xs,
       fontWeight: '600',
       lineHeight: 20,
     },
     price: {
-      textAlign: 'right',
+      // textAlign applied dynamically
       marginBottom: theme.spacing.xs,
     },
     specs: {
-      textAlign: 'right',
+      // textAlign applied dynamically
       marginBottom: theme.spacing.xs,
       opacity: 0.7,
     },
     location: {
-      flexDirection: 'row',
+      // flexDirection and justifyContent applied dynamically
       alignItems: 'center',
-      justifyContent: 'flex-end',
       gap: theme.spacing.xs,
     },
     favoriteButtonWrapper: {
       position: 'absolute',
       bottom: theme.spacing.xs,
-      right: theme.spacing.xs,
+      // left/right applied dynamically
     },
   });
 

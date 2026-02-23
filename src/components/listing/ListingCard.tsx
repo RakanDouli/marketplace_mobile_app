@@ -200,10 +200,10 @@ const createCompactStyles = (theme: Theme) =>
     },
     title: {
       marginBottom: theme.spacing.xs,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     price: {
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
   });
 

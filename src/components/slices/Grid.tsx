@@ -5,11 +5,11 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useTheme, Theme } from '../../theme';
 import { Container, ContainerProps } from './Container';
 import { Text } from './Text';
+import { Button } from './Button';
 import { Loading } from './Loading';
 
 export type GapSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -111,7 +111,11 @@ export function Grid({
   ));
 
   const gridElement = (
-    <View style={[styles.grid, { gap: gapValue }]}>
+    <View style={[
+      styles.grid,
+      { gap: gapValue },
+      { flexDirection: theme.isRTL ? 'row-reverse' : 'row' },
+    ]}>
       {gridItems}
     </View>
   );
@@ -125,19 +129,22 @@ export function Grid({
         <View
           style={[
             styles.header,
+            { flexDirection: theme.isRTL ? 'row-reverse' : 'row' },
             titleAlign === 'center' && styles.headerCenter,
           ]}
         >
-          {onViewAll && (
-            <TouchableOpacity onPress={onViewAll} style={styles.viewAllButton}>
-              <Text variant="paragraph" style={{ color: theme.colors.primary }}>
-                {viewAllText}
-              </Text>
-              <ChevronLeft size={16} color={theme.colors.primary} />
-            </TouchableOpacity>
-          )}
-          {action}
           {title && <Text variant="h3">{title}</Text>}
+          {action}
+          {onViewAll && (
+            <Button
+              variant="link"
+              size="sm"
+              onPress={onViewAll}
+              arrowForward
+            >
+              {viewAllText}
+            </Button>
+          )}
         </View>
         {gridElement}
       </Container>
@@ -150,23 +157,16 @@ export function Grid({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     grid: {
-      flexDirection: 'row-reverse', // RTL support
       flexWrap: 'wrap',
       alignItems: 'flex-start',
     },
     header: {
-      flexDirection: 'row-reverse', // RTL: title on right, action on left
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: theme.spacing.md,
     },
     headerCenter: {
       justifyContent: 'center',
-    },
-    viewAllButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.xs,
     },
     loading: {
       paddingVertical: theme.spacing.xl,

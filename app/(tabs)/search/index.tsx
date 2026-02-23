@@ -181,7 +181,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, i
       paddingBottom: theme.spacing.md,
     },
     sectionTitle: {
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     loadingContainer: {
       padding: 60,
@@ -194,7 +194,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, i
       padding: 60,
     },
     categoriesGrid: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       paddingHorizontal: horizontalPadding,
       gap: gridGap,

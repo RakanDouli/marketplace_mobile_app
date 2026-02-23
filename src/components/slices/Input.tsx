@@ -132,6 +132,7 @@ export function Input({
           {
             borderColor: getBorderColor(),
             backgroundColor: theme.colors.bg,
+            flexDirection: theme.isRTL ? 'row-reverse' : 'row',
           },
         ]}
       >
@@ -142,7 +143,8 @@ export function Input({
             styles.input,
             {
               color: theme.colors.text,
-              textAlign: 'right',
+              textAlign: theme.isRTL ? 'right' : 'left',
+              writingDirection: theme.direction,
             },
             leftIcon ? styles.inputWithLeftIcon : undefined,
             (rightIcon || isPassword) ? styles.inputWithRightIcon : undefined,
@@ -216,7 +218,6 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.error,
     },
     inputContainer: {
-      flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1,
       borderRadius: theme.radius.md,
@@ -227,7 +228,6 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.lg,
       fontSize: theme.fontSize.base,
-      writingDirection: 'rtl',
     },
     inputWithLeftIcon: {
       paddingStart: theme.spacing.sm,
@@ -243,11 +243,9 @@ const createStyles = (theme: Theme) =>
     },
     helperText: {
       marginTop: theme.spacing.xs,
-      textAlign: 'right',
     },
     counter: {
       marginTop: theme.spacing.xs,
-      textAlign: 'left',
     },
   });
 

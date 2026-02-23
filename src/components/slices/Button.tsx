@@ -1,6 +1,13 @@
 /**
  * Button Component
  * Matches web frontend Button.module.scss EXACTLY
+ *
+ * Icon positioning:
+ * - iconStart: Icon at the START of reading direction (RTL: right side, LTR: left side)
+ * - iconEnd: Icon at the END of reading direction (RTL: left side, LTR: right side)
+ * - icon: Legacy prop, same as iconStart
+ * - arrowBack: Shows back arrow (ChevronRight in RTL, ChevronLeft in LTR) at start
+ * - arrowForward: Shows forward arrow (ChevronLeft in RTL, ChevronRight in LTR) at end
  */
 
 import React, { useMemo } from 'react';
@@ -12,7 +19,7 @@ import {
   TextStyle,
   View,
 } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text } from './Text';
 
@@ -32,11 +39,19 @@ export interface ButtonProps {
   size?: ButtonSize;
   loading?: boolean;
   disabled?: boolean;
-  /** Icon to display. If provided, arrow prop is ignored. */
+  /** Icon at the start of reading direction (RTL: right, LTR: left) */
+  iconStart?: React.ReactNode;
+  /** Icon at the end of reading direction (RTL: left, LTR: right) */
+  iconEnd?: React.ReactNode;
+  /** @deprecated Use iconStart instead. Icon to display at start. */
   icon?: React.ReactNode;
   children?: React.ReactNode;
-  /** Show arrow icon after text. Ignored if icon prop is provided. */
+  /** @deprecated Use arrowForward instead. Show arrow icon after text. */
   arrow?: boolean;
+  /** Show back arrow at start (direction-aware) */
+  arrowBack?: boolean;
+  /** Show forward arrow at end (direction-aware) */
+  arrowForward?: boolean;
   onPress?: () => void;
   style?: ViewStyle;
   textStyle?: TextStyle;
@@ -48,9 +63,13 @@ export function Button({
   size = 'md',
   loading = false,
   disabled = false,
-  icon,
+  iconStart,
+  iconEnd,
+  icon, // legacy
   children,
-  arrow,
+  arrow, // legacy
+  arrowBack,
+  arrowForward,
   onPress,
   style,
   textStyle,
@@ -179,9 +198,20 @@ export function Button({
     }
   };
 
-  // Determine which icon to show (icon prop takes priority over arrow)
-  const showIcon = icon || (arrow && !icon ? (
-    <ArrowLeft size={getIconSize()} color={getTextColor()} />
+  // Direction-aware arrow icons
+  // Back arrow: points to the "back" direction (RTL: right, LTR: left)
+  const BackArrowIcon = theme.isRTL ? ChevronRight : ChevronLeft;
+  // Forward arrow: points to the "forward" direction (RTL: left, LTR: right)
+  const ForwardArrowIcon = theme.isRTL ? ChevronLeft : ChevronRight;
+
+  // Resolve start icon (iconStart > icon > arrowBack)
+  const resolvedStartIcon = iconStart || icon || (arrowBack ? (
+    <BackArrowIcon size={getIconSize()} color={getTextColor()} />
+  ) : null);
+
+  // Resolve end icon (iconEnd > arrow/arrowForward)
+  const resolvedEndIcon = iconEnd || ((arrow || arrowForward) ? (
+    <ForwardArrowIcon size={getIconSize()} color={getTextColor()} />
   ) : null);
 
   return (
@@ -203,9 +233,17 @@ export function Button({
       {loading ? (
         <ActivityIndicator size="small" color={getTextColor()} />
       ) : (
-        <View style={[styles.content, { gap: getGap() }]}>
-          {/* Icon (always after text, matching web) */}
-          {showIcon && <View style={styles.icon}>{showIcon}</View>}
+        <View style={[
+          styles.content,
+          { gap: getGap() },
+          // RTL: row-reverse so iconStart appears on right, iconEnd on left
+          // LTR: row so iconStart appears on left, iconEnd on right
+          { flexDirection: theme.isRTL ? 'row-reverse' : 'row' },
+        ]}>
+          {/* Start icon (appears at start of reading direction) */}
+          {resolvedStartIcon && (
+            <View style={styles.icon}>{resolvedStartIcon}</View>
+          )}
 
           {/* Text content */}
           {children && (
@@ -226,6 +264,11 @@ export function Button({
               {children}
             </Text>
           )}
+
+          {/* End icon (appears at end of reading direction) */}
+          {resolvedEndIcon && (
+            <View style={styles.icon}>{resolvedEndIcon}</View>
+          )}
         </View>
       )}
     </TouchableOpacity>
@@ -241,7 +284,6 @@ const createStyles = (theme: Theme) =>
       borderRadius: theme.radius.full,
     },
     content: {
-      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
     },

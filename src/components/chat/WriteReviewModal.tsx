@@ -286,7 +286,7 @@ const createStyles = (theme: Theme) =>
       maxHeight: '90%',
     },
     header: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: theme.spacing.md,
@@ -313,7 +313,7 @@ const createStyles = (theme: Theme) =>
     },
     sectionTitle: {
       marginBottom: theme.spacing.sm,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
       fontWeight: '600',
     },
     starsContainer: {
@@ -326,7 +326,7 @@ const createStyles = (theme: Theme) =>
       padding: theme.spacing.xs,
     },
     tagsContainer: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.sm,
       marginBottom: theme.spacing.sm,
@@ -361,11 +361,11 @@ const createStyles = (theme: Theme) =>
     },
     errorText: {
       color: theme.colors.error,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
       marginTop: theme.spacing.xs,
     },
     actions: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.lg,

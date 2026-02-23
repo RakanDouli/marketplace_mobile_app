@@ -332,13 +332,13 @@ export default function ListingDetailScreen() {
                   <>
                     <TouchableOpacity
                       style={[styles.galleryNav, styles.galleryNavLeft]}
-                      onPress={goToPrevImage}
+                      onPress={theme.isRTL ? goToNextImage : goToPrevImage}
                     >
                       <ChevronLeft size={24} color="#FFFFFF" />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.galleryNav, styles.galleryNavRight]}
-                      onPress={goToNextImage}
+                      onPress={theme.isRTL ? goToPrevImage : goToNextImage}
                     >
                       <ChevronRight size={24} color="#FFFFFF" />
                     </TouchableOpacity>
@@ -666,14 +666,14 @@ const createStyles = (theme: Theme) =>
     },
     price: {
       color: theme.colors.primary,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     title: {
       marginTop: theme.spacing.sm,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     metaRow: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       marginTop: theme.spacing.md,
       gap: theme.spacing.md,
@@ -687,7 +687,7 @@ const createStyles = (theme: Theme) =>
       marginRight: 4,
     },
     statsRow: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       marginTop: theme.spacing.md,
       paddingTop: theme.spacing.md,
       borderTopWidth: 1,
@@ -706,7 +706,7 @@ const createStyles = (theme: Theme) =>
     },
     sectionTitle: {
       marginBottom: theme.spacing.md,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Specs
@@ -720,12 +720,12 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.bg,
       padding: theme.spacing.md,
       borderRadius: theme.radius.lg,
-      alignItems: 'flex-end',
+      alignItems: theme.isRTL ? 'flex-end' : 'flex-start',
     },
 
     // Description
     description: {
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
       lineHeight: 24,
     },
 
@@ -738,7 +738,7 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.bg,
     },
     bottomActions: {
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       padding: theme.spacing.md,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,

@@ -63,7 +63,11 @@ export function DropdownMenuItem({
 
   return (
     <TouchableOpacity
-      style={[styles.menuItem, disabled && styles.menuItemDisabled]}
+      style={[
+        styles.menuItem,
+        { flexDirection: theme.isRTL ? 'row-reverse' : 'row' },
+        disabled && styles.menuItemDisabled,
+      ]}
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.7}
@@ -86,7 +90,6 @@ export function DropdownMenuItem({
 const createMenuItemStyles = (theme: Theme) =>
   StyleSheet.create({
     menuItem: {
-      flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
@@ -134,12 +137,15 @@ export interface DropdownProps {
 export function Dropdown({
   trigger,
   children,
-  align = 'right',
+  align,
   fullWidth = false,
   isOpen: controlledIsOpen,
   onOpenChange,
 }: DropdownProps) {
   const theme = useTheme();
+
+  // Default align based on direction: RTL = right, LTR = left
+  const effectiveAlign = align || (theme.isRTL ? 'right' : 'left');
   const styles = useMemo(() => createDropdownStyles(theme), [theme]);
   const triggerRef = useRef<View>(null);
 
@@ -199,9 +205,9 @@ export function Dropdown({
     let left = triggerLayout.x;
     if (fullWidth) {
       left = 16; // 16px margin on each side
-    } else if (align === 'right') {
+    } else if (effectiveAlign === 'right') {
       left = triggerLayout.x + triggerLayout.width - menuWidth;
-    } else if (align === 'center') {
+    } else if (effectiveAlign === 'center') {
       left = triggerLayout.x + (triggerLayout.width - menuWidth) / 2;
     }
 

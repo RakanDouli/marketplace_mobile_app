@@ -46,7 +46,7 @@ export function FeatureCard({
         };
       case 'icon-row':
         return {
-          flexDirection: 'row',
+          flexDirection: theme.isRTL ? 'row-reverse' : 'row',
           alignItems: 'flex-start',
           padding: theme.spacing.md,
         };
@@ -111,7 +111,7 @@ export function FeatureCard({
     return {
       flex: isRow ? 1 : undefined,
       marginStart: isRow ? theme.spacing.md : 0,
-      alignItems: isRow ? 'flex-end' : 'center',
+      alignItems: isRow ? (theme.isRTL ? 'flex-end' : 'flex-start') : 'center',
     };
   };
 

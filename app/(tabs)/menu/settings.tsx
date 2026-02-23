@@ -1,20 +1,14 @@
 /**
  * Settings Screen
- * App settings and preferences (notifications, currency, language, theme)
+ * App settings and preferences (notifications, language)
+ * Note: Currency selector is in the Menu page (menu/index.tsx)
  */
 
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert, Platform } from 'react-native';
-import { Bell, DollarSign, Check, Globe, RefreshCw } from 'lucide-react-native';
-import * as Updates from 'expo-updates';
+import { Bell, Check, Globe, RefreshCw } from 'lucide-react-native';
 import { useTheme, Theme } from '../../../src/theme';
 import { Text } from '../../../src/components/slices/Text';
-import {
-  useCurrencyStore,
-  CURRENCY_SYMBOLS,
-  CURRENCY_LABELS,
-  type Currency,
-} from '../../../src/stores/currencyStore';
 import {
   useLanguageStore,
   LANGUAGES,
@@ -29,17 +23,11 @@ export default function SettingsScreen() {
   const { t, language: currentLanguage } = useTranslation();
 
   const {
-    preferredCurrency,
-    setPreferredCurrency,
-  } = useCurrencyStore();
-
-  const {
     language,
     setLanguage,
     requiresRestart,
   } = useLanguageStore();
 
-  const currencies: Currency[] = ['USD', 'EUR', 'SYP'];
   const languages: Language[] = ['ar', 'en'];
 
   const handleLanguageChange = async (newLanguage: Language) => {
@@ -54,22 +42,8 @@ export default function SettingsScreen() {
         t('settings.restartMessage'),
         [
           {
-            text: t('settings.restartLater'),
-            style: 'cancel',
-          },
-          {
-            text: t('settings.restartNow'),
-            onPress: async () => {
-              try {
-                await Updates.reloadAsync();
-              } catch (e) {
-                // Fallback for development builds
-                Alert.alert(
-                  'Restart Required',
-                  'Please close and reopen the app to apply language changes.'
-                );
-              }
-            },
+            text: t('common.ok'),
+            style: 'default',
           },
         ]
       );
@@ -131,49 +105,6 @@ export default function SettingsScreen() {
             </Text>
           </View>
         )}
-      </View>
-
-      {/* Currency Selector */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <DollarSign size={20} color={theme.colors.text} />
-          <Text variant="body" style={styles.sectionTitle}>
-            {t('settings.currency')}
-          </Text>
-        </View>
-        <View style={styles.optionsList}>
-          {currencies.map((currency) => (
-            <TouchableOpacity
-              key={currency}
-              style={[
-                styles.option,
-                preferredCurrency === currency && styles.optionSelected,
-              ]}
-              onPress={() => setPreferredCurrency(currency)}
-            >
-              <View style={styles.optionContent}>
-                <Text
-                  variant="body"
-                  style={[
-                    styles.currencySymbol,
-                    preferredCurrency === currency && { color: theme.colors.primary },
-                  ]}
-                >
-                  {CURRENCY_SYMBOLS[currency]}
-                </Text>
-                <Text
-                  variant="small"
-                  style={preferredCurrency === currency ? { color: theme.colors.primary } : undefined}
-                >
-                  {CURRENCY_LABELS[currency]}
-                </Text>
-              </View>
-              {preferredCurrency === currency && (
-                <Check size={20} color={theme.colors.primary} />
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
       </View>
 
       {/* Notifications */}
@@ -248,10 +179,6 @@ const createStyles = (theme: Theme) =>
     optionLabel: {
       fontWeight: '600',
       minWidth: 70,
-    },
-    currencySymbol: {
-      fontWeight: '700',
-      width: 30,
     },
     // Settings Row
     row: {

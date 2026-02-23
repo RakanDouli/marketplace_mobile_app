@@ -10,13 +10,12 @@ import {
   View,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Container, ContainerProps } from './Container';
 import { Text } from './Text';
+import { Button } from './Button';
 import { Loading } from './Loading';
 
 export interface SliderProps<T> {
@@ -86,18 +85,24 @@ export function Slider<T>({
 
   return (
     <Container paddingY={paddingY} paddingX="none" background={background}>
-      {/* Header */}
+      {/* Header - Title at start, View All at end */}
       {(title || onViewAll) && (
-        <View style={[styles.header, { paddingHorizontal: theme.spacing.md }]}>
-          {onViewAll && (
-            <TouchableOpacity onPress={onViewAll} style={styles.viewAllButton}>
-              <Text variant="paragraph" style={{ color: theme.colors.primary }}>
-                {viewAllText}
-              </Text>
-              <ChevronLeft size={16} color={theme.colors.primary} />
-            </TouchableOpacity>
-          )}
+        <View style={[
+          styles.header,
+          { paddingHorizontal: theme.spacing.md },
+          { flexDirection: theme.isRTL ? 'row-reverse' : 'row' },
+        ]}>
           {title && <Text variant="h3">{title}</Text>}
+          {onViewAll && (
+            <Button
+              variant="link"
+              size="sm"
+              onPress={onViewAll}
+              arrowForward
+            >
+              {viewAllText}
+            </Button>
+          )}
         </View>
       )}
 
@@ -105,7 +110,7 @@ export function Slider<T>({
       <FlatList
         data={data}
         horizontal
-        inverted
+        inverted={theme.isRTL}
         showsHorizontalScrollIndicator={false}
         keyExtractor={keyExtractor}
         contentContainerStyle={[
@@ -125,15 +130,9 @@ export function Slider<T>({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     header: {
-      flexDirection: 'row-reverse', // RTL: title on right, action on left
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: theme.spacing.md,
-    },
-    viewAllButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.xs,
     },
     loading: {
       paddingVertical: theme.spacing.xl,

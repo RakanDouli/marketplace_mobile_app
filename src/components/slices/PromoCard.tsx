@@ -51,15 +51,31 @@ export function PromoCard({
 
   const bgColor = variantColors[variant];
 
-  // RTL: row = first child on right, row-reverse = first child on left
-  // imageLeft: Image on left → use 'row-reverse' (first child goes left)
-  // imageRight: Image on right → use 'row' (first child goes right)
-  const flexDirection = imagePosition === 'left' ? 'row-reverse' : 'row';
+  // Determine flex direction based on image position and RTL mode
+  // In RTL: row = first child on right, row-reverse = first child on left
+  // In LTR: row = first child on left, row-reverse = first child on right
+  const getFlexDirection = (): 'row' | 'row-reverse' => {
+    if (theme.isRTL) {
+      // RTL mode
+      return imagePosition === 'left' ? 'row-reverse' : 'row';
+    } else {
+      // LTR mode
+      return imagePosition === 'left' ? 'row' : 'row-reverse';
+    }
+  };
 
-  // Content aligns towards where it sits:
-  // imageLeft → content on right → align right → flex-start in RTL
-  // imageRight → content on left → align left → flex-end in RTL
-  const contentAlign = imagePosition === 'left' ? 'flex-start' : 'flex-end';
+  const flexDirection = getFlexDirection();
+
+  // Content aligns towards where it sits based on direction
+  const getContentAlign = (): 'flex-start' | 'flex-end' => {
+    if (theme.isRTL) {
+      return imagePosition === 'left' ? 'flex-start' : 'flex-end';
+    } else {
+      return imagePosition === 'left' ? 'flex-start' : 'flex-end';
+    }
+  };
+
+  const contentAlign = getContentAlign();
 
   return (
     <TouchableOpacity
@@ -76,7 +92,7 @@ export function PromoCard({
 
       {/* Content */}
       <View style={[styles.content, { alignItems: contentAlign }]}>
-        <View style={styles.titleRow}>
+        <View style={[styles.titleRow, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
           {badge && (
             <View style={[styles.badge, { backgroundColor: theme.colors.error }]}>
               <Text variant="xs" color="inverse">{badge}</Text>
@@ -112,7 +128,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   titleRow: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     flexWrap: 'wrap',
