@@ -24,6 +24,6 @@ export { LocationMap } from './LocationMap';
 export { RelatedListings } from './RelatedListings';
 export type { RelatedType } from './RelatedListings';
 
-export { ImagePreviewModal } from './ImagePreviewModal';
+export { ImagePreviewModal } from '../slices/ImagePreviewModal';
 export { ReportModal } from './ReportModal';
 export { ReviewsModal } from './ReviewsModal';

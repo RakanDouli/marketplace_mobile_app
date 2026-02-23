@@ -43,7 +43,7 @@ import { CarDamageViewer, fromBackendFormat } from '../../src/components/listing
 import { OwnerCard } from '../../src/components/listing/OwnerCard';
 import { LocationMap } from '../../src/components/listing/LocationMap';
 import { RelatedListings } from '../../src/components/listing/RelatedListings';
-import { ImagePreviewModal } from '../../src/components/listing/ImagePreviewModal';
+import { ImagePreviewModal } from '../../src/components/slices/ImagePreviewModal';
 import { ReportModal } from '../../src/components/listing/ReportModal';
 import { ReviewsModal } from '../../src/components/listing/ReviewsModal';
 import { FavoriteButton } from '../../src/components/listing/FavoriteButton';

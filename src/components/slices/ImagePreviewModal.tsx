@@ -172,23 +172,23 @@ export function ImagePreviewModal({
           keyExtractor={(item, index) => `${item}-${index}`}
         />
 
-        {/* Navigation Arrows */}
+        {/* Navigation Arrows - RTL style (right arrow = prev, left arrow = next) */}
         {images.length > 1 && (
           <>
-            {/* Previous button - left side (React Native auto-mirrors for RTL) */}
-            {currentIndex > 0 && (
+            {/* Next button - left side */}
+            {currentIndex < images.length - 1 && (
               <TouchableOpacity
                 style={[styles.navButton, styles.navButtonLeft]}
-                onPress={goToPrev}
+                onPress={goToNext}
               >
                 <ChevronLeft size={32} color="#FFFFFF" />
               </TouchableOpacity>
             )}
-            {/* Next button - right side (React Native auto-mirrors for RTL) */}
-            {currentIndex < images.length - 1 && (
+            {/* Previous button - right side */}
+            {currentIndex > 0 && (
               <TouchableOpacity
                 style={[styles.navButton, styles.navButtonRight]}
-                onPress={goToNext}
+                onPress={goToPrev}
               >
                 <ChevronRight size={32} color="#FFFFFF" />
               </TouchableOpacity>
@@ -196,12 +196,13 @@ export function ImagePreviewModal({
           </>
         )}
 
-        {/* Thumbnails */}
+        {/* Thumbnails - RTL: start from right */}
         {images.length > 1 && (
           <View style={styles.thumbnails}>
             <FlatList
               data={images}
               horizontal
+              inverted
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.thumbnailsContent}
               renderItem={({ item, index }) => (

@@ -17,7 +17,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Image,
+  Image as RNImage,
   TextInput,
   KeyboardAvoidingView,
   Platform,
@@ -25,7 +25,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import {
   Send,
@@ -33,6 +33,7 @@ import {
   Check,
   CheckCheck,
   Edit2,
+  Edit3,
   Trash2,
   Ban,
   Flag,
@@ -54,6 +55,7 @@ import {
   DeleteThreadModal,
   DeleteMessageModal,
   ReportUserModal,
+  WriteReviewModal,
 } from '../../src/components/chat';
 
 const MAX_IMAGES = 8;
@@ -63,6 +65,7 @@ const MESSAGE_EDIT_TIME_LIMIT_MS = 5 * 60 * 1000; // 5 minutes edit/delete time 
 export default function ChatScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { threadId } = useLocalSearchParams<{ threadId: string }>();
 
@@ -103,7 +106,6 @@ export default function ChatScreen() {
 
   // Dropdown states
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
-  const [inputMenuOpen, setInputMenuOpen] = useState(false);
   const [messageMenuOpen, setMessageMenuOpen] = useState<string | null>(null);
 
   // Modals
@@ -111,6 +113,7 @@ export default function ChatScreen() {
   const [showDeleteThreadModal, setShowDeleteThreadModal] = useState(false);
   const [showDeleteMessageModal, setShowDeleteMessageModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showWriteReviewModal, setShowWriteReviewModal] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   // Image preview
@@ -142,6 +145,11 @@ export default function ChatScreen() {
 
   const otherUserId = thread ? getOtherUserId(thread) : null;
   const isBuyer = thread ? thread.buyerId === currentUserId : false;
+  const otherUserName = thread
+    ? (isBuyer
+        ? (thread.seller?.name || thread.seller?.companyName)
+        : (thread.buyer?.name || thread.buyer?.companyName)) || 'المستخدم'
+    : 'المستخدم';
 
   // Fetch messages and subscribe on mount
   useEffect(() => {
@@ -182,19 +190,24 @@ export default function ChatScreen() {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      selectionLimit: remainingSlots,
-      quality: 0.8,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        selectionLimit: remainingSlots,
+        quality: 0.8,
+      });
 
-    if (!result.canceled && result.assets) {
-      const newImages = result.assets.map((asset) => ({
-        uri: asset.uri,
-        assetKey: undefined,
-      }));
-      setPendingImages((prev) => [...prev, ...newImages].slice(0, MAX_IMAGES));
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newImages = result.assets.map((asset) => ({
+          uri: asset.uri,
+          assetKey: undefined,
+        }));
+        setPendingImages((prev) => [...prev, ...newImages].slice(0, MAX_IMAGES));
+      }
+    } catch (error) {
+      console.error('Image picker error:', error);
+      Alert.alert('خطأ', 'فشل في فتح معرض الصور. يرجى المحاولة مرة أخرى.');
     }
   };
 
@@ -214,7 +227,7 @@ export default function ChatScreen() {
       }
 
       try {
-        const { uploadUrl, assetKey } = await createImageUploadUrl();
+        const { uploadUrl } = await createImageUploadUrl();
 
         // React Native: Create FormData with file object (not blob)
         const formData = new FormData();
@@ -243,7 +256,19 @@ export default function ChatScreen() {
           throw new Error('Upload failed');
         }
 
-        uploadedKeys.push(assetKey);
+        // Extract ACTUAL asset ID from Cloudflare response (not the backend's assetKey)
+        const uploadResult = await uploadResponse.json();
+
+        if (!uploadResult.success) {
+          throw new Error('Upload failed');
+        }
+
+        const actualAssetId = uploadResult?.result?.id;
+        if (!actualAssetId) {
+          throw new Error('No asset ID returned from Cloudflare');
+        }
+
+        uploadedKeys.push(actualAssetId);
       } catch (error) {
         console.error('Error uploading image:', error);
         throw error;
@@ -461,9 +486,7 @@ export default function ChatScreen() {
               {!isOwn && (
                 <TouchableOpacity
                   style={styles.writeReviewButton}
-                  onPress={() => {
-                    Alert.alert('قريباً', 'ميزة كتابة التقييم قيد التطوير');
-                  }}
+                  onPress={() => setShowWriteReviewModal(true)}
                 >
                   <Text variant="small" style={styles.writeReviewButtonText}>
                     اكتب تقييم
@@ -473,36 +496,23 @@ export default function ChatScreen() {
             </View>
           ) : (
             <>
-              {/* Images - WhatsApp style grid */}
+              {/* Images - Simple grid like WhatsApp */}
               {hasImages && (
-                <View style={[
-                  styles.messageImagesGrid,
-                  message.imageKeys!.length === 1 && styles.messageImagesSingle,
-                  message.imageKeys!.length === 2 && styles.messageImagesDouble,
-                  message.imageKeys!.length >= 3 && styles.messageImagesMultiple,
-                ]}>
+                <View style={styles.messageImagesContainer}>
                   {message.imageKeys!.slice(0, 4).map((imageKey, index) => {
                     const imageCount = message.imageKeys!.length;
                     const isLast = index === 3 && imageCount > 4;
+                    const imageUrl = getCloudflareImageUrl(imageKey, 'large');
 
                     return (
                       <TouchableOpacity
                         key={index}
-                        style={[
-                          styles.messageImageWrapper,
-                          // Single image - full width
-                          imageCount === 1 && styles.messageImageWrapperSingle,
-                          // Two images - half width each
-                          imageCount === 2 && styles.messageImageWrapperHalf,
-                          // 3+ images - grid layout
-                          imageCount >= 3 && index === 0 && styles.messageImageWrapperLarge,
-                          imageCount >= 3 && index > 0 && styles.messageImageWrapperSmall,
-                        ]}
+                        style={styles.messageImageWrapper}
                         onPress={() => openImagePreview(message.imageKeys!, index)}
-                        activeOpacity={0.9}
+                        activeOpacity={0.8}
                       >
-                        <Image
-                          source={{ uri: getCloudflareImageUrl(imageKey, imageCount === 1 ? 'desktop' : 'thumbnail') }}
+                        <RNImage
+                          source={{ uri: imageUrl }}
                           style={styles.messageImage}
                           resizeMode="cover"
                         />
@@ -582,11 +592,11 @@ export default function ChatScreen() {
               {thread.listing?.title || 'إعلان محذوف'}
             </Text>
             <Text variant="small" color="secondary" numberOfLines={1}>
-              {isBuyer ? 'محادثة مع البائع' : 'محادثة مع المشتري'}
+              {otherUserName}
             </Text>
           </View>
           {thread.listing?.images?.[0] && (
-            <Image
+            <RNImage
               source={{ uri: getCloudflareImageUrl(thread.listing.images[0], 'thumbnail') }}
               style={styles.listingThumbnail}
             />
@@ -601,9 +611,25 @@ export default function ChatScreen() {
             </TouchableOpacity>
           }
           align="left"
+          fullWidth
           isOpen={headerMenuOpen}
           onOpenChange={setHeaderMenuOpen}
         >
+          <DropdownMenuItem
+            icon={<Star size={18} color={canRequestReview ? '#fbbf24' : theme.colors.textMuted} />}
+            label="طلب تقييم"
+            description={canRequestReview ? 'أرسل طلب تقييم للمستخدم الآخر' : `متاح بعد ${MIN_MESSAGES_FOR_REVIEW - threadMessages.length} رسائل`}
+            onPress={handleSendReviewRequest}
+            disabled={!canRequestReview}
+          />
+          <DropdownMenuItem
+            icon={<Edit3 size={18} color={canRequestReview ? theme.colors.primary : theme.colors.textMuted} />}
+            label="كتابة تقييم"
+            description={canRequestReview ? 'قيّم تجربتك مع هذا المستخدم' : `متاح بعد ${MIN_MESSAGES_FOR_REVIEW - threadMessages.length} رسائل`}
+            onPress={() => setShowWriteReviewModal(true)}
+            disabled={!canRequestReview}
+          />
+          <DropdownSeparator />
           <DropdownMenuItem
             icon={<Flag size={18} color={theme.colors.warning} />}
             label="الإبلاغ عن المستخدم"
@@ -686,7 +712,7 @@ export default function ChatScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {pendingImages.map((image, index) => (
                 <View key={index} style={styles.pendingImageWrapper}>
-                  <Image source={{ uri: image.uri }} style={styles.pendingImage} />
+                  <RNImage source={{ uri: image.uri }} style={styles.pendingImage} />
                   <TouchableOpacity
                     style={styles.removePendingImage}
                     onPress={() => removePendingImage(index)}
@@ -703,44 +729,22 @@ export default function ChatScreen() {
         )}
 
         {/* Input Area */}
-        <View style={styles.inputContainer}>
-          {/* Three dots menu with Dropdown */}
-          <Dropdown
-            trigger={
-              <TouchableOpacity
-                style={styles.menuButton}
-                disabled={isUploadingImages || isSending}
-              >
-                <MoreVertical size={24} color={theme.colors.textMuted} />
-                {pendingImages.length > 0 && (
-                  <View style={styles.imageBadge}>
-                    <Text variant="small" style={styles.imageBadgeText}>
-                      {pendingImages.length}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            }
-            align="left"
-            isOpen={inputMenuOpen}
-            onOpenChange={setInputMenuOpen}
+        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, theme.spacing.sm) }]}>
+          {/* Direct paperclip button for image attachment */}
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={handlePickImages}
+            disabled={isUploadingImages || isSending || pendingImages.length >= MAX_IMAGES}
           >
-            <DropdownMenuItem
-              icon={<Paperclip size={18} color={theme.colors.text} />}
-              label="إرفاق صور"
-              description={pendingImages.length > 0 ? `${pendingImages.length}/${MAX_IMAGES}` : undefined}
-              onPress={handlePickImages}
-              disabled={pendingImages.length >= MAX_IMAGES}
-            />
-            <DropdownSeparator />
-            <DropdownMenuItem
-              icon={<Star size={18} color={canRequestReview ? '#fbbf24' : theme.colors.textMuted} />}
-              label="طلب تقييم"
-              description={canRequestReview ? undefined : `متاح بعد ${MIN_MESSAGES_FOR_REVIEW - threadMessages.length} رسائل`}
-              onPress={handleSendReviewRequest}
-              disabled={!canRequestReview}
-            />
-          </Dropdown>
+            <Paperclip size={24} color={pendingImages.length >= MAX_IMAGES ? theme.colors.textMuted : theme.colors.primary} />
+            {pendingImages.length > 0 && (
+              <View style={styles.imageBadge}>
+                <Text variant="small" style={styles.imageBadgeText}>
+                  {pendingImages.length}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
           <TextInput
             style={styles.input}
@@ -811,6 +815,18 @@ export default function ChatScreen() {
         isLoading={isActionLoading}
       />
 
+      {/* Write Review Modal */}
+      {otherUserId && (
+        <WriteReviewModal
+          visible={showWriteReviewModal}
+          onClose={() => setShowWriteReviewModal(false)}
+          reviewedUserId={otherUserId}
+          reviewedUserName={otherUserName}
+          listingId={thread?.listing?.id}
+          threadId={threadId}
+        />
+      )}
+
       {/* Image Preview Modal */}
       <ImagePreviewModal
         visible={showImagePreview}
@@ -854,14 +870,14 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
+    headerText: {
+      flex: 1,
+      alignItems: 'flex-end', // RTL: align text to right
+    },
     listingThumbnail: {
       width: 40,
       height: 40,
       borderRadius: theme.radius.sm,
-    },
-    headerText: {
-      flex: 1,
-      alignItems: 'flex-end', // RTL: align text to right
     },
     moreButton: {
       padding: theme.spacing.xs,
@@ -982,48 +998,19 @@ const createStyles = (theme: Theme) =>
     ownMessageTime: {
       color: 'rgba(255, 255, 255, 0.7)',
     },
-    // WhatsApp-style image grid
-    messageImagesGrid: {
-      borderRadius: theme.radius.md,
-      overflow: 'hidden',
+    // Message images - simple grid like WhatsApp (RTL: start from right)
+    messageImagesContainer: {
+      flexDirection: 'row-reverse',
+      flexWrap: 'wrap-reverse',
+      gap: 4,
       marginBottom: theme.spacing.xs,
-    },
-    messageImagesSingle: {
-      width: 220,
-      height: 280,
-    },
-    messageImagesDouble: {
-      flexDirection: 'row',
-      width: 220,
-      height: 150,
-      gap: 2,
-    },
-    messageImagesMultiple: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      width: 220,
-      height: 220,
-      gap: 2,
     },
     messageImageWrapper: {
       position: 'relative',
+      width: 100,
+      height: 100,
+      borderRadius: theme.radius.sm,
       overflow: 'hidden',
-    },
-    messageImageWrapperSingle: {
-      width: '100%',
-      height: '100%',
-    },
-    messageImageWrapperHalf: {
-      flex: 1,
-      height: '100%',
-    },
-    messageImageWrapperLarge: {
-      width: '60%',
-      height: '100%',
-    },
-    messageImageWrapperSmall: {
-      width: '38%',
-      height: '32%',
     },
     messageImage: {
       width: '100%',
@@ -1034,6 +1021,7 @@ const createStyles = (theme: Theme) =>
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
       justifyContent: 'center',
       alignItems: 'center',
+      borderRadius: theme.radius.sm,
     },
     moreImagesText: {
       color: '#FFFFFF',

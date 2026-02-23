@@ -126,6 +126,7 @@ export interface DropdownProps {
   trigger: ReactElement;
   children: ReactNode;
   align?: 'left' | 'right' | 'center';
+  fullWidth?: boolean;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 }
@@ -134,6 +135,7 @@ export function Dropdown({
   trigger,
   children,
   align = 'right',
+  fullWidth = false,
   isOpen: controlledIsOpen,
   onOpenChange,
 }: DropdownProps) {
@@ -188,14 +190,16 @@ export function Dropdown({
 
   // Calculate menu position
   const getMenuPosition = () => {
-    if (!triggerLayout) return { top: 0, left: 0 };
+    if (!triggerLayout) return { top: 0, left: 0, width: undefined as number | undefined };
 
-    const menuWidth = 220;
+    const menuWidth = fullWidth ? SCREEN_WIDTH - 32 : 220;
     const estimatedMenuHeight = 200; // Approximate menu height
     let top = triggerLayout.y + triggerLayout.height + 8;
 
     let left = triggerLayout.x;
-    if (align === 'right') {
+    if (fullWidth) {
+      left = 16; // 16px margin on each side
+    } else if (align === 'right') {
       left = triggerLayout.x + triggerLayout.width - menuWidth;
     } else if (align === 'center') {
       left = triggerLayout.x + (triggerLayout.width - menuWidth) / 2;
@@ -212,7 +216,7 @@ export function Dropdown({
       top = triggerLayout.y - estimatedMenuHeight - 8;
     }
 
-    return { top, left };
+    return { top, left, width: fullWidth ? menuWidth : undefined };
   };
 
   const menuPosition = getMenuPosition();
@@ -236,6 +240,7 @@ export function Dropdown({
               {
                 top: menuPosition.top,
                 left: menuPosition.left,
+                ...(menuPosition.width && { width: menuPosition.width, maxWidth: menuPosition.width }),
               },
             ]}
           >

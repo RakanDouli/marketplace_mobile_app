@@ -45,6 +45,18 @@ export const MY_THREADS_QUERY = `
         currency
         images
       }
+      buyer {
+        id
+        name
+        companyName
+        avatar
+      }
+      seller {
+        id
+        name
+        companyName
+        avatar
+      }
     }
   }
 `;

@@ -1,10 +1,10 @@
 /**
  * Reviews Store
- * Fetches user reviews for the reviews modal
+ * Fetches user reviews and creates new reviews
  */
 
 import { create } from 'zustand';
-import { graphqlRequest } from '../services/graphql/client';
+import { graphqlRequest, authGraphqlRequest } from '../services/graphql/client';
 
 const GET_USER_REVIEWS_QUERY = `
   query GetUserReviews($userId: ID!) {
@@ -20,6 +20,30 @@ const GET_USER_REVIEWS_QUERY = `
   }
 `;
 
+const CREATE_REVIEW_MUTATION = `
+  mutation CreateReview($input: CreateReviewInput!) {
+    createReview(input: $input) {
+      id
+      reviewerId
+      reviewerName
+      reviewerAvatar
+      reviewedUserId
+      listingId
+      threadId
+      rating
+      positiveTags
+      negativeTags
+      createdAt
+    }
+  }
+`;
+
+const CAN_REVIEW_USER_QUERY = `
+  query CanReviewUser($reviewedUserId: ID!) {
+    canReviewUser(reviewedUserId: $reviewedUserId)
+  }
+`;
+
 export interface Review {
   id: string;
   rating: number;
@@ -30,32 +54,53 @@ export interface Review {
   createdAt: string;
 }
 
-// Review tag translations
-export const POSITIVE_TAGS: Record<string, string> = {
-  fast: 'سريع',
-  respectful: 'محترم',
-  accurate: 'دقيق',
-  friendly: 'ودود',
-  professional: 'محترف',
-  reliable: 'موثوق',
-};
+export interface CreateReviewInput {
+  reviewedUserId: string;
+  listingId?: string;
+  threadId?: string;
+  rating: number;
+  positiveTags: string[];
+  negativeTags: string[];
+}
 
-export const NEGATIVE_TAGS: Record<string, string> = {
-  slow: 'متأخر',
-  rude: 'غير مهذب',
-  inaccurate: 'غير دقيق',
-  unfriendly: 'غير ودود',
-  unprofessional: 'غير محترف',
-  unreliable: 'غير موثوق',
-};
+// Review tags matching web frontend - in Arabic
+export const POSITIVE_REVIEW_TAGS = [
+  'مطابق للوصف',           // As described
+  'مطابق للصور',           // Matches photos
+  'معلومات دقيقة',          // Accurate information
+  'بائع متعاون',           // Cooperative seller
+  'سريع الاستجابة',        // Fast response
+  'احترافي في التعامل',    // Professional
+  'صادق وأمين',            // Honest and trustworthy
+  'أسعار معقولة',          // Reasonable prices
+  'حالة ممتازة',           // Excellent condition
+  'تسليم سريع',            // Fast delivery
+] as const;
+
+export const NEGATIVE_REVIEW_TAGS = [
+  'لا يطابق الوصف',        // Doesn't match description
+  'لا يطابق الصور',        // Doesn't match photos
+  'معلومات غير دقيقة',     // Inaccurate information
+  'بائع غير متعاون',       // Uncooperative seller
+  'بطيء في الرد',          // Slow to respond
+  'غير احترافي',           // Unprofessional
+  'مضلل',                  // Misleading
+  'أسعار مبالغ فيها',       // Overpriced
+  'حالة سيئة',             // Poor condition
+  'تأخير في التسليم',      // Delayed delivery
+] as const;
 
 interface ReviewsState {
   reviews: Review[];
   isLoading: boolean;
+  isSubmitting: boolean;
   error: string | null;
   lastFetchedUserId: string | null;
 
+  // Actions
   fetchReviews: (userId: string) => Promise<void>;
+  createReview: (input: CreateReviewInput) => Promise<Review>;
+  canReviewUser: (reviewedUserId: string) => Promise<boolean>;
   clearReviews: () => void;
 
   // Computed helpers
@@ -67,6 +112,7 @@ interface ReviewsState {
 export const useReviewsStore = create<ReviewsState>((set, get) => ({
   reviews: [],
   isLoading: false,
+  isSubmitting: false,
   error: null,
   lastFetchedUserId: null,
 
@@ -95,6 +141,38 @@ export const useReviewsStore = create<ReviewsState>((set, get) => ({
         error: 'فشل تحميل التقييمات',
         isLoading: false,
       });
+    }
+  },
+
+  createReview: async (input: CreateReviewInput): Promise<Review> => {
+    set({ isSubmitting: true, error: null });
+
+    try {
+      const result = await authGraphqlRequest<{ createReview: Review }>(
+        CREATE_REVIEW_MUTATION,
+        { input }
+      );
+
+      set({ isSubmitting: false });
+      return result.createReview;
+    } catch (error: any) {
+      console.error('[reviewsStore] Error creating review:', error);
+      const errorMessage = error.message || 'فشل في إنشاء التقييم';
+      set({ isSubmitting: false, error: errorMessage });
+      throw new Error(errorMessage);
+    }
+  },
+
+  canReviewUser: async (reviewedUserId: string): Promise<boolean> => {
+    try {
+      const result = await authGraphqlRequest<{ canReviewUser: boolean }>(
+        CAN_REVIEW_USER_QUERY,
+        { reviewedUserId }
+      );
+      return result.canReviewUser || false;
+    } catch (error) {
+      console.error('[reviewsStore] Error checking review permission:', error);
+      return false;
     }
   },
 

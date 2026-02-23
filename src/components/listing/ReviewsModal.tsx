@@ -16,11 +16,7 @@ import {
 import { X, Star, User, ThumbsUp, ThumbsDown } from 'lucide-react-native';
 import { Text, Loading } from '../slices';
 import { useTheme, Theme } from '../../theme';
-import {
-  useReviewsStore,
-  POSITIVE_TAGS,
-  NEGATIVE_TAGS,
-} from '../../stores/reviewsStore';
+import { useReviewsStore } from '../../stores/reviewsStore';
 import { getCloudflareImageUrl } from '../../services/cloudflare/images';
 
 interface ReviewsModalProps {
@@ -185,7 +181,7 @@ export function ReviewsModal({
                               .map(([tag, count]) => (
                                 <View key={tag} style={styles.tagPositive}>
                                   <Text variant="xs" style={{ color: theme.colors.success }}>
-                                    {POSITIVE_TAGS[tag] || tag} ({count})
+                                    {tag} ({count})
                                   </Text>
                                 </View>
                               ))}
@@ -208,7 +204,7 @@ export function ReviewsModal({
                               .map(([tag, count]) => (
                                 <View key={tag} style={styles.tagNegative}>
                                   <Text variant="xs" style={{ color: theme.colors.error }}>
-                                    {NEGATIVE_TAGS[tag] || tag} ({count})
+                                    {tag} ({count})
                                   </Text>
                                 </View>
                               ))}
@@ -260,7 +256,7 @@ export function ReviewsModal({
                               <View key={tag} style={styles.reviewTagPositive}>
                                 <ThumbsUp size={10} color={theme.colors.success} />
                                 <Text variant="xs" style={{ color: theme.colors.success }}>
-                                  {POSITIVE_TAGS[tag] || tag}
+                                  {tag}
                                 </Text>
                               </View>
                             ))}
@@ -268,7 +264,7 @@ export function ReviewsModal({
                               <View key={tag} style={styles.reviewTagNegative}>
                                 <ThumbsDown size={10} color={theme.colors.error} />
                                 <Text variant="xs" style={{ color: theme.colors.error }}>
-                                  {NEGATIVE_TAGS[tag] || tag}
+                                  {tag}
                                 </Text>
                               </View>
                             ))}

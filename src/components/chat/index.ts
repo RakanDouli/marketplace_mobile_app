@@ -4,3 +4,4 @@ export {
   DeleteMessageModal,
   ReportUserModal,
 } from './ChatModals';
+export { WriteReviewModal } from './WriteReviewModal';
