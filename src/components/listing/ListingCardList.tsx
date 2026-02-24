@@ -51,8 +51,6 @@ export const ListingCardList = memo(function ListingCardList({
   // Direction-aware styles
   const cardDirection = theme.isRTL ? 'row-reverse' : 'row';
   const textAlign = theme.isRTL ? 'right' : 'left';
-  const locationDirection = theme.isRTL ? 'row' : 'row-reverse';
-  const locationJustify = theme.isRTL ? 'flex-end' : 'flex-start';
   const imageCornerStyle = theme.isRTL
     ? { borderTopRightRadius: theme.radius.lg, borderBottomRightRadius: theme.radius.lg }
     : { borderTopLeftRadius: theme.radius.lg, borderBottomLeftRadius: theme.radius.lg };
@@ -135,11 +133,11 @@ export const ListingCardList = memo(function ListingCardList({
 
         {/* Location - icon position based on direction */}
         {location && (
-          <View style={[styles.location, { flexDirection: locationDirection, justifyContent: locationJustify }]}>
+          <View style={styles.location}>
+            <MapPin size={12} color={theme.colors.textMuted} />
             <Text variant="xs" color="muted" numberOfLines={1}>
               {location}
             </Text>
-            <MapPin size={12} color={theme.colors.textMuted} />
           </View>
         )}
       </View>
@@ -205,7 +203,7 @@ const createStyles = (theme: Theme) =>
       opacity: 0.7,
     },
     location: {
-      // flexDirection and justifyContent applied dynamically
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },

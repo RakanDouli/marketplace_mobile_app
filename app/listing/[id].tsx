@@ -36,7 +36,7 @@ import { useCurrencyStore } from '../../src/stores/currencyStore';
 import { useRelatedListingsStore } from '../../src/stores/relatedListingsStore';
 import { useListingOwnerStore } from '../../src/stores/listingOwnerStore';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
-import { formatPrice, formatLocation, trackListingView } from '../../src/utils';
+import { formatPrice, formatLocation, trackListingView, formatDate } from '../../src/utils';
 
 // Components
 import { CarDamageViewer, fromBackendFormat } from '../../src/components/listing/CarDamageViewer';
@@ -156,16 +156,6 @@ export default function ListingDetailScreen() {
     };
   }, [currentListing, preferredCurrency]);
 
-  // Format date
-  const formatDate = useCallback((dateString?: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ar-SY', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }, []);
 
   // Build specs list from specsDisplay (excluding car_damage)
   const specsList = useMemo(() => {
@@ -301,243 +291,243 @@ export default function ListingDetailScreen() {
         {/* Image Gallery */}
         <View style={styles.imageGallery}>
           {images.length > 0 ? (
-              <>
-                <FlatList
-                  ref={flatListRef}
-                  data={images}
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  onMomentumScrollEnd={(e) => {
-                    const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-                    setActiveImageIndex(index);
-                  }}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      activeOpacity={0.95}
-                      onPress={() => setShowImagePreview(true)}
-                    >
-                      <Image
-                        source={{ uri: getCloudflareImageUrl(item, 'large') }}
-                        style={styles.galleryImage}
-                        resizeMode="cover"
-                      />
-                    </TouchableOpacity>
-                  )}
-                  keyExtractor={(item) => item}
-                />
-
-                {/* Navigation arrows */}
-                {images.length > 1 && (
-                  <>
-                    <TouchableOpacity
-                      style={[styles.galleryNav, styles.galleryNavLeft]}
-                      onPress={theme.isRTL ? goToNextImage : goToPrevImage}
-                    >
-                      <ChevronLeft size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.galleryNav, styles.galleryNavRight]}
-                      onPress={theme.isRTL ? goToPrevImage : goToNextImage}
-                    >
-                      <ChevronRight size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                  </>
+            <>
+              <FlatList
+                ref={flatListRef}
+                data={images}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(e) => {
+                  const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                  setActiveImageIndex(index);
+                }}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    activeOpacity={0.95}
+                    onPress={() => setShowImagePreview(true)}
+                  >
+                    <Image
+                      source={{ uri: getCloudflareImageUrl(item, 'large') }}
+                      style={styles.galleryImage}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
                 )}
+                keyExtractor={(item) => item}
+              />
 
-                {/* Image counter */}
-                {images.length > 1 && (
-                  <View style={styles.imageCounter}>
-                    <Text variant="xs" style={styles.imageCounterText}>
-                      {activeImageIndex + 1} / {images.length}
-                    </Text>
-                  </View>
-                )}
-              </>
-            ) : (
-              <View style={styles.noImage}>
-                <Text variant="paragraph" color="muted">لا توجد صور</Text>
+              {/* Navigation arrows */}
+              {images.length > 1 && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.galleryNav, styles.galleryNavLeft]}
+                    onPress={theme.isRTL ? goToNextImage : goToPrevImage}
+                  >
+                    <ChevronLeft size={24} color="#FFFFFF" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.galleryNav, styles.galleryNavRight]}
+                    onPress={theme.isRTL ? goToPrevImage : goToNextImage}
+                  >
+                    <ChevronRight size={24} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {/* Image counter */}
+              {images.length > 1 && (
+                <View style={styles.imageCounter}>
+                  <Text variant="xs" style={styles.imageCounterText}>
+                    {activeImageIndex + 1} / {images.length}
+                  </Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={styles.noImage}>
+              <Text variant="paragraph" color="muted">لا توجد صور</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Content */}
+        <View style={styles.content}>
+          {/* Price */}
+          <Text variant="h2" style={styles.price}>
+            {formatPrice(currentListing.priceMinor, preferredCurrency)}
+          </Text>
+
+          {/* Title */}
+          <Text variant="h3" style={styles.title}>
+            {currentListing.title}
+          </Text>
+
+          {/* Meta info */}
+          <View style={styles.metaRow}>
+            {location && (
+              <View style={styles.metaItem}>
+                <Text variant="small" color="secondary" style={styles.metaText}>
+                  {location}
+                </Text>
+                <MapPin size={16} color={theme.colors.textMuted} />
+              </View>
+            )}
+            {currentListing.createdAt && (
+              <View style={styles.metaItem}>
+                <Text variant="small" color="secondary" style={styles.metaText}>
+                  {formatDate(currentListing.createdAt)}
+                </Text>
+                <Calendar size={16} color={theme.colors.textMuted} />
               </View>
             )}
           </View>
 
-          {/* Content */}
-          <View style={styles.content}>
-            {/* Price */}
-            <Text variant="h2" style={styles.price}>
-              {formatPrice(currentListing.priceMinor, preferredCurrency)}
-            </Text>
-
-            {/* Title */}
-            <Text variant="h3" style={styles.title}>
-              {currentListing.title}
-            </Text>
-
-            {/* Meta info */}
-            <View style={styles.metaRow}>
-              {location && (
-                <View style={styles.metaItem}>
-                  <Text variant="small" color="secondary" style={styles.metaText}>
-                    {location}
-                  </Text>
-                  <MapPin size={16} color={theme.colors.textMuted} />
-                </View>
-              )}
-              {currentListing.createdAt && (
-                <View style={styles.metaItem}>
-                  <Text variant="small" color="secondary" style={styles.metaText}>
-                    {formatDate(currentListing.createdAt)}
-                  </Text>
-                  <Calendar size={16} color={theme.colors.textMuted} />
-                </View>
-              )}
+          {/* Stats */}
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text variant="small" color="muted">
+                {currentListing.viewCount || 0} مشاهدة
+              </Text>
+              <Eye size={16} color={theme.colors.textMuted} />
             </View>
-
-            {/* Stats */}
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text variant="small" color="muted">
-                  {currentListing.viewCount || 0} مشاهدة
-                </Text>
-                <Eye size={16} color={theme.colors.textMuted} />
-              </View>
-              <View style={styles.statItem}>
-                <Text variant="small" color="muted">
-                  {currentListing.wishlistCount || 0} مفضلة
-                </Text>
-                <Heart size={16} color={theme.colors.textMuted} />
-              </View>
+            <View style={styles.statItem}>
+              <Text variant="small" color="muted">
+                {currentListing.wishlistCount || 0} مفضلة
+              </Text>
+              <Heart size={16} color={theme.colors.textMuted} />
             </View>
-
-            {/* Specifications - Collapsible */}
-            {specsList.length > 0 && (
-              <View style={styles.section}>
-                <Collapsible title="المواصفات" defaultOpen variant="bordered">
-                  <View style={styles.specsGrid}>
-                    {specsList.map((spec) => (
-                      <View key={spec.key} style={styles.specItem}>
-                        <Text variant="small" color="muted">
-                          {spec.label}
-                        </Text>
-                        <Text variant="body" bold>
-                          {spec.value}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </Collapsible>
-              </View>
-            )}
-
-            {/* Car Damage Viewer */}
-            {carDamages.length > 0 && (
-              <View style={styles.section}>
-                <Collapsible title="حالة السيارة" defaultOpen={false} variant="bordered">
-                  <CarDamageViewer damages={carDamages} />
-                </Collapsible>
-              </View>
-            )}
-
-            {/* Description - Collapsible */}
-            {currentListing.description && (
-              <View style={styles.section}>
-                <Collapsible title="الوصف" defaultOpen variant="bordered">
-                  <Text variant="paragraph" color="secondary" style={styles.description}>
-                    {currentListing.description}
-                  </Text>
-                </Collapsible>
-              </View>
-            )}
-
-            {/* Seller Info */}
-            {listingUserId && (
-              <View style={styles.section}>
-                <Text variant="h4" style={styles.sectionTitle}>
-                  معلومات البائع
-                </Text>
-                <OwnerCard
-                  userId={listingUserId}
-                  onViewReviews={() => setShowReviewsModal(true)}
-                  onReport={isOwnListing ? undefined : () => setShowReportModal(true)}
-                />
-              </View>
-            )}
-
-            {/* Location Map */}
-            {locationForMap && (
-              <View style={styles.section}>
-                <Text variant="h4" style={styles.sectionTitle}>
-                  الموقع
-                </Text>
-                <LocationMap
-                  location={locationForMap}
-                  title={currentListing.title}
-                />
-              </View>
-            )}
           </View>
 
-          {/* Related Listings - By Brand (Slider) */}
-          <RelatedListings
-            listingId={currentListing.id}
-            type="brand"
-            title="من نفس الماركة"
-            layout="slider"
-          />
+          {/* Specifications - Collapsible */}
+          {specsList.length > 0 && (
+            <View style={styles.collapsibleContainer}>
+              <Collapsible title="المواصفات" defaultOpen variant="bordered">
+                <View style={styles.specsGrid}>
+                  {specsList.map((spec) => (
+                    <View key={spec.key} style={styles.specItem}>
+                      <Text variant="small" color="muted">
+                        {spec.label}
+                      </Text>
+                      <Text variant="body" bold>
+                        {spec.value}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </Collapsible>
+            </View>
+          )}
 
-          {/* Related Listings - By Price (Grid) */}
-          <RelatedListings
-            listingId={currentListing.id}
-            type="price"
-            title="بسعر مشابه"
-            layout="grid"
-          />
+          {/* Car Damage Viewer */}
+          {carDamages.length > 0 && (
+            <View style={styles.collapsibleContainer}>
+              <Collapsible title="حالة السيارة" defaultOpen={false} variant="bordered">
+                <CarDamageViewer damages={carDamages} />
+              </Collapsible>
+            </View>
+          )}
 
-          {/* Bottom spacing for action bar */}
-          <View style={{ height: isOwnListing ? 20 : 100 }} />
-        </ScrollView>
+          {/* Description - Collapsible */}
+          {currentListing.description && (
+            <View style={styles.collapsibleContainer}>
+              <Collapsible title="الوصف" defaultOpen variant="bordered">
+                <Text variant="paragraph" color="secondary" style={styles.description}>
+                  {currentListing.description}
+                </Text>
+              </Collapsible>
+            </View>
+          )}
 
-        {/* Bottom Actions - Fixed at bottom */}
-        {/* Only show after owner data is loaded (prevents layout shift) */}
-        {!isOwnListing && !ownerLoading && (
-          <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}>
-            <View style={styles.bottomActions}>
-              {/* Message Button - Always visible */}
+          {/* Seller Info */}
+          {listingUserId && (
+            <View style={styles.section}>
+              <Text variant="h4" style={styles.sectionTitle}>
+                معلومات البائع
+              </Text>
+              <OwnerCard
+                userId={listingUserId}
+                onViewReviews={() => setShowReviewsModal(true)}
+                onReport={isOwnListing ? undefined : () => setShowReportModal(true)}
+              />
+            </View>
+          )}
+
+          {/* Location Map */}
+          {locationForMap && (
+            <View style={styles.section}>
+              <Text variant="h4" style={styles.sectionTitle}>
+                الموقع
+              </Text>
+              <LocationMap
+                location={locationForMap}
+                title={currentListing.title}
+              />
+            </View>
+          )}
+        </View>
+
+        {/* Related Listings - By Brand (Slider) */}
+        <RelatedListings
+          listingId={currentListing.id}
+          type="brand"
+          title="من نفس الماركة"
+          layout="slider"
+        />
+
+        {/* Related Listings - By Price (Grid) */}
+        <RelatedListings
+          listingId={currentListing.id}
+          type="price"
+          title="بسعر مشابه"
+          layout="grid"
+        />
+
+        {/* Bottom spacing for action bar */}
+        <View style={{ height: isOwnListing ? 20 : 100 }} />
+      </ScrollView>
+
+      {/* Bottom Actions - Fixed at bottom */}
+      {/* Only show after owner data is loaded (prevents layout shift) */}
+      {!isOwnListing && !ownerLoading && (
+        <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}>
+          <View style={styles.bottomActions}>
+            {/* Message Button - Always visible */}
+            <Button
+              variant="primary"
+              icon={<MessageCircle size={18} color="#FFFFFF" />}
+              onPress={handleMessage}
+              style={styles.actionButton}
+            >
+              رسالة
+            </Button>
+
+            {/* Call Button - Only if phone is available */}
+            {hasPhone && (
               <Button
-                variant="primary"
-                icon={<MessageCircle size={18} color="#FFFFFF" />}
-                onPress={handleMessage}
+                variant="outline"
+                icon={<Phone size={18} color={theme.colors.primary} />}
+                onPress={handleCallSeller}
                 style={styles.actionButton}
               >
-                رسالة
+                اتصال
               </Button>
+            )}
 
-              {/* Call Button - Only if phone is available */}
-              {hasPhone && (
-                <Button
-                  variant="outline"
-                  icon={<Phone size={18} color={theme.colors.primary} />}
-                  onPress={handleCallSeller}
-                  style={styles.actionButton}
-                >
-                  اتصال
-                </Button>
-              )}
-
-              {/* WhatsApp Button - Only if phone is WhatsApp */}
-              {hasPhone && isWhatsApp && (
-                <Button
-                  variant="success"
-                  icon={<MessageCircle size={18} color="#FFFFFF" />}
-                  onPress={handleWhatsApp}
-                  style={styles.actionButton}
-                >
-                  واتساب
-                </Button>
-              )}
-            </View>
-          </SafeAreaView>
-        )}
+            {/* WhatsApp Button - Only if phone is WhatsApp */}
+            {hasPhone && isWhatsApp && (
+              <Button
+                variant="success"
+                icon={<MessageCircle size={18} color="#FFFFFF" />}
+                onPress={handleWhatsApp}
+                style={styles.actionButton}
+              >
+                واتساب
+              </Button>
+            )}
+          </View>
+        </SafeAreaView>
+      )}
 
       {/* Modals */}
       <ImagePreviewModal
@@ -679,13 +669,11 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.md,
     },
     metaItem: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
-    metaText: {
-      marginRight: 4,
-    },
+    metaText: {},
     statsRow: {
       flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       marginTop: theme.spacing.md,
@@ -695,7 +683,7 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.lg,
     },
     statItem: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
@@ -703,6 +691,12 @@ const createStyles = (theme: Theme) =>
     // Section
     section: {
       marginTop: theme.spacing.lg,
+    },
+    collapsibleContainer: {
+      backgroundColor: theme.colors.bg,
+      marginTop: theme.spacing.md,
+      borderRadius: theme.radius.md,
+      overflow: 'hidden',
     },
     sectionTitle: {
       marginBottom: theme.spacing.md,

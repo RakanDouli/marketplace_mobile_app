@@ -24,6 +24,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -120,6 +121,26 @@ export default function ChatScreen() {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
   const [showImagePreview, setShowImagePreview] = useState(false);
+
+  // Keyboard state
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Listen for keyboard show/hide
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   // Open image preview
   const openImagePreview = (images: string[], index: number) => {
@@ -729,7 +750,7 @@ export default function ChatScreen() {
         )}
 
         {/* Input Area */}
-        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, theme.spacing.sm) }]}>
+        <View style={[styles.inputContainer, { paddingBottom: isKeyboardVisible ? theme.spacing.sm : Math.max(insets.bottom, theme.spacing.sm) }]}>
           {/* Direct paperclip button for image attachment */}
           <TouchableOpacity
             style={styles.menuButton}

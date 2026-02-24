@@ -8,7 +8,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  FlatList,
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
@@ -26,7 +25,7 @@ import {
 import { useTheme } from '../../src/theme';
 import { LogoIcon } from '../../src/components/icons';
 import { Text } from '../../src/components/slices/Text';
-import { ListingCard } from '../../src/components/listing';
+import { FeaturedListings } from '../../src/components/listing';
 import { Loading } from '../../src/components/slices/Loading';
 import { SearchBar } from '../../src/components/search';
 import { useCategoriesStore, useListingsStore, useWishlistStore, useUserAuthStore } from '../../src/stores';
@@ -35,9 +34,7 @@ import {
   FeatureCard,
   PromoCard,
   PromoBanner,
-  Button,
 } from '../../src/components/slices';
-import { formatLocation } from '../../src/utils';
 
 // CMS Assets
 const CMS_BASE_URL = 'https://staging.shambay.com';
@@ -141,29 +138,6 @@ export default function HomeTab() {
     setSelectedCategory(slug);
   }, []);
 
-  // Helpers - Format price with English numbers for consistency
-  const formatPriceDisplay = (priceMinor: number) => `${(priceMinor / 100).toLocaleString('en-US')} ل.س`;
-
-  const formatSpecs = (specsDisplay: Record<string, any> | string | undefined): string => {
-    if (!specsDisplay) return '';
-    let specs: Record<string, any> = {};
-    try {
-      if (typeof specsDisplay === 'string') specs = JSON.parse(specsDisplay);
-      else if (typeof specsDisplay === 'object') specs = specsDisplay;
-    } catch { return ''; }
-    // Deduplicate values
-    const partsSet = new Set<string>();
-    Object.entries(specs)
-      .filter(([key]) => key !== 'accountType' && key !== 'account_type')
-      .forEach(([, value]) => {
-        if (!value) return;
-        const displayValue = typeof value === 'object' ? value.value : value;
-        if (displayValue && displayValue !== '') partsSet.add(String(displayValue));
-      });
-    // Wrap each part in Unicode isolates to prevent BiDi reordering
-    return Array.from(partsSet).map(p => `\u2068${p}\u2069`).join(' | ');
-  };
-
   const renderCategoryIcon = (iconSvg: string | undefined, size: number, color: string) => {
     if (!iconSvg) return <LayoutGrid size={size} color={color} />;
     const styledSvg = iconSvg
@@ -229,82 +203,31 @@ export default function HomeTab() {
           paddingY="sm"
         />
 
-        {/* Featured Listings */}
-        <View style={styles.section}>
-          <View style={[styles.sectionHeader, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
-            <Text variant="h3">عروض لك</Text>
-            <Button
-              variant="link"
-              size="sm"
-              onPress={() => goToCategory('cars', 'سيارات')}
-              arrowForward
-            >
-              عرض الكل
-            </Button>
-          </View>
-          {listingsLoading && featuredListings.length === 0 ? (
-            <View style={styles.loadingContainer}><Loading type="dots" size="sm" /></View>
-          ) : (
-            <FlatList
-              horizontal
-              inverted
-              showsHorizontalScrollIndicator={false}
-              data={featuredListings}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listingsScroll}
-              renderItem={({ item: listing }) => (
-                <ListingCard
-                  id={listing.id}
-                  title={listing.title}
-                  price={formatPriceDisplay(listing.priceMinor)}
-                  location={formatLocation(listing.location)}
-                  specs={formatSpecs(listing.specsDisplay)}
-                  images={listing.imageKeys}
-                  userId={listing.user?.id}
-                  onPress={() => goToListing(listing.id)}
-                  viewMode="grid"
-                  style={{ width: isTablet ? 220 : 180, marginRight: theme.spacing.md }}
-                />
-              )}
-            />
-          )}
-        </View>
+        {/* Featured Listings - Uses Slider component with RTL support */}
+        <FeaturedListings
+          listings={featuredListings}
+          title="عروض لك"
+          viewAllText="عرض الكل"
+          onViewAll={() => goToCategory('cars', 'سيارات')}
+          onListingPress={goToListing}
+          variant="slider"
+          isLoading={listingsLoading && featuredListings.length === 0}
+          paddingY="md"
+        />
 
-        {/* New Listings Grid */}
-        <View style={styles.section}>
-          <View style={[styles.sectionHeader, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
-            <Text variant="h3">إعلانات جديدة</Text>
-            <Button
-              variant="link"
-              size="sm"
-              onPress={() => goToCategory('cars', 'سيارات')}
-              arrowForward
-            >
-              عرض الكل
-            </Button>
-          </View>
-          {listingsLoading && listings.length === 0 ? (
-            <View style={styles.loadingContainer}><Loading type="dots" size="sm" /></View>
-          ) : (
-            <View style={styles.listingsGrid}>
-              {listings.slice(0, isTablet ? 9 : 6).map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  id={listing.id}
-                  title={listing.title}
-                  price={formatPriceDisplay(listing.priceMinor)}
-                  location={formatLocation(listing.location)}
-                  specs={formatSpecs(listing.specsDisplay)}
-                  images={listing.imageKeys}
-                  userId={listing.user?.id}
-                  onPress={() => goToListing(listing.id)}
-                  viewMode="grid"
-                  style={styles.gridCard}
-                />
-              ))}
-            </View>
-          )}
-        </View>
+        {/* New Listings Grid - Uses Grid component with RTL support */}
+        <FeaturedListings
+          listings={listings}
+          title="إعلانات جديدة"
+          viewAllText="عرض الكل"
+          onViewAll={() => goToCategory('cars', 'سيارات')}
+          onListingPress={goToListing}
+          variant="grid"
+          columns={isTablet ? 3 : 2}
+          limit={isTablet ? 9 : 6}
+          isLoading={listingsLoading && listings.length === 0}
+          paddingY="md"
+        />
 
         {/* Promo Cards */}
         <Container paddingY="md">

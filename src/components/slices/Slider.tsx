@@ -106,7 +106,10 @@ export function Slider<T>({
         </View>
       )}
 
-      {/* Horizontal FlatList - inverted for RTL support */}
+      {/* Horizontal FlatList with RTL support
+          - For RTL: use inverted=true so items start from right
+          - For LTR: use inverted=false so items start from left
+          Use theme.isRTL which reflects the user's language choice */}
       <FlatList
         data={data}
         horizontal
@@ -115,7 +118,10 @@ export function Slider<T>({
         keyExtractor={keyExtractor}
         contentContainerStyle={[
           styles.listContent,
-          { gap: gapValue, paddingHorizontal: theme.spacing.md },
+          {
+            gap: gapValue,
+            paddingHorizontal: theme.spacing.md,
+          },
         ]}
         renderItem={({ item, index }) => (
           <View style={{ width: cardWidth }}>

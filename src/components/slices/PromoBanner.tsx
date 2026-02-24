@@ -73,9 +73,18 @@ export function PromoBanner({
   }
 
   // Tablet: row layout [Image | Content | Button] or reversed
-  // Web uses: imageLeft = row-reverse, imageRight = row
-  // In RTL React Native: imageLeft = row-reverse, imageRight = row (same logic)
-  const flexDirection = imagePosition === 'left' ? 'row-reverse' : 'row';
+  // Use row/row-reverse based on RTL/LTR so button and image switch positions
+  const getTabletFlexDirection = (): 'row' | 'row-reverse' => {
+    if (theme.isRTL) {
+      // RTL: row = first child on right, row-reverse = first child on left
+      return imagePosition === 'left' ? 'row-reverse' : 'row';
+    } else {
+      // LTR: row = first child on left, row-reverse = first child on right
+      return imagePosition === 'left' ? 'row' : 'row-reverse';
+    }
+  };
+
+  const flexDirection = getTabletFlexDirection();
 
   return (
     <Container paddingY={paddingY}>
@@ -88,9 +97,9 @@ export function PromoBanner({
         )}
 
         {/* Content - in middle */}
-        <View style={styles.content}>
-          <Text variant="h3">{title}</Text>
-          {subtitle && <Text variant="paragraph" color="secondary">{subtitle}</Text>}
+        <View style={[styles.content, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
+          <Text variant="h3" style={{ textAlign: theme.isRTL ? 'right' : 'left' }}>{title}</Text>
+          {subtitle && <Text variant="paragraph" color="secondary" style={{ textAlign: theme.isRTL ? 'right' : 'left' }}>{subtitle}</Text>}
         </View>
 
         {/* Button - separate section */}

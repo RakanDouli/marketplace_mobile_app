@@ -51,58 +51,47 @@ export function PromoCard({
 
   const bgColor = variantColors[variant];
 
-  // Determine flex direction based on image position and RTL mode
-  // In RTL: row = first child on right, row-reverse = first child on left
-  // In LTR: row = first child on left, row-reverse = first child on right
-  const getFlexDirection = (): 'row' | 'row-reverse' => {
-    if (theme.isRTL) {
-      // RTL mode
-      return imagePosition === 'left' ? 'row-reverse' : 'row';
-    } else {
-      // LTR mode
-      return imagePosition === 'left' ? 'row' : 'row-reverse';
-    }
-  };
+  // Content text alignment - align to opposite side of image for visual balance
+  // When image is LEFT, text aligns to END (right in LTR)
+  // When image is RIGHT, text aligns to START (left in LTR)
+  const contentAlign = imagePosition === 'left' ? 'flex-end' : 'flex-start';
 
-  const flexDirection = getFlexDirection();
+  // Image component
+  const imageComponent = imageSrc && (
+    <View style={styles.imageWrapper}>
+      <Image source={imageSrc} style={styles.image} contentFit="contain" />
+    </View>
+  );
 
-  // Content aligns towards where it sits based on direction
-  const getContentAlign = (): 'flex-start' | 'flex-end' => {
-    if (theme.isRTL) {
-      return imagePosition === 'left' ? 'flex-start' : 'flex-end';
-    } else {
-      return imagePosition === 'left' ? 'flex-start' : 'flex-end';
-    }
-  };
+  // Content component
+  const contentComponent = (
+    <View style={[styles.content, { alignItems: contentAlign }]}>
+      <View style={[styles.titleRow, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
+        {badge && (
+          <View style={[styles.badge, { backgroundColor: theme.colors.error }]}>
+            <Text variant="xs" color="inverse">{badge}</Text>
+          </View>
+        )}
+        <Text variant="body">{title}</Text>
+      </View>
+      {subtitle && <Text variant="small" color="secondary">{subtitle}</Text>}
+      <Button variant="outline" size="sm" onPress={onButtonPress} arrow>{buttonText}</Button>
+    </View>
+  );
 
-  const contentAlign = getContentAlign();
+  // Simple logic: use flexDirection based on imagePosition
+  // 'row' = image (first child) on LEFT
+  // 'row-reverse' = image (first child) on RIGHT
+  const cardFlexDirection: 'row' | 'row-reverse' = imagePosition === 'left' ? 'row' : 'row-reverse';
 
   return (
     <TouchableOpacity
-      style={[styles.card, { backgroundColor: bgColor, flexDirection }]}
+      style={[styles.card, { backgroundColor: bgColor, flexDirection: cardFlexDirection }]}
       onPress={onButtonPress}
       activeOpacity={0.9}
     >
-      {/* Image */}
-      {imageSrc && (
-        <View style={styles.imageWrapper}>
-          <Image source={imageSrc} style={styles.image} contentFit="contain" />
-        </View>
-      )}
-
-      {/* Content */}
-      <View style={[styles.content, { alignItems: contentAlign }]}>
-        <View style={[styles.titleRow, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
-          {badge && (
-            <View style={[styles.badge, { backgroundColor: theme.colors.error }]}>
-              <Text variant="xs" color="inverse">{badge}</Text>
-            </View>
-          )}
-          <Text variant="body">{title}</Text>
-        </View>
-        {subtitle && <Text variant="small" color="secondary">{subtitle}</Text>}
-        <Button variant="outline" size="sm" onPress={onButtonPress} arrow>{buttonText}</Button>
-      </View>
+      {imageComponent}
+      {contentComponent}
     </TouchableOpacity>
   );
 }
@@ -124,7 +113,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 12,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     gap: 4,
   },
   titleRow: {

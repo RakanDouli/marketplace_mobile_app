@@ -35,19 +35,18 @@ export default function SettingsScreen() {
 
     await setLanguage(newLanguage);
 
-    // Show restart prompt for Android (RTL requires restart)
-    if (Platform.OS === 'android') {
-      Alert.alert(
-        t('settings.restartRequired'),
-        t('settings.restartMessage'),
-        [
-          {
-            text: t('common.ok'),
-            style: 'default',
-          },
-        ]
-      );
-    }
+    // Show restart prompt (RTL requires app restart to take effect)
+    // On both Android and iOS, native RTL layout changes need app restart
+    Alert.alert(
+      t('settings.restartRequired'),
+      t('settings.restartMessage'),
+      [
+        {
+          text: t('common.ok'),
+          style: 'default',
+        },
+      ]
+    );
   };
 
   return (

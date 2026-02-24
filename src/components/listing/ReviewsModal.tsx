@@ -18,6 +18,7 @@ import { Text, Loading } from '../slices';
 import { useTheme, Theme } from '../../theme';
 import { useReviewsStore } from '../../stores/reviewsStore';
 import { getCloudflareImageUrl } from '../../services/cloudflare/images';
+import { formatDate } from '../../utils';
 
 interface ReviewsModalProps {
   visible: boolean;
@@ -50,15 +51,6 @@ export function ReviewsModal({
     }
   }, [visible, userId]);
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ar-SY', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
 
   // Render stars
   const renderStars = (rating: number, size = 14) => {

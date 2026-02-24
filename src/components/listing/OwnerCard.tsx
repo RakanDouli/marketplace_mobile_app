@@ -23,6 +23,7 @@ import { Text, Button } from '../slices';
 import { useTheme, Theme } from '../../theme';
 import { useListingOwnerStore, ListingOwner } from '../../stores/listingOwnerStore';
 import { getCloudflareImageUrl } from '../../services/cloudflare/images';
+import { formatMonthYear } from '../../utils';
 
 interface OwnerCardProps {
   userId: string;
@@ -45,11 +46,7 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
   // Format member since date
   const formatMemberSince = (dateString?: string) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ar-SY', {
-      year: 'numeric',
-      month: 'long',
-    });
+    return formatMonthYear(dateString);
   };
 
   // Render stars

@@ -273,7 +273,7 @@ const createStyles = (theme: Theme) =>
     openButton: {
       position: 'absolute',
       top: theme.spacing.sm,
-      left: theme.spacing.sm,
+      start: theme.spacing.sm,
       width: 32,
       height: 32,
       borderRadius: 16,
@@ -286,20 +286,20 @@ const createStyles = (theme: Theme) =>
     // Info
     info: {
       padding: theme.spacing.md,
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing.md,
     },
     locationRow: {
       flex: 1,
-      flexDirection: 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
     locationText: {
       flex: 1,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Directions Button

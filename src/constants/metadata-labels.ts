@@ -51,8 +51,20 @@ export function getLabel(
   const lowercased = value.toLowerCase();
   if (labelMap[lowercased]) return labelMap[lowercased];
 
-  // Return original as fallback
-  return value;
+  // Try snake_case conversion (replace spaces with underscores, lowercase)
+  const snakeCase = value.toLowerCase().replace(/\s+/g, '_');
+  if (labelMap[snakeCase]) return labelMap[snakeCase];
+
+  // Try removing underscores and matching
+  const noUnderscores = value.toLowerCase().replace(/_/g, '');
+  for (const key of Object.keys(labelMap)) {
+    if (key.toLowerCase().replace(/_/g, '') === noUnderscores) {
+      return labelMap[key];
+    }
+  }
+
+  // Return original but replace underscores with spaces for display
+  return value.replace(/_/g, ' ');
 }
 
 // ============================================================

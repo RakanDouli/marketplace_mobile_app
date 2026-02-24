@@ -191,7 +191,7 @@ const createCompactStyles = (theme: Theme) =>
     imageActions: {
       position: 'absolute',
       bottom: theme.spacing.sm,
-      right: theme.spacing.sm,
+      start: theme.spacing.sm,
       flexDirection: 'row',
       gap: theme.spacing.sm,
     },

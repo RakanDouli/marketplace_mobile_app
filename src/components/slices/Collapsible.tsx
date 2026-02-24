@@ -106,7 +106,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       marginBottom: theme.spacing.sm,
     },
     trigger: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
       alignItems: 'center',
       paddingVertical: theme.spacing.md,
       paddingHorizontal: theme.spacing.md,
@@ -117,13 +117,13 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       borderRadius: 14,
       justifyContent: 'center',
       alignItems: 'center',
-      marginStart: theme.spacing.md,
+
     },
     title: {
       flex: 1,
       fontSize: theme.fontSize.base,
       fontFamily: theme.fontFamily.bodyMedium,
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     content: {
       paddingHorizontal: theme.spacing.md,

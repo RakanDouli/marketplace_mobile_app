@@ -12,7 +12,7 @@ import { useTheme } from '../../../src/theme';
 import { Text, Button } from '../../../src/components/slices';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
 import { useCurrencyStore } from '../../../src/stores/currencyStore';
-import { formatPrice } from '../../../src/utils/formatPrice';
+import { formatPrice, formatDate } from '../../../src/utils';
 
 // Account type labels
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
@@ -217,7 +217,7 @@ export default function SubscriptionsScreen() {
           <View style={styles.footerInfo}>
             {!isFree && endDate && (
               <Text variant="small" color="secondary">
-                ينتهي الاشتراك في {endDate.toLocaleDateString('ar-EG')}
+                ينتهي الاشتراك في {formatDate(endDate)}
               </Text>
             )}
             {isFree && !isBusinessAccount && (

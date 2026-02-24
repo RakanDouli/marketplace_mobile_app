@@ -113,10 +113,10 @@ export const ListingCardGrid = memo(function ListingCardGrid({
         )}
         {location && (
           <View style={styles.location}>
+            <MapPin size={14} color={theme.colors.textSecondary} />
             <Text variant="xs" color="secondary" style={styles.locationText}>
               {location}
             </Text>
-            <MapPin size={14} color={theme.colors.textSecondary} />
           </View>
         )}
       </View>
@@ -146,14 +146,14 @@ const createStyles = (theme: Theme) =>
     imageActions: {
       position: 'absolute',
       bottom: theme.spacing.sm,
-      right: theme.spacing.sm,
+      start: theme.spacing.sm,
       flexDirection: 'row',
       gap: theme.spacing.sm,
     },
     featuredBadge: {
       position: 'absolute',
       top: theme.spacing.sm,
-      right: theme.spacing.sm,
+      start: theme.spacing.sm,
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.primary,
@@ -178,7 +178,6 @@ const createStyles = (theme: Theme) =>
     },
     location: {
       flexDirection: theme.isRTL ? 'row-reverse' : 'row',
-      justifyContent: 'flex-start',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
