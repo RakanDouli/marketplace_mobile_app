@@ -1,12 +1,13 @@
 /**
  * Location & Review Step
  * Final step before submission - location selection and listing review
+ * Includes validation error display
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { MapPin, Check, AlertCircle } from 'lucide-react-native';
-import { useTheme } from '../../theme';
+import { useTheme, Theme } from '../../theme';
 import { Text } from '../slices/Text';
 import { useCreateListingStore } from '../../stores/createListingStore';
 
@@ -30,10 +31,35 @@ const PROVINCES = [
 
 export default function LocationReviewStep() {
   const theme = useTheme();
-  const { formData, setLocationField, steps, validateStep } = useCreateListingStore();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const {
+    formData,
+    setLocationField,
+    steps,
+    validateStep,
+    getValidationError,
+    clearValidationError,
+  } = useCreateListingStore();
 
   // Check validation for all steps
   const allStepsValid = steps.every((_, index) => validateStep(index));
+
+  const provinceError = getValidationError('location.province');
+
+  // Helper to render field error message
+  const renderFieldError = (fieldKey: string) => {
+    const error = getValidationError(fieldKey);
+    if (!error) return null;
+
+    return (
+      <View style={styles.errorContainer}>
+        <AlertCircle size={14} color={theme.colors.error} />
+        <Text variant="small" style={[styles.errorText, { color: theme.colors.error }]}>
+          {error}
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -64,7 +90,10 @@ export default function LocationReviewStep() {
                         : theme.colors.border,
                   },
                 ]}
-                onPress={() => setLocationField('province', province.key)}
+                onPress={() => {
+                  setLocationField('province', province.key);
+                  clearValidationError('location.province');
+                }}
               >
                 <Text
                   variant="small"
@@ -80,6 +109,7 @@ export default function LocationReviewStep() {
               </TouchableOpacity>
             ))}
           </View>
+          {renderFieldError('location.province')}
         </View>
 
         {/* City */}
@@ -222,69 +252,81 @@ export default function LocationReviewStep() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    gap: 24,
-  },
-  section: {
-    gap: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 8,
-  },
-  sectionTitle: {
-    textAlign: 'right',
-  },
-  field: {
-    gap: 8,
-  },
-  label: {
-    textAlign: 'right',
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-  },
-  provincesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'flex-end',
-  },
-  provinceChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  summaryCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E5E5',
-  },
-  validationCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 8,
-    padding: 16,
-    borderRadius: 12,
-  },
-});
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      gap: 24,
+    },
+    section: {
+      gap: 16,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: 8,
+    },
+    sectionTitle: {
+      textAlign: 'right',
+    },
+    field: {
+      gap: 8,
+    },
+    label: {
+      textAlign: 'right',
+    },
+    input: {
+      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      fontSize: 16,
+    },
+    provincesGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      justifyContent: 'flex-end',
+    },
+    provinceChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 20,
+      borderWidth: 1,
+    },
+    summaryCard: {
+      borderWidth: 1,
+      borderRadius: 16,
+      padding: 16,
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 8,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: '#E5E5E5',
+    },
+    validationCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: 8,
+      padding: 16,
+      borderRadius: 12,
+    },
+    // Error styles
+    errorContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginTop: 4,
+      justifyContent: 'flex-end',
+    },
+    errorText: {
+      textAlign: 'right',
+    },
+  });

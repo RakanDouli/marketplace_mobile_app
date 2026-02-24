@@ -88,8 +88,15 @@ export interface CreateListingFormData {
 
   // Catalog selection (for categories with brand-model)
   brandId?: string;
+  brandName?: string;
   modelId?: string;
+  modelName?: string;
   variantId?: string;
+  variantName?: string;
+
+  // "Other" flags - when user selects "Other" to enter manually
+  isOtherBrand?: boolean;
+  isOtherModel?: boolean;
 
   // Basic info
   title: string;
@@ -191,6 +198,9 @@ export interface CreateListingState {
   // Submission
   isSubmitting: boolean;
   error: string | null;
+
+  // Validation errors (per-field)
+  validationErrors: Record<string, string | undefined>;
 }
 
 export interface CreateListingActions {
@@ -217,6 +227,8 @@ export interface CreateListingActions {
   // Validation
   validateCurrentStep: () => boolean;
   validateStep: (stepIndex: number) => boolean;
+  getValidationError: (field: string) => string | undefined;
+  clearValidationError: (field: string) => void;
 
   // Draft management
   ensureDraftExists: () => Promise<string | null>;

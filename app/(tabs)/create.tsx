@@ -1,91 +1,37 @@
 /**
  * Create Listing - Select Category
+ * Uses ListItem slice with SVG icons from backend
  */
 
 import React, { useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import {
-  Car,
-  Smartphone,
-  Home,
-  ShoppingBag,
-  ChevronLeft,
-  Laptop,
-  Shirt,
-  Sofa,
-  Wrench,
-  Package,
-  type LucideIcon,
-} from 'lucide-react-native';
+import { LayoutGrid } from 'lucide-react-native';
+import { SvgXml } from 'react-native-svg';
 import { useTheme } from '../../src/theme';
-import { Text } from '../../src/components/slices/Text';
+import { Text, ListItem, Button } from '../../src/components/slices';
 import { useCategoriesStore, type Category } from '../../src/stores/categoriesStore';
 import { useCreateListingStore } from '../../src/stores/createListingStore';
 
-// Map category slugs/icons to Lucide icons
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  cars: Car,
-  electronics: Smartphone,
-  'real-estate': Home,
-  phones: Smartphone,
-  laptops: Laptop,
-  clothing: Shirt,
-  furniture: Sofa,
-  services: Wrench,
-  other: ShoppingBag,
-};
+/**
+ * Renders category icon from SVG string (from backend)
+ * Falls back to LayoutGrid if no icon or parse error
+ */
+function renderCategoryIcon(iconSvg: string | undefined, size: number, color: string) {
+  if (!iconSvg) return <LayoutGrid size={size} color={color} />;
 
-// Fallback icon mapping by icon name from backend
-const ICON_NAME_MAP: Record<string, LucideIcon> = {
-  car: Car,
-  smartphone: Smartphone,
-  home: Home,
-  laptop: Laptop,
-  shirt: Shirt,
-  sofa: Sofa,
-  wrench: Wrench,
-  package: Package,
-  'shopping-bag': ShoppingBag,
-};
+  // Style the SVG with correct size and color
+  const styledSvg = iconSvg
+    .replace(/<svg/, `<svg width="${size}" height="${size}"`)
+    .replace(/stroke="[^"]*"/g, `stroke="${color}"`)
+    .replace(/fill="[^"]*"/g, 'fill="none"');
 
-function getCategoryIcon(category: Category): LucideIcon {
-  // Try by slug first
-  if (CATEGORY_ICONS[category.slug]) {
-    return CATEGORY_ICONS[category.slug];
+  try {
+    return <SvgXml xml={styledSvg} width={size} height={size} />;
+  } catch {
+    return <LayoutGrid size={size} color={color} />;
   }
-  // Try by icon name from backend
-  if (category.icon && ICON_NAME_MAP[category.icon.toLowerCase()]) {
-    return ICON_NAME_MAP[category.icon.toLowerCase()];
-  }
-  // Default fallback
-  return Package;
-}
-
-interface CategoryCardProps {
-  category: Category;
-  onPress: () => void;
-}
-
-function CategoryCard({ category, onPress }: CategoryCardProps) {
-  const theme = useTheme();
-  const IconComponent = getCategoryIcon(category);
-
-  return (
-    <TouchableOpacity
-      style={[styles.categoryCard, { backgroundColor: theme.colors.bg, borderColor: theme.colors.border }]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      {/* RTL: Chevron on left, content on right */}
-      <ChevronLeft size={20} color={theme.colors.textMuted} />
-      <View style={styles.categoryContent}>
-        <Text variant="body">{category.nameAr || category.name}</Text>
-        <IconComponent size={32} color={theme.colors.primary} />
-      </View>
-    </TouchableOpacity>
-  );
 }
 
 export default function CreateListingScreen() {
@@ -109,24 +55,25 @@ export default function CreateListingScreen() {
   }, []);
 
   const handleCategorySelect = async (category: Category) => {
-    // Set category in create listing store
+    // Set category in create listing store (this fetches attributes & brands)
     await setCategory(category.id);
 
-    // Check if category supports multiple listing types (sale/rent)
-    if (category.supportedListingTypes.length > 1) {
-      // Navigate to listing type selection
-      router.push({
-        pathname: '/create/listing-type',
-        params: { categoryId: category.id, categoryName: category.nameAr || category.name },
-      });
-    } else {
-      // Skip listing type selection, go directly to wizard
-      // Set the only supported listing type
+    // If category only supports one listing type, set it automatically
+    if (category.supportedListingTypes.length === 1) {
       useCreateListingStore.getState().setFormField('listingType', category.supportedListingTypes[0]);
-      router.push({
-        pathname: '/create/wizard',
-        params: { categoryId: category.id },
-      });
+    }
+    // Note: If multiple types supported, user will select in BasicInfoStep
+
+    // Check if category has brands (pre-step flow)
+    const store = useCreateListingStore.getState();
+    const hasBrands = store.attributes.some(attr => attr.key === 'brandId');
+
+    if (hasBrands && store.brands.length > 0) {
+      // Go to brand selection pre-step
+      router.push('/create/brand');
+    } else {
+      // No brands for this category, go directly to wizard
+      router.push('/create/wizard');
     }
   };
 
@@ -154,23 +101,30 @@ export default function CreateListingScreen() {
           <Text variant="paragraph" color="error">
             {error}
           </Text>
-          <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+          <Button
+            variant="primary"
+            size="md"
             onPress={() => fetchCategories()}
+            style={styles.retryButton}
           >
-            <Text variant="body" color="inverse">إعادة المحاولة</Text>
-          </TouchableOpacity>
+            إعادة المحاولة
+          </Button>
         </View>
       )}
 
-      {/* Categories */}
+      {/* Categories - Using ListItem slice */}
       {!isLoading && !error && (
         <ScrollView style={styles.categories} contentContainerStyle={styles.categoriesContent}>
-          {categories.map((category) => (
-            <CategoryCard
+          {categories.map((category, index) => (
+            <ListItem
               key={category.id}
-              category={category}
+              label={category.nameAr || category.name}
+              subtitle={category.name}
+              icon={renderCategoryIcon(category.icon, 24, theme.colors.primary)}
               onPress={() => handleCategorySelect(category)}
+              showArrow
+              showBorder={index < categories.length - 1}
+              size="lg"
             />
           ))}
         </ScrollView>
@@ -190,24 +144,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   categoriesContent: {
-    padding: 16,
     paddingBottom: 100, // Account for tab bar
-  },
-  categoryCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  categoryContent: {
-    flex: 1,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'flex-end', // RTL: content aligned to right
-    gap: 12,
   },
   loadingContainer: {
     flex: 1,
@@ -226,8 +163,5 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
   },
 });

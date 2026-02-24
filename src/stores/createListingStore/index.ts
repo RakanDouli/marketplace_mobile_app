@@ -19,6 +19,17 @@ import {
   DELETE_DRAFT,
   CREATE_MY_LISTING_MUTATION,
 } from './createListingStore.gql';
+import {
+  validateTitle,
+  validateDescription,
+  validatePriceMinor,
+  validateImages,
+  validateProvince,
+  validateAttribute,
+  validateAttributeGroup,
+  hasValidationErrors,
+  type ValidationErrors,
+} from '../../lib/validation/listingValidation';
 import type {
   CreateListingStore,
   CreateListingFormData,
@@ -39,8 +50,13 @@ const initialFormData: CreateListingFormData = {
   categoryId: '',
   listingType: '',
   brandId: undefined,
+  brandName: undefined,
   modelId: undefined,
+  modelName: undefined,
   variantId: undefined,
+  variantName: undefined,
+  isOtherBrand: false,
+  isOtherModel: false,
   title: '',
   description: '',
   priceMinor: 0,
@@ -115,6 +131,9 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
   // Submission
   isSubmitting: false,
   error: null,
+
+  // Validation errors (per-field)
+  validationErrors: {} as ValidationErrors,
 
   // ============ CATEGORY & ATTRIBUTES ============
 
@@ -233,9 +252,23 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
     field: K,
     value: CreateListingFormData[K]
   ): void => {
-    set((state) => ({
-      formData: { ...state.formData, [field]: value },
-    }));
+    set((state) => {
+      const newFormData = { ...state.formData, [field]: value };
+
+      // Sync brandId/modelId/variantId to specs for consistency
+      // This ensures pre-step selections are available in specs
+      if (field === 'brandId' && value) {
+        newFormData.specs = { ...newFormData.specs, brandId: value as string };
+      }
+      if (field === 'modelId' && value) {
+        newFormData.specs = { ...newFormData.specs, modelId: value as string };
+      }
+      if (field === 'variantId' && value) {
+        newFormData.specs = { ...newFormData.specs, variantId: value as string };
+      }
+
+      return { formData: newFormData };
+    });
 
     // If brandId changes, fetch models
     if (field === 'brandId' && value) {
@@ -247,8 +280,9 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       get().fetchVariants(value as string);
     }
 
-    // Auto-validate after field change
-    setTimeout(() => get().validateCurrentStep(), 0);
+    // Don't auto-validate - only validate on "Next" press
+    // Clear error for this field if it exists
+    get().clearValidationError(field as string);
   },
 
   setSpecField: (key: string, value: any): void => {
@@ -258,7 +292,9 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
         specs: { ...state.formData.specs, [key]: value },
       },
     }));
-    setTimeout(() => get().validateCurrentStep(), 0);
+    // Don't auto-validate - only validate on "Next" press
+    // Clear error for this field if it exists
+    get().clearValidationError(key);
   },
 
   setLocationField: (field: keyof LocationData, value: string): void => {
@@ -268,7 +304,9 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
         location: { ...state.formData.location, [field]: value },
       },
     }));
-    setTimeout(() => get().validateCurrentStep(), 0);
+    // Don't auto-validate - only validate on "Next" press
+    // Clear error for this field if it exists
+    get().clearValidationError(`location.${field}`);
   },
 
   // ============ STEP NAVIGATION ============
@@ -276,22 +314,27 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
   goToStep: (stepIndex: number): void => {
     const { steps } = get();
     if (stepIndex >= 0 && stepIndex < steps.length) {
-      set({ currentStep: stepIndex });
+      // Clear all validation errors when jumping to a step
+      set({ currentStep: stepIndex, validationErrors: {} });
     }
   },
 
   nextStep: (): void => {
     const { currentStep, steps, validateCurrentStep } = get();
+    // Validate current step - errors will be set if invalid
     if (!validateCurrentStep()) return;
+
     if (currentStep < steps.length - 1) {
-      set({ currentStep: currentStep + 1 });
+      // Clear errors when moving to next step (validation passed)
+      set({ currentStep: currentStep + 1, validationErrors: {} });
     }
   },
 
   previousStep: (): void => {
     const { currentStep } = get();
     if (currentStep > 0) {
-      set({ currentStep: currentStep - 1 });
+      // Clear errors when going back
+      set({ currentStep: currentStep - 1, validationErrors: {} });
     }
   },
 
@@ -303,58 +346,82 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
   },
 
   validateStep: (stepIndex: number): boolean => {
-    const { steps, formData, attributes } = get();
+    const { steps, formData, attributes, validationErrors: existingErrors } = get();
     const step = steps[stepIndex];
     if (!step) return false;
 
     let isValid = false;
+    const errors: ValidationErrors = {};
 
     switch (step.type) {
       case 'listing_type':
-        isValid = !!formData.listingType;
-        break;
-
-      case 'brand':
-        isValid = !!formData.brandId;
-        break;
-
-      case 'model':
-        isValid = !!formData.modelId;
+        if (!formData.listingType) {
+          errors.listingType = 'يرجى اختيار نوع الإعلان';
+        }
+        isValid = !formData.listingType ? false : true;
         break;
 
       case 'basic':
-        isValid = !!(
-          formData.title.trim() &&
-          formData.priceMinor > 0 &&
-          (!formData.allowBidding ||
-            (formData.biddingStartPrice !== undefined && formData.biddingStartPrice >= 0))
-        );
+        // Validate title
+        const titleError = validateTitle(formData.title);
+        if (titleError) errors.title = titleError;
+
+        // Validate description (optional but has max length)
+        const descError = validateDescription(formData.description);
+        if (descError) errors.description = descError;
+
+        // Validate price
+        const priceError = validatePriceMinor(formData.priceMinor);
+        if (priceError) errors.priceMinor = priceError;
+
+        // Validate bidding
+        if (formData.allowBidding && (formData.biddingStartPrice === undefined || formData.biddingStartPrice === null || formData.biddingStartPrice < 0)) {
+          errors.biddingStartPrice = 'سعر البداية للمزايدة مطلوب عند تفعيل المزايدة';
+        }
+
+        isValid = !hasValidationErrors(errors);
         break;
 
       case 'images':
-        isValid = formData.images.length >= 1;
+        const imagesError = validateImages(formData.images);
+        if (imagesError) errors.images = imagesError;
+        isValid = !imagesError;
         break;
 
       case 'attribute_group':
         if (step.attributeGroup) {
-          isValid = step.attributeGroup.attributes.every((attr) => {
-            if (attr.validation !== 'REQUIRED') return true;
-            const value = formData.specs[attr.key];
-            if (Array.isArray(value)) return value.length > 0;
-            return value !== undefined && value !== null && value !== '';
-          });
+          // Validate all attributes in the group using the validation system
+          const groupErrors = validateAttributeGroup(
+            step.attributeGroup.attributes.map(attr => ({
+              key: attr.key,
+              name: attr.name,
+              validation: attr.validation as 'REQUIRED' | 'OPTIONAL',
+              type: attr.type,
+              maxSelections: attr.config?.maxSelections,
+              config: attr.config,
+            })),
+            formData.specs
+          );
+
+          // Merge group errors into errors object
+          Object.assign(errors, groupErrors);
+          isValid = !hasValidationErrors(groupErrors);
         }
         break;
 
       case 'location_review':
-        isValid = !!formData.location.province;
+        const provinceError = validateProvince(formData.location.province);
+        if (provinceError) errors['location.province'] = provinceError;
+        isValid = !provinceError;
         break;
 
       default:
         isValid = true;
     }
 
+    // Update validation errors in state (merge with existing errors for other steps)
     set((state) => ({
+      validationErrors: { ...state.validationErrors, ...errors },
       steps: state.steps.map((s, i) =>
         i === stepIndex ? { ...s, isValid } : s
       ),
@@ -363,36 +430,43 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
     return isValid;
   },
 
+  getValidationError: (field: string): string | undefined => {
+    return get().validationErrors[field];
+  },
+
+  clearValidationError: (field: string): void => {
+    set((state) => {
+      const newErrors = { ...state.validationErrors };
+      delete newErrors[field];
+      return { validationErrors: newErrors };
+    });
+  },
+
   // ============ GENERATE DYNAMIC STEPS ============
 
   generateSteps: (): void => {
-    const { attributes, formData } = get();
+    const { attributes } = get();
 
-    // Check if category has brand-model support
-    const hasBrandAttr = attributes.some((attr) => attr.key === 'brandId');
-    const hasModelAttr = attributes.some((attr) => attr.key === 'modelId');
+    // Keys that are handled in BasicInfoStep (not dynamic attributes)
+    const basicInfoKeys = ['search', 'title', 'description', 'price', 'listingType', 'condition', 'location'];
 
-    // Manually handled attribute keys (have dedicated UI)
-    const manuallyHandledKeys = [
-      'search', 'title', 'description', 'price', 'listingType', 'condition',
-      'brandId', 'modelId', 'variantId', 'location',
-    ];
-
-    // Group remaining attributes
+    // Group ALL attributes by their group name (including brand/model/variant)
     const groupsMap = new Map<string, Attribute[]>();
     attributes.forEach((attr) => {
-      if (manuallyHandledKeys.includes(attr.key)) return;
+      // Skip basic info keys - they have dedicated UI
+      if (basicInfoKeys.includes(attr.key)) return;
+
       const groupName = attr.group || 'other';
       if (!groupsMap.has(groupName)) groupsMap.set(groupName, []);
       groupsMap.get(groupName)!.push(attr);
     });
 
-    // Sort attributes within each group
+    // Sort attributes within each group by sortOrder
     groupsMap.forEach((attrs) =>
       attrs.sort((a, b) => a.sortOrder - b.sortOrder)
     );
 
-    // Create attribute groups
+    // Create attribute groups (sorted by groupOrder)
     const attributeGroups: AttributeGroup[] = [];
     groupsMap.forEach((attrs, name) => {
       if (attrs.length && name !== 'other') {
@@ -405,38 +479,34 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
     });
     attributeGroups.sort((a, b) => a.groupOrder - b.groupOrder);
 
+    // Separate first group (contains brand/model/variant) from other groups
+    const firstGroup = attributeGroups[0];
+    const otherGroups = attributeGroups.slice(1);
+
     // Build steps dynamically
     const steps: Step[] = [];
 
-    // Step 1: Brand selection (if category has brands)
-    if (hasBrandAttr) {
+    // Step 1: First attribute group (brand/model/variant/year/mileage)
+    // This is where pre-selected brand/model are shown as pre-filled fields
+    if (firstGroup) {
       steps.push({
-        id: 'brand',
-        type: 'brand',
-        title: 'اختر الماركة',
+        id: 'first_group',
+        type: 'attribute_group',
+        title: firstGroup.name,
         isValid: false,
+        attributeGroup: firstGroup,
       });
     }
 
-    // Step 2: Model selection (if category has models)
-    if (hasModelAttr) {
-      steps.push({
-        id: 'model',
-        type: 'model',
-        title: 'اختر الموديل',
-        isValid: false,
-      });
-    }
-
-    // Step 3: Basic info
+    // Step 2: Basic info (title, description, price, condition, bidding)
     steps.push({
       id: 'basic',
       type: 'basic',
-      title: 'المعلومات الأساسية',
+      title: 'معلومات الإعلان',
       isValid: false,
     });
 
-    // Step 4: Images
+    // Step 3: Images
     steps.push({
       id: 'images',
       type: 'images',
@@ -444,10 +514,10 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       isValid: false,
     });
 
-    // Step 5+: Dynamic attribute groups
-    attributeGroups.forEach((group, i) => {
+    // Step 4+: Other dynamic attribute groups (specs, features, etc.)
+    otherGroups.forEach((group, i) => {
       steps.push({
-        id: `group-${i}`,
+        id: `group-${i + 1}`,
         type: 'attribute_group',
         title: group.name,
         isValid: false,
@@ -751,6 +821,7 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       isCreatingDraft: false,
       isSubmitting: false,
       error: null,
+      validationErrors: {},
     });
   },
 }));
@@ -764,5 +835,6 @@ export const useModels = () => useCreateListingStore((state) => state.models);
 export const useVariants = () => useCreateListingStore((state) => state.variants);
 export const useFormData = () => useCreateListingStore((state) => state.formData);
 export const useIsSubmitting = () => useCreateListingStore((state) => state.isSubmitting);
+export const useValidationErrors = () => useCreateListingStore((state) => state.validationErrors);
 
 export default useCreateListingStore;

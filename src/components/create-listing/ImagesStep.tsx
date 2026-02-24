@@ -1,18 +1,22 @@
 /**
  * Images Step
  * Image upload and preview for listing
+ * Includes validation error display
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image, FlatList } from 'react-native';
-import { Camera, Plus, X, ImageIcon } from 'lucide-react-native';
-import { useTheme } from '../../theme';
+import { Camera, Plus, X, ImageIcon, AlertCircle } from 'lucide-react-native';
+import { useTheme, Theme } from '../../theme';
 import { Text } from '../slices/Text';
 import { useCreateListingStore } from '../../stores/createListingStore';
 
 export default function ImagesStep() {
   const theme = useTheme();
-  const { formData, removeImage } = useCreateListingStore();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { formData, removeImage, getValidationError } = useCreateListingStore();
+
+  const imagesError = getValidationError('images');
 
   const handleAddImage = () => {
     // TODO: Implement image picker
@@ -104,6 +108,16 @@ export default function ImagesStep() {
         </View>
       )}
 
+      {/* Validation error */}
+      {imagesError && (
+        <View style={styles.errorContainer}>
+          <AlertCircle size={14} color={theme.colors.error} />
+          <Text variant="small" style={[styles.errorText, { color: theme.colors.error }]}>
+            {imagesError}
+          </Text>
+        </View>
+      )}
+
       {/* Info note */}
       <View style={[styles.infoNote, { backgroundColor: theme.colors.primary + '10' }]}>
         <ImageIcon size={20} color={theme.colors.primary} />
@@ -115,104 +129,115 @@ export default function ImagesStep() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    gap: 16,
-  },
-  title: {
-    textAlign: 'right',
-  },
-  subtitle: {
-    textAlign: 'right',
-  },
-  emptyState: {
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    gap: 12,
-  },
-  emptyIconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  emptyTitle: {
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    textAlign: 'center',
-  },
-  imagesGrid: {
-    marginTop: 8,
-  },
-  row: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  imageContainer: {
-    flex: 1,
-    aspectRatio: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-    maxWidth: '32%',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  removeButton: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mainBadge: {
-    position: 'absolute',
-    bottom: 6,
-    left: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  addButton: {
-    flex: 1,
-    aspectRatio: 1,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    maxWidth: '32%',
-  },
-  addIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  infoText: {
-    flex: 1,
-    textAlign: 'right',
-  },
-});
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      gap: 16,
+    },
+    title: {
+      textAlign: 'right',
+    },
+    subtitle: {
+      textAlign: 'right',
+    },
+    emptyState: {
+      borderWidth: 2,
+      borderStyle: 'dashed',
+      borderRadius: 16,
+      padding: 32,
+      alignItems: 'center',
+      gap: 12,
+    },
+    emptyIconContainer: {
+      width: 96,
+      height: 96,
+      borderRadius: 48,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    emptyTitle: {
+      textAlign: 'center',
+    },
+    emptySubtitle: {
+      textAlign: 'center',
+    },
+    imagesGrid: {
+      marginTop: 8,
+    },
+    row: {
+      gap: 8,
+      marginBottom: 8,
+    },
+    imageContainer: {
+      flex: 1,
+      aspectRatio: 1,
+      borderRadius: 12,
+      overflow: 'hidden',
+      position: 'relative',
+      maxWidth: '32%',
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    removeButton: {
+      position: 'absolute',
+      top: 6,
+      right: 6,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    mainBadge: {
+      position: 'absolute',
+      bottom: 6,
+      left: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 4,
+    },
+    addButton: {
+      flex: 1,
+      aspectRatio: 1,
+      borderWidth: 2,
+      borderStyle: 'dashed',
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 8,
+      maxWidth: '32%',
+    },
+    addIconContainer: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    infoNote: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 12,
+      borderRadius: 12,
+      marginTop: 8,
+    },
+    infoText: {
+      flex: 1,
+      textAlign: 'right',
+    },
+    // Error styles
+    errorContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      justifyContent: 'flex-end',
+    },
+    errorText: {
+      textAlign: 'right',
+    },
+  });
