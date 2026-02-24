@@ -18,7 +18,7 @@ export default function CreateLayout() {
         headerTitleStyle: {
           fontFamily: 'Cairo-Bold',
         },
-        headerBackTitle: 'رجوع',
+        headerBackButtonDisplayMode: 'minimal',
         contentStyle: {
           backgroundColor: theme.colors.surface,
         },
