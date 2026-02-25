@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Check } from 'lucide-react-native';
@@ -233,21 +233,28 @@ export default function WizardScreen() {
           </Text>
         </View>
 
-        {/* Step Content */}
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          keyboardShouldPersistTaps="handled"
+        {/* Step Content - Wrapped in KeyboardAvoidingView to handle keyboard */}
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoidingView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         >
-          {renderStepContent()}
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {renderStepContent()}
 
-          {/* Error Message */}
-          {error && (
-            <View style={[styles.errorContainer, { backgroundColor: theme.colors.error + '15' }]}>
-              <Text variant="paragraph" color="error">{error}</Text>
-            </View>
-          )}
-        </ScrollView>
+            {/* Error Message */}
+            {error && (
+              <View style={[styles.errorContainer, { backgroundColor: theme.colors.error + '15' }]}>
+                <Text variant="paragraph" color="error">{error}</Text>
+              </View>
+            )}
+          </ScrollView>
+        </KeyboardAvoidingView>
 
         {/* Navigation Buttons - 3 buttons: Back | Cancel | Next */}
         <View style={[styles.footer, { backgroundColor: theme.colors.bg, borderTopColor: theme.colors.border }]}>
@@ -293,6 +300,9 @@ export default function WizardScreen() {
 const createStyles = (theme: Theme, isRTL: boolean) =>
   StyleSheet.create({
     container: {
+      flex: 1,
+    },
+    keyboardAvoidingView: {
       flex: 1,
     },
     loadingContainer: {
