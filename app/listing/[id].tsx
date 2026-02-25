@@ -16,6 +16,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { Video, ResizeMode } from 'expo-av';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import {
   MapPin,
@@ -27,6 +28,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRight,
+  Play,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, Theme } from '../../src/theme';
@@ -101,21 +103,6 @@ export default function ListingDetailScreen() {
       trackListingView(id);
     }
   }, [id]);
-
-  // Image navigation
-  const goToNextImage = useCallback(() => {
-    if (!currentListing?.imageKeys) return;
-    const nextIndex = (activeImageIndex + 1) % currentListing.imageKeys.length;
-    setActiveImageIndex(nextIndex);
-    flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-  }, [activeImageIndex, currentListing?.imageKeys]);
-
-  const goToPrevImage = useCallback(() => {
-    if (!currentListing?.imageKeys) return;
-    const prevIndex = activeImageIndex === 0 ? currentListing.imageKeys.length - 1 : activeImageIndex - 1;
-    setActiveImageIndex(prevIndex);
-    flatListRef.current?.scrollToIndex({ index: prevIndex, animated: true });
-  }, [activeImageIndex, currentListing?.imageKeys]);
 
   // Handle call seller
   const handleCallSeller = useCallback(() => {
@@ -248,6 +235,48 @@ export default function ListingDetailScreen() {
     );
   }
 
+  // Build media items array: images first, video at the end (same as web frontend)
+  const mediaItems = useMemo(() => {
+    const items: { type: 'image' | 'video'; url: string; id: string }[] = [];
+
+    // Add images first
+    if (currentListing?.imageKeys) {
+      currentListing.imageKeys.forEach((key, index) => {
+        items.push({
+          type: 'image',
+          url: getCloudflareImageUrl(key, 'large'),
+          id: key,
+        });
+      });
+    }
+
+    // Add video at the end if exists
+    if (currentListing?.videoUrl) {
+      items.push({
+        type: 'video',
+        url: getCloudflareImageUrl(currentListing.videoUrl, 'public'),
+        id: 'video',
+      });
+    }
+
+    return items;
+  }, [currentListing?.imageKeys, currentListing?.videoUrl]);
+
+  // Media navigation (images + video)
+  const goToNextImage = useCallback(() => {
+    if (mediaItems.length === 0) return;
+    const nextIndex = (activeImageIndex + 1) % mediaItems.length;
+    setActiveImageIndex(nextIndex);
+    flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+  }, [activeImageIndex, mediaItems.length]);
+
+  const goToPrevImage = useCallback(() => {
+    if (mediaItems.length === 0) return;
+    const prevIndex = activeImageIndex === 0 ? mediaItems.length - 1 : activeImageIndex - 1;
+    setActiveImageIndex(prevIndex);
+    flatListRef.current?.scrollToIndex({ index: prevIndex, animated: true });
+  }, [activeImageIndex, mediaItems.length]);
+
   const images = currentListing.imageKeys || [];
   const location = formatLocation(currentListing.location);
   const hasPhone = owner?.showPhone && (owner?.phone || owner?.contactPhone);
@@ -288,13 +317,13 @@ export default function ListingDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Image Gallery */}
+        {/* Media Gallery (Images + Video) */}
         <View style={styles.imageGallery}>
-          {images.length > 0 ? (
+          {mediaItems.length > 0 ? (
             <>
               <FlatList
                 ref={flatListRef}
-                data={images}
+                data={mediaItems}
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
@@ -303,22 +332,39 @@ export default function ListingDetailScreen() {
                   setActiveImageIndex(index);
                 }}
                 renderItem={({ item }) => (
-                  <TouchableOpacity
-                    activeOpacity={0.95}
-                    onPress={() => setShowImagePreview(true)}
-                  >
-                    <Image
-                      source={{ uri: getCloudflareImageUrl(item, 'large') }}
-                      style={styles.galleryImage}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
+                  item.type === 'video' ? (
+                    <View style={styles.galleryImage}>
+                      <Video
+                        source={{ uri: item.url }}
+                        style={styles.galleryVideo}
+                        useNativeControls
+                        resizeMode={ResizeMode.CONTAIN}
+                        isLooping={false}
+                      />
+                      {/* Video indicator badge */}
+                      <View style={styles.videoBadge}>
+                        <Play size={16} color="#FFFFFF" fill="#FFFFFF" />
+                        <Text variant="xs" style={styles.videoBadgeText}>فيديو</Text>
+                      </View>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      activeOpacity={0.95}
+                      onPress={() => setShowImagePreview(true)}
+                    >
+                      <Image
+                        source={{ uri: item.url }}
+                        style={styles.galleryImage}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  )
                 )}
-                keyExtractor={(item) => item}
+                keyExtractor={(item) => item.id}
               />
 
               {/* Navigation arrows */}
-              {images.length > 1 && (
+              {mediaItems.length > 1 && (
                 <>
                   <TouchableOpacity
                     style={[styles.galleryNav, styles.galleryNavLeft]}
@@ -335,11 +381,11 @@ export default function ListingDetailScreen() {
                 </>
               )}
 
-              {/* Image counter */}
-              {images.length > 1 && (
+              {/* Media counter */}
+              {mediaItems.length > 1 && (
                 <View style={styles.imageCounter}>
                   <Text variant="xs" style={styles.imageCounterText}>
-                    {activeImageIndex + 1} / {images.length}
+                    {activeImageIndex + 1} / {mediaItems.length}
                   </Text>
                 </View>
               )}
@@ -613,6 +659,26 @@ const createStyles = (theme: Theme) =>
     galleryImage: {
       width: SCREEN_WIDTH,
       height: IMAGE_HEIGHT,
+    },
+    galleryVideo: {
+      width: SCREEN_WIDTH,
+      height: IMAGE_HEIGHT,
+      backgroundColor: '#000000',
+    },
+    videoBadge: {
+      position: 'absolute',
+      top: theme.spacing.md,
+      right: theme.spacing.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+      borderRadius: theme.radius.md,
+    },
+    videoBadgeText: {
+      color: '#FFFFFF',
     },
     noImage: {
       flex: 1,

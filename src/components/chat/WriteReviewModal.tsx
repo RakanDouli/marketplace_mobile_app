@@ -153,8 +153,8 @@ export function WriteReviewModal({
                   >
                     <Star
                       size={40}
-                      color={star <= rating ? '#fbbf24' : theme.colors.textMuted}
-                      fill={star <= rating ? '#fbbf24' : 'none'}
+                      color={star <= rating ? theme.colors.warning : theme.colors.textMuted}
+                      fill={star <= rating ? theme.colors.warning : 'none'}
                     />
                   </TouchableOpacity>
                 ))}
@@ -276,7 +276,7 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'flex-end',
     },
     modalContent: {
@@ -357,7 +357,7 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.text,
     },
     tagTextSelected: {
-      color: '#FFFFFF',
+      color: theme.colors.textInverse,
     },
     errorText: {
       color: theme.colors.error,

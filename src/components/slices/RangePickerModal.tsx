@@ -253,7 +253,7 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'flex-end',
     },
     container: {
@@ -350,7 +350,7 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
     },
     confirmButtonText: {
-      color: '#FFF',
+      color: theme.colors.textInverse,
       fontWeight: '600',
     },
   });

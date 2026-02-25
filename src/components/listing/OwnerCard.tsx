@@ -216,13 +216,13 @@ const createStyles = (theme: Theme) =>
     avatar: {
       width: 64,
       height: 64,
-      borderRadius: 32,
+      borderRadius: theme.radius.full,
       backgroundColor: theme.colors.bg,
     },
     avatarPlaceholder: {
       width: 64,
       height: 64,
-      borderRadius: 32,
+      borderRadius: theme.radius.full,
       backgroundColor: theme.colors.primaryLight,
       justifyContent: 'center',
       alignItems: 'center',
@@ -232,7 +232,7 @@ const createStyles = (theme: Theme) =>
       bottom: -2,
       right: -2,
       backgroundColor: theme.colors.bg,
-      borderRadius: 10,
+      borderRadius: theme.radius.md,
     },
 
     // Info
@@ -248,7 +248,7 @@ const createStyles = (theme: Theme) =>
       textAlign: 'right',
     },
     accountType: {
-      marginTop: 2,
+      marginTop: theme.spacing.xs / 2,
     },
     ratingRow: {
       alignItems: 'center',
@@ -257,7 +257,7 @@ const createStyles = (theme: Theme) =>
     },
     stars: {
       flexDirection: 'row',
-      gap: 2,
+      gap: theme.spacing.xs / 2,
     },
     ratingText: {
       marginStart: theme.spacing.xs,
@@ -293,7 +293,7 @@ const createStyles = (theme: Theme) =>
     skeletonAvatar: {
       width: 64,
       height: 64,
-      borderRadius: 32,
+      borderRadius: theme.radius.full,
       backgroundColor: theme.colors.border,
     },
     skeletonText: {

@@ -7,13 +7,19 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, TextInput, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { View, StyleSheet, TextInput, TouchableOpacity, ScrollView, Switch, Image } from 'react-native';
 import { Check, ChevronDown, Car, Plus, AlertCircle } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text, Loading } from '../slices';
 import { useCreateListingStore } from '../../stores/createListingStore';
 import { validateAttribute } from '../../lib/validation/listingValidation';
 import type { AttributeGroup, Attribute, Brand, Model, Variant } from '../../stores/createListingStore/types';
+
+// Convert Arabic numerals (٠١٢٣٤٥٦٧٨٩) to English (0123456789)
+const convertArabicToEnglish = (str: string): string => {
+  const arabicNumerals = '٠١٢٣٤٥٦٧٨٩';
+  return str.replace(/[٠-٩]/g, (d) => String(arabicNumerals.indexOf(d)));
+};
 
 interface AttributeGroupStepProps {
   group: AttributeGroup;
@@ -97,7 +103,11 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
       return brandId.replace('other:', '');
     }
     const brand = brands.find(b => b.id === brandId);
-    return brand?.name || formData.brandName || null;
+    // Show both Arabic and English names with dash
+    if (brand) {
+      return brand.nameAr && brand.name ? `${brand.nameAr} - ${brand.name}` : (brand.nameAr || brand.name);
+    }
+    return formData.brandName || null;
   }, [formData.specs.brandId, formData.brandId, formData.brandName, brands]);
 
   const selectedModelName = useMemo(() => {
@@ -313,15 +323,25 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
                         key={brand.id}
                         style={[
                           styles.dropdownItem,
-                          formData.specs.brandId === brand.id && { backgroundColor: theme.colors.primary + '15' },
+                          formData.specs.brandId === brand.id && { backgroundColor: theme.colors.primaryLight },
                         ]}
                         onPress={() => handleBrandSelect(brand)}
                       >
                         <View style={styles.brandItemContent}>
                           <View style={[styles.brandIcon, { backgroundColor: theme.colors.surface }]}>
-                            <Car size={16} color={theme.colors.textMuted} />
+                            {brand.logoUrl ? (
+                              <Image
+                                source={{ uri: brand.logoUrl }}
+                                style={styles.brandLogoImage}
+                                resizeMode="contain"
+                              />
+                            ) : (
+                              <Car size={16} color={theme.colors.textMuted} />
+                            )}
                           </View>
-                          <Text variant="body">{brand.name}</Text>
+                          <Text variant="body">
+                            {brand.nameAr && brand.name ? `${brand.nameAr} - ${brand.name}` : (brand.nameAr || brand.name)}
+                          </Text>
                         </View>
                         {formData.specs.brandId === brand.id && (
                           <Check size={18} color={theme.colors.primary} />
@@ -341,7 +361,7 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
           <Switch
             value={isOtherBrand}
             onValueChange={handleOtherBrandToggle}
-            trackColor={{ false: theme.colors.border, true: theme.colors.primary + '60' }}
+            trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
             thumbColor={isOtherBrand ? theme.colors.primary : theme.colors.surface}
           />
         </View>
@@ -423,7 +443,7 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
                         key={model.id}
                         style={[
                           styles.dropdownItem,
-                          formData.specs.modelId === model.id && { backgroundColor: theme.colors.primary + '15' },
+                          formData.specs.modelId === model.id && { backgroundColor: theme.colors.primaryLight },
                         ]}
                         onPress={() => handleModelSelect(model)}
                       >
@@ -447,7 +467,7 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
             <Switch
               value={isOtherModel}
               onValueChange={handleOtherModelToggle}
-              trackColor={{ false: theme.colors.border, true: theme.colors.primary + '60' }}
+              trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
               thumbColor={isOtherModel ? theme.colors.primary : theme.colors.surface}
               disabled={!hasBrand}
             />
@@ -530,7 +550,7 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
                       key={variant.id}
                       style={[
                         styles.dropdownItem,
-                        formData.specs.variantId === variant.id && { backgroundColor: theme.colors.primary + '15' },
+                        formData.specs.variantId === variant.id && { backgroundColor: theme.colors.primaryLight },
                       ]}
                       onPress={() => handleVariantSelect(variant)}
                     >
@@ -553,7 +573,7 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
             <Switch
               value={isOtherVariant}
               onValueChange={handleOtherVariantToggle}
-              trackColor={{ false: theme.colors.border, true: theme.colors.primary + '60' }}
+              trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
               thumbColor={isOtherVariant ? theme.colors.primary : theme.colors.surface}
               disabled={!hasModel}
             />
@@ -576,7 +596,10 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
     const currentValue = formData.specs[attr.key];
     const isRequired = attr.validation === 'REQUIRED' || attr.validation === 'required';
 
-    switch (attr.type) {
+    // Normalize type to lowercase for comparison
+    const attrType = attr.type?.toLowerCase() || 'text';
+
+    switch (attrType) {
       case 'select':
       case 'single_select':
       case 'selector':
@@ -608,7 +631,7 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
                     variant="small"
                     style={{
                       color:
-                        currentValue === option.key ? '#fff' : theme.colors.text,
+                        currentValue === option.key ? theme.colors.textInverse : theme.colors.text,
                     }}
                   >
                     {option.value}
@@ -621,6 +644,7 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
         );
 
       case 'multi_select':
+      case 'multi_selector':
         const selectedValues = Array.isArray(currentValue) ? currentValue : [];
         return (
           <View key={attr.key} style={styles.field}>
@@ -651,10 +675,10 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
                       setSpecField(attr.key, newValues);
                     }}
                   >
-                    {isSelected && <Check size={14} color="#fff" />}
+                    {isSelected && <Check size={14} color={theme.colors.textInverse} />}
                     <Text
                       variant="small"
-                      style={{ color: isSelected ? '#fff' : theme.colors.text }}
+                      style={{ color: isSelected ? theme.colors.textInverse : theme.colors.text }}
                     >
                       {option.value}
                     </Text>
@@ -668,6 +692,36 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
 
       case 'number':
       case 'integer':
+        return (
+          <View key={attr.key} style={styles.field}>
+            <Text variant="body" style={styles.label}>
+              {attr.name} {isRequired && '*'}
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.colors.bg,
+                  borderColor: getValidationError(attr.key) ? theme.colors.error : theme.colors.border,
+                  color: theme.colors.text,
+                },
+              ]}
+              value={currentValue?.toString() || ''}
+              onChangeText={(text) => {
+                const converted = convertArabicToEnglish(text);
+                const numValue = parseInt(converted.replace(/[^0-9]/g, ''), 10) || 0;
+                setSpecField(attr.key, numValue);
+                clearValidationError(attr.key);
+              }}
+              placeholder={`أدخل ${attr.name}`}
+              placeholderTextColor={theme.colors.textMuted}
+              textAlign={isRTL ? 'right' : 'left'}
+              keyboardType="number-pad"
+            />
+            {renderFieldError(attr.key)}
+          </View>
+        );
+
       case 'range_selector':
         return (
           <View key={attr.key} style={styles.field}>
@@ -685,14 +739,47 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
               ]}
               value={currentValue?.toString() || ''}
               onChangeText={(text) => {
-                const numValue = parseInt(text.replace(/[^0-9]/g, ''), 10) || 0;
+                const converted = convertArabicToEnglish(text);
+                const numValue = parseInt(converted.replace(/[^0-9]/g, ''), 10) || 0;
                 setSpecField(attr.key, numValue);
                 clearValidationError(attr.key);
               }}
               placeholder={`أدخل ${attr.name}`}
               placeholderTextColor={theme.colors.textMuted}
               textAlign={isRTL ? 'right' : 'left'}
-              keyboardType="numeric"
+              keyboardType="number-pad"
+            />
+            {renderFieldError(attr.key)}
+          </View>
+        );
+
+      case 'textarea':
+        return (
+          <View key={attr.key} style={styles.field}>
+            <Text variant="body" style={styles.label}>
+              {attr.name} {isRequired && '*'}
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                styles.textareaInput,
+                {
+                  backgroundColor: theme.colors.bg,
+                  borderColor: getValidationError(attr.key) ? theme.colors.error : theme.colors.border,
+                  color: theme.colors.text,
+                },
+              ]}
+              value={currentValue || ''}
+              onChangeText={(text) => {
+                setSpecField(attr.key, text);
+                clearValidationError(attr.key);
+              }}
+              placeholder={`أدخل ${attr.name}`}
+              placeholderTextColor={theme.colors.textMuted}
+              textAlign={isRTL ? 'right' : 'left'}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
             />
             {renderFieldError(attr.key)}
           </View>
@@ -753,7 +840,7 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
               >
                 <Text
                   variant="body"
-                  style={{ color: currentValue === true ? '#fff' : theme.colors.text }}
+                  style={{ color: currentValue === true ? theme.colors.textInverse : theme.colors.text }}
                 >
                   نعم
                 </Text>
@@ -776,7 +863,7 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
               >
                 <Text
                   variant="body"
-                  style={{ color: currentValue === false ? '#fff' : theme.colors.text }}
+                  style={{ color: currentValue === false ? theme.colors.textInverse : theme.colors.text }}
                 >
                   لا
                 </Text>
@@ -804,18 +891,16 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      gap: 20,
+      gap: theme.spacing.lg,
     },
     title: {
-      // Text component handles RTL automatically
-      marginBottom: 4,
+      marginBottom: theme.spacing.xs,
     },
     subtitle: {
-      // Text component handles RTL automatically
-      marginBottom: 8,
+      marginBottom: theme.spacing.sm,
     },
     field: {
-      gap: 8,
+      gap: theme.spacing.sm,
     },
     label: {
       // Text component handles RTL automatically
@@ -824,8 +909,8 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      gap: 8,
-      marginTop: 4,
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.xs,
     },
     switchDisabled: {
       opacity: 0.5,
@@ -836,7 +921,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     otherInputIcon: {
       position: 'absolute',
-      [isRTL ? 'right' : 'left']: 12,
+      [isRTL ? 'right' : 'left']: theme.spacing.md,
       zIndex: 1,
     },
     otherInput: {
@@ -849,37 +934,41 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     input: {
       borderWidth: 1,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      fontSize: 16,
+      borderRadius: theme.radius.lg,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+      fontSize: theme.fontSize.base,
       textAlign: isRTL ? 'right' : 'left',
+    },
+    textareaInput: {
+      minHeight: 100,
+      paddingTop: theme.spacing.md,
     },
     optionsContainer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
-      gap: 8,
+      gap: theme.spacing.sm,
       justifyContent: 'flex-start',
     },
     optionChip: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      gap: 4,
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-      borderRadius: 20,
+      gap: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.radius.full,
       borderWidth: 1,
     },
     booleanContainer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
-      gap: 12,
+      gap: theme.spacing.md,
       justifyContent: 'flex-start',
     },
     booleanOption: {
       flex: 1,
       maxWidth: 120,
-      paddingVertical: 14,
-      borderRadius: 12,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.radius.lg,
       borderWidth: 1,
       alignItems: 'center',
     },
@@ -888,8 +977,8 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     errorContainer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      gap: 4,
-      marginTop: 4,
+      gap: theme.spacing.xs,
+      marginTop: theme.spacing.xs,
       justifyContent: 'flex-start',
     },
     errorText: {
@@ -902,17 +991,17 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       borderWidth: 1,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
+      borderRadius: theme.radius.lg,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
     },
     selectorDisabled: {
       opacity: 0.5,
     },
     dropdownContainer: {
       borderWidth: 1,
-      borderRadius: 12,
-      marginTop: 4,
+      borderRadius: theme.radius.lg,
+      marginTop: theme.spacing.xs,
       maxHeight: 250,
       overflow: 'hidden',
     },
@@ -923,25 +1012,30 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
     },
     brandItemContent: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      gap: 12,
+      gap: theme.spacing.md,
     },
     brandIcon: {
       width: 32,
       height: 32,
-      borderRadius: 8,
+      borderRadius: theme.radius.md,
       justifyContent: 'center',
       alignItems: 'center',
+      overflow: 'hidden',
+    },
+    brandLogoImage: {
+      width: 28,
+      height: 28,
     },
     loadingContainer: {
-      padding: 20,
+      padding: theme.spacing.lg,
       alignItems: 'center',
     },
   });

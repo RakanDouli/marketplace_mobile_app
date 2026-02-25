@@ -4,14 +4,14 @@
  * Matches web frontend: components/slices/PromoCard
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useTheme } from '../../theme';
+import { useTheme, Theme } from '../../theme';
 import { Text } from './Text';
 import { Button } from './Button';
 
@@ -41,6 +41,7 @@ export function PromoCard({
   variant = 'primary',
 }: PromoCardProps) {
   const theme = useTheme();
+  const styles = useMemo(() => createPromoCardStyles(theme), [theme]);
 
   const variantColors: Record<PromoCardVariant, string> = {
     primary: theme.colors.infoLight,
@@ -96,36 +97,37 @@ export function PromoCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  imageWrapper: {
-    width: '30%',
-    maxWidth: 120,
-    aspectRatio: 1,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  content: {
-    flex: 1,
-    padding: 12,
-    justifyContent: 'space-between',
-    gap: 4,
-  },
-  titleRow: {
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 100,
-  },
-});
+const createPromoCardStyles = (theme: Theme) =>
+  StyleSheet.create({
+    card: {
+      borderRadius: theme.radius.lg,
+      overflow: 'hidden',
+    },
+    imageWrapper: {
+      width: '30%',
+      maxWidth: 120,
+      aspectRatio: 1,
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    content: {
+      flex: 1,
+      padding: theme.spacing.md,
+      justifyContent: 'space-between',
+      gap: theme.spacing.xs,
+    },
+    titleRow: {
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      flexWrap: 'wrap',
+    },
+    badge: {
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+      borderRadius: theme.radius.full,
+    },
+  });
 
 export default PromoCard;

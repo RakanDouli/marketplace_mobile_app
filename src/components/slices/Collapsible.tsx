@@ -114,10 +114,9 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     toggleIcon: {
       width: 28,
       height: 28,
-      borderRadius: 14,
+      borderRadius: theme.radius.full,
       justifyContent: 'center',
       alignItems: 'center',
-
     },
     title: {
       flex: 1,

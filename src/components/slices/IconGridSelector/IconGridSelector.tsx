@@ -181,7 +181,7 @@ const createStyles = (theme: Theme) =>
       fontWeight: '600',
     },
     count: {
-      marginTop: 2,
+      marginTop: theme.spacing.xs,
     },
   });
 

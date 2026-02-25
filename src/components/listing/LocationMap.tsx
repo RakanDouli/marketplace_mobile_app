@@ -226,7 +226,7 @@ export function LocationMap({ location, title }: LocationMapProps) {
             style={styles.directionsButton}
             onPress={openDirections}
           >
-            <Navigation size={16} color="#FFFFFF" />
+            <Navigation size={16} color={theme.colors.textInverse} />
             <Text variant="small" style={styles.directionsText}>
               الاتجاهات
             </Text>
@@ -276,7 +276,7 @@ const createStyles = (theme: Theme) =>
       start: theme.spacing.sm,
       width: 32,
       height: 32,
-      borderRadius: 16,
+      borderRadius: theme.radius.full,
       backgroundColor: theme.colors.bg,
       justifyContent: 'center',
       alignItems: 'center',
@@ -313,7 +313,7 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
     },
     directionsText: {
-      color: '#FFFFFF',
+      color: theme.colors.textInverse,
     },
   });
 

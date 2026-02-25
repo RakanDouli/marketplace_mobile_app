@@ -186,16 +186,17 @@ const createStyles = (theme: Theme) =>
     },
     cardOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.45)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'flex-end',
       padding: theme.spacing.md,
     },
     cardName: {
-      color: '#FFFFFF',
+      color: theme.colors.textInverse,
       fontFamily: theme.fontFamily.header,
     },
     cardCount: {
-      color: 'rgba(255,255,255,0.85)',
+      color: theme.colors.textInverse,
+      opacity: 0.85,
       marginTop: theme.spacing.xs,
     },
 

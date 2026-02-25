@@ -178,7 +178,7 @@ const createStyles = (theme: Theme) =>
       borderRadius: theme.radius.sm,
     },
     featuredBadgeText: {
-      color: '#FFFFFF',
+      color: theme.colors.textInverse,
       fontSize: 10,
     },
     content: {

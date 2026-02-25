@@ -195,9 +195,9 @@ export function ContactSellerModal({
               style={styles.sendButton}
               icon={
                 isSubmitting ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={theme.colors.textInverse} />
                 ) : (
-                  <Send size={18} color="#FFFFFF" />
+                  <Send size={18} color={theme.colors.textInverse} />
                 )
               }
             >
@@ -218,7 +218,7 @@ const createStyles = (theme: Theme) =>
     },
     backdrop: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.colors.overlay,
     },
     modalContent: {
       backgroundColor: theme.colors.bg,

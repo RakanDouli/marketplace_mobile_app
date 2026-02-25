@@ -39,7 +39,9 @@ export interface AttributeGroup {
 export interface Brand {
   id: string;
   name: string;
+  nameAr?: string;
   slug: string;
+  logoUrl?: string;
   isActive: boolean;
 }
 

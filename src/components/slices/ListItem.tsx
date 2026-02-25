@@ -164,7 +164,7 @@ const createStyles = (theme: Theme, size: ListItemSize) => {
     },
     content: {
       flex: 1,
-      gap: 2,
+      gap: theme.spacing.xs,
     },
     label: {
       fontWeight: '500',

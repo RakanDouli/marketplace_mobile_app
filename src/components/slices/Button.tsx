@@ -111,13 +111,13 @@ export function Button({
       case 'secondary':
       case 'success':
       case 'danger':
-        return '#FFFFFF';
+        return theme.colors.textInverse;
       case 'outline':
       case 'ghost':
       case 'link':
         return theme.colors.text;
       default:
-        return '#FFFFFF';
+        return theme.colors.textInverse;
     }
   };
 

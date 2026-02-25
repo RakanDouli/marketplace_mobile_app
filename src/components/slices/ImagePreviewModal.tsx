@@ -141,12 +141,12 @@ export function ImagePreviewModal({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar barStyle="light-content" backgroundColor={theme.colors.textInverse === '#f8fafc' ? '#0f172a' : '#000000'} />
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={24} color="#FFFFFF" />
+            <X size={24} color={theme.colors.textInverse} />
           </TouchableOpacity>
           <Text variant="body" style={styles.counter}>
             {currentIndex + 1} / {images.length}
@@ -181,7 +181,7 @@ export function ImagePreviewModal({
                 style={[styles.navButton, styles.navButtonLeft]}
                 onPress={goToNext}
               >
-                <ChevronLeft size={32} color="#FFFFFF" />
+                <ChevronLeft size={32} color={theme.colors.textInverse} />
               </TouchableOpacity>
             )}
             {/* Previous button - right side */}
@@ -190,7 +190,7 @@ export function ImagePreviewModal({
                 style={[styles.navButton, styles.navButtonRight]}
                 onPress={goToPrev}
               >
-                <ChevronRight size={32} color="#FFFFFF" />
+                <ChevronRight size={32} color={theme.colors.textInverse} />
               </TouchableOpacity>
             )}
           </>
@@ -236,7 +236,7 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#000000',
+      backgroundColor: theme.colors.textInverse === '#f8fafc' ? '#0f172a' : '#000000',
     },
 
     // Header
@@ -252,13 +252,13 @@ const createStyles = (theme: Theme) =>
       left: 0,
       right: 0,
       zIndex: 10,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.colors.overlay,
     },
     closeButton: {
       padding: theme.spacing.sm,
     },
     counter: {
-      color: '#FFFFFF',
+      color: theme.colors.textInverse,
     },
     placeholder: {
       width: 40,
@@ -293,8 +293,8 @@ const createStyles = (theme: Theme) =>
       marginTop: -24,
       width: 48,
       height: 48,
-      borderRadius: 24,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      borderRadius: theme.radius.full,
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -313,7 +313,7 @@ const createStyles = (theme: Theme) =>
       right: 0,
       paddingVertical: theme.spacing.md,
       paddingBottom: 40, // Safe area
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.colors.overlay,
     },
     thumbnailsContent: {
       paddingHorizontal: theme.spacing.md,
@@ -328,7 +328,7 @@ const createStyles = (theme: Theme) =>
       borderColor: 'transparent',
     },
     thumbnailActive: {
-      borderColor: '#FFFFFF',
+      borderColor: theme.colors.textInverse,
     },
     thumbnailImage: {
       width: '100%',

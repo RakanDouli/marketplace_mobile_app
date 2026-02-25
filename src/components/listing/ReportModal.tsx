@@ -213,7 +213,7 @@ export function ReportModal({
                         onPress={handleSubmit}
                         loading={isSubmitting}
                         disabled={!selectedReason || isSubmitting}
-                        icon={<Flag size={18} color="#FFFFFF" />}
+                        icon={<Flag size={18} color={theme.colors.textInverse} />}
                         style={styles.submitButton}
                       >
                         إرسال البلاغ
@@ -234,7 +234,7 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'flex-end',
     },
     keyboardAvoid: {
@@ -315,12 +315,12 @@ const createStyles = (theme: Theme) =>
     },
     reasonItemSelected: {
       borderColor: theme.colors.error,
-      backgroundColor: '#FFEBEE', // Light red background
+      backgroundColor: theme.colors.errorLight,
     },
     radio: {
       width: 20,
       height: 20,
-      borderRadius: 10,
+      borderRadius: theme.radius.full,
       borderWidth: 2,
       borderColor: theme.colors.border,
       alignItems: 'center',
@@ -332,7 +332,7 @@ const createStyles = (theme: Theme) =>
     radioInner: {
       width: 10,
       height: 10,
-      borderRadius: 5,
+      borderRadius: theme.radius.full,
       backgroundColor: theme.colors.error,
     },
     reasonText: {
@@ -378,8 +378,8 @@ const createStyles = (theme: Theme) =>
     successIcon: {
       width: 80,
       height: 80,
-      borderRadius: 40,
-      backgroundColor: '#E8F5E9', // Light green background
+      borderRadius: theme.radius.full,
+      backgroundColor: theme.colors.successLight,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: theme.spacing.lg,

@@ -384,7 +384,7 @@ const createStyles = (theme: Theme) =>
     },
     modalBackdrop: {
       flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
+      backgroundColor: theme.colors.overlay,
     },
     modalContent: {
       backgroundColor: theme.colors.bg,

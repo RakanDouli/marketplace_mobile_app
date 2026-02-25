@@ -183,6 +183,20 @@ export const GET_MY_DRAFTS = `
 
 // ============ MEDIA ============
 
+// Get Cloudflare upload URL for listing images
+export const CREATE_IMAGE_UPLOAD_URL_MUTATION = `
+  mutation CreateImageUploadUrl {
+    createImageUploadUrl {
+      uploadUrl
+      assetKey
+    }
+  }
+`;
+
+// NOTE: Videos use the same Cloudflare Images API as images
+// Use CREATE_IMAGE_UPLOAD_URL_MUTATION for both images and videos
+// (The old createVideoUploadUrl mutation doesn't exist in the backend)
+
 // Add image to draft
 export const ADD_IMAGE_TO_DRAFT = `
   mutation AddImageToDraft($draftId: ID!, $imageKey: String!, $position: Int) {

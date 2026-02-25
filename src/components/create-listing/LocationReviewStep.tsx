@@ -100,7 +100,7 @@ export default function LocationReviewStep() {
                   style={{
                     color:
                       formData.location.province === province.key
-                        ? '#fff'
+                        ? theme.colors.textInverse
                         : theme.colors.text,
                   }}
                 >
@@ -226,8 +226,8 @@ export default function LocationReviewStep() {
             styles.validationCard,
             {
               backgroundColor: allStepsValid
-                ? theme.colors.success + '15'
-                : theme.colors.warning + '15',
+                ? theme.colors.successLight
+                : theme.colors.warningLight,
             },
           ]}
         >
@@ -256,74 +256,74 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      gap: 24,
+      gap: theme.spacing.lg,
     },
     section: {
-      gap: 16,
+      gap: theme.spacing.md,
     },
     sectionHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-end',
-      gap: 8,
+      gap: theme.spacing.sm,
     },
     sectionTitle: {
       textAlign: 'right',
     },
     field: {
-      gap: 8,
+      gap: theme.spacing.sm,
     },
     label: {
       textAlign: 'right',
     },
     input: {
       borderWidth: 1,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      fontSize: 16,
+      borderRadius: theme.radius.lg,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+      fontSize: theme.fontSize.base,
     },
     provincesGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 8,
+      gap: theme.spacing.sm,
       justifyContent: 'flex-end',
     },
     provinceChip: {
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-      borderRadius: 20,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.radius.full,
       borderWidth: 1,
     },
     summaryCard: {
       borderWidth: 1,
-      borderRadius: 16,
-      padding: 16,
+      borderRadius: theme.radius.xl,
+      padding: theme.spacing.md,
     },
     summaryRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingVertical: 8,
+      paddingVertical: theme.spacing.sm,
     },
     divider: {
       height: 1,
-      backgroundColor: '#E5E5E5',
+      backgroundColor: theme.colors.border,
     },
     validationCard: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-end',
-      gap: 8,
-      padding: 16,
-      borderRadius: 12,
+      gap: theme.spacing.sm,
+      padding: theme.spacing.md,
+      borderRadius: theme.radius.lg,
     },
     // Error styles
     errorContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 4,
-      marginTop: 4,
+      gap: theme.spacing.xs,
+      marginTop: theme.spacing.xs,
       justifyContent: 'flex-end',
     },
     errorText: {

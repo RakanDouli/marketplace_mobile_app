@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Check } from 'lucide-react-native';
@@ -50,6 +50,8 @@ export default function WizardScreen() {
     ensureDraftExists,
     draftId,
     generateSteps,
+    deleteDraft,
+    reset,
   } = useCreateListingStore();
 
   // Keys that are handled in BasicInfoStep (not dynamic attributes)
@@ -96,10 +98,40 @@ export default function WizardScreen() {
 
   const handleBack = () => {
     if (isFirstStep) {
+      // On first step, back goes to previous screen (brand/model selection)
       router.back();
     } else {
       previousStep();
     }
+  };
+
+  // Cancel with confirmation - deletes draft and all uploaded images
+  const handleCancel = () => {
+    Alert.alert(
+      'إلغاء الإعلان',
+      'هل أنت متأكد؟ سيتم حذف جميع البيانات والصور المرفوعة.',
+      [
+        {
+          text: 'متابعة',
+          style: 'cancel',
+        },
+        {
+          text: 'إلغاء الإعلان',
+          style: 'destructive',
+          onPress: async () => {
+            // Delete draft from backend (includes image cleanup)
+            if (draftId) {
+              await deleteDraft();
+            } else {
+              // Just reset local state if no draft
+              reset();
+            }
+            // Navigate to home
+            router.replace('/');
+          },
+        },
+      ]
+    );
   };
 
   // Render current step content
@@ -217,10 +249,9 @@ export default function WizardScreen() {
           )}
         </ScrollView>
 
-        {/* Navigation Buttons */}
-        {/* RTL: Back on right, Next on left | LTR: Back on left, Next on right */}
+        {/* Navigation Buttons - 3 buttons: Back | Cancel | Next */}
         <View style={[styles.footer, { backgroundColor: theme.colors.bg, borderTopColor: theme.colors.border }]}>
-          {/* Back/Cancel Button */}
+          {/* Back Button - goes to previous step or previous screen */}
           <Button
             variant="outline"
             size="lg"
@@ -228,7 +259,17 @@ export default function WizardScreen() {
             arrowBack
             style={styles.navButton}
           >
-            {isFirstStep ? 'إلغاء' : 'رجوع'}
+            رجوع
+          </Button>
+
+          {/* Cancel Button - deletes draft and goes home */}
+          <Button
+            variant="danger"
+            size="lg"
+            onPress={handleCancel}
+            style={styles.navButton}
+          >
+            إلغاء
           </Button>
 
           {/* Next/Submit Button */}
@@ -307,11 +348,11 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginTop: 16,
     },
     footer: {
-      // RTL: row-reverse puts Back on right, Next on left
-      // LTR: row puts Back on left, Next on right
+      // RTL: row-reverse puts buttons in correct order for RTL
+      // LTR: row puts buttons in correct order for LTR
       flexDirection: isRTL ? 'row-reverse' : 'row',
       padding: 16,
-      gap: 12,
+      gap: 8,
       borderTopWidth: 1,
     },
     navButton: {

@@ -137,10 +137,14 @@ export const LISTING_TYPE_LABELS: Record<string, string> = {
 };
 
 export const CONDITION_LABELS: Record<string, string> = {
+  // Lowercase keys match backend enum values exactly
+  new: "جديد",
+  used_like_new: "مستعمل كالجديد",
+  used: "مستعمل",
+  // Uppercase keys for flexibility
   NEW: "جديد",
   USED_LIKE_NEW: "مستعمل كالجديد",
-  USED_GOOD: "مستعمل بحالة جيدة",
-  USED_FAIR: "مستعمل بحالة مقبولة",
+  USED: "مستعمل",
 };
 
 export const REJECTION_REASON_LABELS: Record<string, string> = {

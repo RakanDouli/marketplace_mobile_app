@@ -92,10 +92,10 @@ export function Text({
       lineHeight: theme.fontSize.sm * theme.lineHeight.relaxed,
     },
     small: {
-      fontSize: 13,
+      fontSize: theme.fontSize.sm,
       fontWeight: theme.fontWeight.normal,
       fontFamily: theme.fontFamily.body,
-      lineHeight: 20,
+      lineHeight: theme.fontSize.sm * theme.lineHeight.relaxed,
     },
     xs: {
       fontSize: theme.fontSize.xs,
@@ -104,10 +104,10 @@ export function Text({
       lineHeight: theme.fontSize.xs * theme.lineHeight.normal,
     },
     navlink: {
-      fontSize: 11,
+      fontSize: theme.fontSize.xs,
       fontWeight: theme.fontWeight.medium,
       fontFamily: theme.fontFamily.bodyMedium,
-      lineHeight: theme.fontSize.base,
+      lineHeight: theme.fontSize.xs * theme.lineHeight.normal,
     },
   };
 

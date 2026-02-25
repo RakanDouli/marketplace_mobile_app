@@ -4,14 +4,14 @@
  * Matches web frontend: components/slices/PromoBanner
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useTheme } from '../../theme';
+import { useTheme, Theme } from '../../theme';
 import { Container, ContainerProps } from './Container';
 import { Text } from './Text';
 import { Button } from './Button';
@@ -43,6 +43,7 @@ export function PromoBanner({
 }: PromoBannerProps) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
+  const styles = useMemo(() => createPromoBannerStyles(theme), [theme]);
 
   const isMobile = width < 600;
 
@@ -111,50 +112,51 @@ export function PromoBanner({
   );
 }
 
-const styles = StyleSheet.create({
-  // Mobile: column layout
-  bannerMobile: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    gap: 8,
-  },
-  imageWrapperMobile: {
-    width: '40%',
-    maxWidth: 150,
-    aspectRatio: 2,
-  },
-  imageMobile: {
-    width: '100%',
-    height: '100%',
-  },
+const createPromoBannerStyles = (theme: Theme) =>
+  StyleSheet.create({
+    // Mobile: column layout
+    bannerMobile: {
+      borderRadius: theme.radius.lg,
+      padding: theme.spacing.md,
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+    imageWrapperMobile: {
+      width: '40%',
+      maxWidth: 150,
+      aspectRatio: 2,
+    },
+    imageMobile: {
+      width: '100%',
+      height: '100%',
+    },
 
-  // Tablet: row layout [Image | Content | Button]
-  bannerTablet: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    gap: 16,
-    overflow: 'hidden',
-  },
-  imageWrapperTablet: {
-    width: '20%',
-    maxWidth: 180,
-    aspectRatio: 2,
-  },
-  imageTablet: {
-    width: '100%',
-    height: '100%',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 4,
-  },
-  buttonWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+    // Tablet: row layout [Image | Content | Button]
+    bannerTablet: {
+      borderRadius: theme.radius.lg,
+      padding: theme.spacing.md,
+      alignItems: 'center',
+      gap: theme.spacing.md,
+      overflow: 'hidden',
+    },
+    imageWrapperTablet: {
+      width: '20%',
+      maxWidth: 180,
+      aspectRatio: 2,
+    },
+    imageTablet: {
+      width: '100%',
+      height: '100%',
+    },
+    content: {
+      flex: 1,
+      justifyContent: 'center',
+      gap: theme.spacing.xs,
+    },
+    buttonWrapper: {
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
 
 export default PromoBanner;

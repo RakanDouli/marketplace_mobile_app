@@ -208,7 +208,7 @@ export const MobileCatalogSelector: React.FC<MobileCatalogSelectorProps> = ({
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <Loading type="svg" size="lg" />
-          <Text variant="body" color="secondary" style={{ marginTop: 16 }}>
+          <Text variant="body" color="secondary" style={{ marginTop: theme.spacing.md }}>
             جاري التحميل...
           </Text>
         </View>

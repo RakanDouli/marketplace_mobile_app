@@ -163,7 +163,7 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
     },
     featuredBadgeText: {
-      color: '#FFFFFF',
+      color: theme.colors.textInverse,
     },
     content: {
       padding: theme.spacing.md,

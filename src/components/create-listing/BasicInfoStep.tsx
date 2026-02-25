@@ -3,22 +3,28 @@
  * Title, description, price, condition, bidding options
  * Also handles listing type (sale/rent) when category supports both
  * Includes real-time validation with Arabic error messages
+ *
+ * Price Input:
+ * - User selects currency (USD, EUR, SYP)
+ * - Enters price in selected currency
+ * - Price is converted to USD before storing (backend stores all prices in USD)
  */
 
 import React, { useMemo } from 'react';
-import { View, StyleSheet, TextInput, TouchableOpacity, Switch, I18nManager } from 'react-native';
+import { View, StyleSheet, TextInput, TouchableOpacity, Switch } from 'react-native';
 import { AlertCircle, ShoppingBag, Key } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text } from '../slices/Text';
+import { PriceInput } from '../slices/PriceInput';
 import { useCreateListingStore } from '../../stores/createListingStore';
 import { useCategoriesStore } from '../../stores/categoriesStore';
+import { CONDITION_LABELS } from '../../constants/metadata-labels';
 
+// Conditions from backend enum - using metadata-labels for Arabic text
 const CONDITIONS = [
-  { key: 'new', label: 'جديد' },
-  { key: 'like_new', label: 'كالجديد' },
-  { key: 'excellent', label: 'ممتاز' },
-  { key: 'good', label: 'جيد' },
-  { key: 'fair', label: 'مقبول' },
+  { key: 'new', label: CONDITION_LABELS['new'] },
+  { key: 'used_like_new', label: CONDITION_LABELS['used_like_new'] },
+  { key: 'used', label: CONDITION_LABELS['used'] },
 ];
 
 const LISTING_TYPES = [
@@ -47,18 +53,15 @@ export default function BasicInfoStep() {
   const supportedListingTypes = category?.supportedListingTypes || ['sale'];
   const showListingTypeSelector = supportedListingTypes.length > 1;
 
-  const handlePriceChange = (text: string) => {
-    // Remove non-numeric characters except decimal
-    const numericValue = text.replace(/[^0-9]/g, '');
-    const priceMinor = parseInt(numericValue, 10) || 0;
-    setFormField('priceMinor', priceMinor);
+  const handlePriceChange = (usdValue: number) => {
+    // PriceInput already converts to USD, store directly
+    setFormField('priceMinor', usdValue);
     clearValidationError('priceMinor');
   };
 
-  const handleBiddingPriceChange = (text: string) => {
-    const numericValue = text.replace(/[^0-9]/g, '');
-    const price = parseInt(numericValue, 10) || 0;
-    setFormField('biddingStartPrice', price);
+  const handleBiddingPriceChange = (usdValue: number) => {
+    // PriceInput already converts to USD, store directly
+    setFormField('biddingStartPrice', usdValue);
     clearValidationError('biddingStartPrice');
   };
 
@@ -102,10 +105,10 @@ export default function BasicInfoStep() {
                     clearValidationError('listingType');
                   }}
                 >
-                  <IconComponent size={24} color={isSelected ? '#fff' : theme.colors.primary} />
+                  <IconComponent size={24} color={isSelected ? theme.colors.textInverse : theme.colors.primary} />
                   <Text
                     variant="body"
-                    style={{ color: isSelected ? '#fff' : theme.colors.text }}
+                    style={{ color: isSelected ? theme.colors.textInverse : theme.colors.text }}
                   >
                     {type.label}
                   </Text>
@@ -171,22 +174,13 @@ export default function BasicInfoStep() {
 
       {/* Price */}
       <View style={styles.field}>
-        <Text variant="body" style={styles.label}>السعر (ل.س) *</Text>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.bg,
-              borderColor: getValidationError('priceMinor') ? theme.colors.error : theme.colors.border,
-              color: theme.colors.text,
-              textAlign: isRTL ? 'right' : 'left',
-            },
-          ]}
-          value={formData.priceMinor > 0 ? formData.priceMinor.toString() : ''}
-          onChangeText={handlePriceChange}
+        <PriceInput
+          label="السعر *"
+          value={formData.priceMinor}
+          onChange={handlePriceChange}
           placeholder="أدخل السعر"
-          placeholderTextColor={theme.colors.textMuted}
-          keyboardType="numeric"
+          error={!!getValidationError('priceMinor')}
+          required
         />
         {renderFieldError('priceMinor')}
       </View>
@@ -218,7 +212,7 @@ export default function BasicInfoStep() {
                 style={{
                   color:
                     formData.condition === condition.key
-                      ? '#fff'
+                      ? theme.colors.textInverse
                       : theme.colors.text,
                 }}
               >
@@ -240,34 +234,20 @@ export default function BasicInfoStep() {
         <Switch
           value={formData.allowBidding}
           onValueChange={(value) => setFormField('allowBidding', value)}
-          trackColor={{ false: theme.colors.border, true: theme.colors.primary + '80' }}
-          thumbColor={formData.allowBidding ? theme.colors.primary : '#f4f3f4'}
+          trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
+          thumbColor={formData.allowBidding ? theme.colors.primary : theme.colors.surface}
         />
       </View>
 
       {/* Bidding Start Price */}
       {formData.allowBidding && (
         <View style={styles.field}>
-          <Text variant="body" style={styles.label}>سعر البدء للمزايدة (ل.س)</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.colors.bg,
-                borderColor: getValidationError('biddingStartPrice') ? theme.colors.error : theme.colors.border,
-                color: theme.colors.text,
-                textAlign: isRTL ? 'right' : 'left',
-              },
-            ]}
-            value={
-              formData.biddingStartPrice !== undefined
-                ? formData.biddingStartPrice.toString()
-                : ''
-            }
-            onChangeText={handleBiddingPriceChange}
+          <PriceInput
+            label="سعر البدء للمزايدة"
+            value={formData.biddingStartPrice || 0}
+            onChange={handleBiddingPriceChange}
             placeholder="أدخل سعر البدء"
-            placeholderTextColor={theme.colors.textMuted}
-            keyboardType="numeric"
+            error={!!getValidationError('biddingStartPrice')}
           />
           {renderFieldError('biddingStartPrice')}
         </View>
@@ -280,68 +260,68 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      gap: 20,
+      gap: theme.spacing.lg,
     },
     field: {
-      gap: 8,
+      gap: theme.spacing.sm,
     },
     label: {
       // Text component handles RTL automatically
     },
     input: {
       borderWidth: 1,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      fontSize: 16,
+      borderRadius: theme.radius.lg,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+      fontSize: theme.fontSize.base,
     },
     textArea: {
       minHeight: 100,
-      paddingTop: 14,
+      paddingTop: theme.spacing.md,
     },
     conditionContainer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
-      gap: 8,
+      gap: theme.spacing.sm,
       justifyContent: 'flex-start',
     },
     conditionChip: {
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 20,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.radius.full,
       borderWidth: 1,
     },
     listingTypeContainer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
-      gap: 12,
+      gap: theme.spacing.md,
     },
     listingTypeCard: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 8,
-      paddingVertical: 16,
-      borderRadius: 12,
+      gap: theme.spacing.sm,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.radius.lg,
       borderWidth: 1,
     },
     toggleField: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: 8,
+      paddingVertical: theme.spacing.sm,
     },
     toggleInfo: {
       flex: 1,
       alignItems: isRTL ? 'flex-end' : 'flex-start',
-      gap: 2,
+      gap: theme.spacing.xs,
     },
     // Error styles
     errorContainer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      gap: 4,
-      marginTop: 4,
+      gap: theme.spacing.xs,
+      marginTop: theme.spacing.xs,
       justifyContent: 'flex-start',
     },
     errorText: {

@@ -279,7 +279,7 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'flex-end',
     },
     container: {
@@ -352,7 +352,7 @@ const createStyles = (theme: Theme) =>
     starsRow: {
       flexDirection: 'row',
       marginVertical: theme.spacing.xs,
-      gap: 2,
+      gap: theme.spacing.xs / 2,
     },
     ratingBars: {
       gap: theme.spacing.sm,
@@ -367,7 +367,7 @@ const createStyles = (theme: Theme) =>
     ratingBarLabelContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 2,
+      gap: theme.spacing.xs / 2,
       width: 28,
     },
     ratingBarLabel: {
@@ -377,13 +377,13 @@ const createStyles = (theme: Theme) =>
       flex: 1,
       height: 8,
       backgroundColor: theme.colors.border,
-      borderRadius: 4,
+      borderRadius: theme.radius.sm,
       overflow: 'hidden',
     },
     ratingBarFill: {
       height: '100%',
       backgroundColor: theme.colors.warning,
-      borderRadius: 4,
+      borderRadius: theme.radius.sm,
     },
     ratingBarCount: {
       width: 24,
@@ -413,14 +413,14 @@ const createStyles = (theme: Theme) =>
     },
     tagPositive: {
       flexDirection: 'row',
-      backgroundColor: '#E8F5E9', // Light green
+      backgroundColor: theme.colors.successLight,
       paddingVertical: theme.spacing.xs,
       paddingHorizontal: theme.spacing.sm,
       borderRadius: theme.radius.full,
     },
     tagNegative: {
       flexDirection: 'row',
-      backgroundColor: '#FFEBEE', // Light red
+      backgroundColor: theme.colors.errorLight,
       paddingVertical: theme.spacing.xs,
       paddingHorizontal: theme.spacing.sm,
       borderRadius: theme.radius.full,
@@ -448,12 +448,12 @@ const createStyles = (theme: Theme) =>
     reviewerAvatar: {
       width: 40,
       height: 40,
-      borderRadius: 20,
+      borderRadius: theme.radius.full,
     },
     reviewerAvatarPlaceholder: {
       width: 40,
       height: 40,
-      borderRadius: 20,
+      borderRadius: theme.radius.full,
       backgroundColor: theme.colors.bg,
       alignItems: 'center',
       justifyContent: 'center',
@@ -474,18 +474,18 @@ const createStyles = (theme: Theme) =>
     reviewTagPositive: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 4,
-      backgroundColor: '#E8F5E9', // Light green
-      paddingVertical: 4,
+      gap: theme.spacing.xs,
+      backgroundColor: theme.colors.successLight,
+      paddingVertical: theme.spacing.xs,
       paddingHorizontal: theme.spacing.sm,
       borderRadius: theme.radius.full,
     },
     reviewTagNegative: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 4,
-      backgroundColor: '#FFEBEE', // Light red
-      paddingVertical: 4,
+      gap: theme.spacing.xs,
+      backgroundColor: theme.colors.errorLight,
+      paddingVertical: theme.spacing.xs,
       paddingHorizontal: theme.spacing.sm,
       borderRadius: theme.radius.full,
     },

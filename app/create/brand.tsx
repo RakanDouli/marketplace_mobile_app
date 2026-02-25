@@ -8,7 +8,7 @@ import React, { useMemo } from 'react';
 import { View, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
-import { Car, Plus, ChevronLeft } from 'lucide-react-native';
+import { Car, ChevronLeft } from 'lucide-react-native';
 import { useTheme, Theme } from '../../src/theme';
 import { Text, ListItem } from '../../src/components/slices';
 import { useCreateListingStore } from '../../src/stores/createListingStore';
@@ -127,11 +127,6 @@ export default function BrandSelectionScreen() {
           <ListItem
             label="ماركة أخرى"
             subtitle="أدخل اسم الماركة يدوياً"
-            icon={
-              <View style={[styles.brandLogoContainer, { backgroundColor: theme.colors.primary + '15' }]}>
-                <Plus size={24} color={theme.colors.primary} />
-              </View>
-            }
             onPress={handleOtherSelect}
             showArrow
             showBorder={false}

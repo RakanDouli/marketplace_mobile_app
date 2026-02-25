@@ -125,12 +125,12 @@ export function FeatureCard({
       case 'primary':
         return {
           container: { backgroundColor: theme.colors.primary },
-          iconBg: 'rgba(255, 255, 255, 0.15)',
+          iconBg: theme.colors.primaryLight,
         };
       case 'accent':
         return {
           container: { backgroundColor: theme.colors.accent },
-          iconBg: 'rgba(255, 255, 255, 0.15)',
+          iconBg: theme.colors.accentBg,
         };
       case 'surface':
         return {

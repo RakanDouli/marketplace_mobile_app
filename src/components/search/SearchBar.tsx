@@ -211,14 +211,14 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.bg,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: theme.spacing.sm,
-      borderRadius: 9999,
+      borderRadius: theme.radius.full,
       borderWidth: 1,
       borderColor: theme.colors.border,
       ...theme.shadows.md,
     },
     input: {
       flex: 1,
-      fontSize: 14,
+      fontSize: theme.fontSize.sm,
       color: theme.colors.text,
       paddingVertical: theme.spacing.xs,
       paddingHorizontal: theme.spacing.sm,
@@ -227,7 +227,7 @@ const createStyles = (theme: Theme) =>
     iconButton: {
       width: 40,
       height: 40,
-      borderRadius: 9999,
+      borderRadius: theme.radius.full,
       backgroundColor: theme.colors.surface,
       justifyContent: 'center',
       alignItems: 'center',
@@ -239,7 +239,7 @@ const createStyles = (theme: Theme) =>
     searchButton: {
       width: 40,
       height: 40,
-      borderRadius: 9999,
+      borderRadius: theme.radius.full,
       backgroundColor: theme.colors.primary,
       justifyContent: 'center',
       alignItems: 'center',
@@ -247,7 +247,7 @@ const createStyles = (theme: Theme) =>
     // Modal styles
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'flex-end',
     },
     dropdownContainer: {

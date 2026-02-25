@@ -9,7 +9,6 @@ import React, { useMemo } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
-import { Plus } from 'lucide-react-native';
 import { useTheme, Theme } from '../../src/theme';
 import { Text, ListItem } from '../../src/components/slices';
 import { useCreateListingStore } from '../../src/stores/createListingStore';
@@ -122,11 +121,6 @@ export default function ModelSelectionScreen() {
           <ListItem
             label="موديل آخر"
             subtitle="أدخل اسم الموديل يدوياً"
-            icon={
-              <View style={[styles.iconContainer, { backgroundColor: theme.colors.primary + '15' }]}>
-                <Plus size={24} color={theme.colors.primary} />
-              </View>
-            }
             onPress={handleOtherSelect}
             showArrow
             showBorder={false}
@@ -231,13 +225,6 @@ const createStyles = (theme: Theme) =>
     },
     scrollView: {
       flex: 1,
-    },
-    iconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 8,
-      justifyContent: 'center',
-      alignItems: 'center',
     },
     modelHeader: {
       paddingHorizontal: 16,

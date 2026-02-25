@@ -18,6 +18,11 @@ import {
   GET_MY_DRAFTS,
   DELETE_DRAFT,
   CREATE_MY_LISTING_MUTATION,
+  CREATE_IMAGE_UPLOAD_URL_MUTATION,
+  ADD_IMAGE_TO_DRAFT,
+  REMOVE_IMAGE_FROM_DRAFT,
+  ADD_VIDEO_TO_DRAFT,
+  REMOVE_VIDEO_FROM_DRAFT,
 } from './createListingStore.gql';
 import {
   validateTitle,
@@ -30,6 +35,8 @@ import {
   hasValidationErrors,
   type ValidationErrors,
 } from '../../lib/validation/listingValidation';
+import { useCategoriesStore } from '../categoriesStore';
+import { getCloudflareImageUrl } from '../../services/cloudflare/images';
 import type {
   CreateListingStore,
   CreateListingFormData,
@@ -362,6 +369,13 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
         break;
 
       case 'basic':
+        // Validate listingType if category supports multiple types
+        const category = useCategoriesStore.getState().getCategoryById(formData.categoryId);
+        const supportedTypes = category?.supportedListingTypes || ['sale'];
+        if (supportedTypes.length > 1 && !formData.listingType) {
+          errors.listingType = 'يرجى اختيار نوع الإعلان (بيع أو إيجار)';
+        }
+
         // Validate title
         const titleError = validateTitle(formData.title);
         if (titleError) errors.title = titleError;
@@ -617,7 +631,7 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
           condition,
           images: (draft.imageKeys || []).map((key: string) => ({
             id: key,
-            url: `https://imagedelivery.net/yvE6_nYkmBMTwQORcLcTkA/${key}/public`,
+            url: getCloudflareImageUrl(key, 'card'),
           })),
           video: draft.videoUrl
             ? [{ id: draft.videoUrl, url: draft.videoUrl, isVideo: true }]
@@ -705,41 +719,221 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
   },
 
   // ============ MEDIA MANAGEMENT ============
-  // Note: These will need React Native specific implementations
-  // For now, they are placeholders
 
-  uploadAndAddImage: async (uri: string, position?: number): Promise<string | null> => {
-    // TODO: Implement React Native image upload
-    console.log('uploadAndAddImage not yet implemented for mobile', uri, position);
-    set({ error: 'رفع الصور غير مدعوم حالياً' });
-    return null;
+  uploadAndAddImage: async (uri: string, position?: number, onProgress?: (progress: number) => void): Promise<string | null> => {
+    const { draftId, formData } = get();
+
+    if (!draftId) {
+      // Create draft first if it doesn't exist
+      const newDraftId = await get().ensureDraftExists();
+      if (!newDraftId) {
+        set({ error: 'فشل إنشاء المسودة' });
+        return null;
+      }
+    }
+
+    try {
+      // 1. Get upload URL from backend
+      const uploadData = await graphqlRequest<{
+        createImageUploadUrl: { uploadUrl: string; assetKey: string };
+      }>(CREATE_IMAGE_UPLOAD_URL_MUTATION, {});
+
+      const { uploadUrl, assetKey } = uploadData.createImageUploadUrl;
+
+      onProgress?.(10);
+
+      // 2. Upload file to Cloudflare
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', {
+        uri,
+        type: 'image/jpeg',
+        name: `image-${Date.now()}.jpg`,
+      } as any);
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formDataUpload,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('فشل رفع الصورة');
+      }
+
+      // Extract ACTUAL asset ID from Cloudflare response (not the backend's assetKey)
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResult.success) {
+        throw new Error('فشل رفع الصورة إلى Cloudflare');
+      }
+
+      const actualAssetId = uploadResult?.result?.id;
+      if (!actualAssetId) {
+        throw new Error('لم يتم استلام معرف الصورة من Cloudflare');
+      }
+
+      onProgress?.(70);
+
+      // 3. Add image key to draft - use the ACTUAL Cloudflare asset ID
+      const currentDraftId = get().draftId;
+      await graphqlRequest(ADD_IMAGE_TO_DRAFT, {
+        draftId: currentDraftId,
+        imageKey: actualAssetId,
+        position: position ?? formData.images.length,
+      });
+
+      onProgress?.(100);
+
+      // 4. Update local state with proper Cloudflare URL
+      const imageUrl = getCloudflareImageUrl(actualAssetId, 'card');
+
+      set({
+        formData: {
+          ...get().formData,
+          images: [
+            ...get().formData.images,
+            { id: actualAssetId, url: imageUrl, isUploaded: true },
+          ],
+        },
+      });
+
+      return actualAssetId;
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      set({ error: error.message || 'فشل رفع الصورة' });
+      return null;
+    }
   },
 
   removeImage: async (imageKey: string): Promise<void> => {
-    const { formData } = get();
+    const { draftId, formData } = get();
+
+    // Update local state first
     set({
       formData: {
         ...formData,
         images: formData.images.filter((img) => img.id !== imageKey),
       },
     });
+
+    // Remove from backend if draft exists
+    if (draftId) {
+      try {
+        await graphqlRequest(REMOVE_IMAGE_FROM_DRAFT, {
+          draftId,
+          imageKey,
+        });
+      } catch (error: any) {
+        console.error('Error removing image from draft:', error);
+        // Don't set error - local state is already updated
+      }
+    }
   },
 
-  uploadAndAddVideo: async (uri: string): Promise<string | null> => {
-    // TODO: Implement React Native video upload
-    console.log('uploadAndAddVideo not yet implemented for mobile', uri);
-    set({ error: 'رفع الفيديو غير مدعوم حالياً' });
-    return null;
+  uploadAndAddVideo: async (uri: string, onProgress?: (progress: number) => void): Promise<string | null> => {
+    const { draftId } = get();
+
+    if (!draftId) {
+      const newDraftId = await get().ensureDraftExists();
+      if (!newDraftId) {
+        set({ error: 'فشل إنشاء المسودة' });
+        return null;
+      }
+    }
+
+    try {
+      // 1. Get upload URL from backend (same mutation as images - Cloudflare Images accepts videos)
+      const uploadData = await graphqlRequest<{
+        createImageUploadUrl: { uploadUrl: string; assetKey: string };
+      }>(CREATE_IMAGE_UPLOAD_URL_MUTATION, {});
+
+      const { uploadUrl } = uploadData.createImageUploadUrl;
+
+      onProgress?.(10);
+
+      // 2. Upload video to Cloudflare Images (same API as images)
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', {
+        uri,
+        type: 'video/mp4',
+        name: `video-${Date.now()}.mp4`,
+      } as any);
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formDataUpload,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('فشل رفع الفيديو');
+      }
+
+      // Extract ACTUAL asset ID from Cloudflare response
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResult.success) {
+        throw new Error('فشل رفع الفيديو إلى Cloudflare');
+      }
+
+      const actualAssetId = uploadResult?.result?.id;
+      if (!actualAssetId) {
+        throw new Error('لم يتم استلام معرف الفيديو من Cloudflare');
+      }
+
+      onProgress?.(70);
+
+      // 3. Add video to draft using the actual Cloudflare asset ID
+      const currentDraftId = get().draftId;
+      await graphqlRequest(ADD_VIDEO_TO_DRAFT, {
+        draftId: currentDraftId,
+        videoUrl: actualAssetId,
+      });
+
+      onProgress?.(100);
+
+      // 4. Update local state with Cloudflare URL
+      const videoUrl = getCloudflareImageUrl(actualAssetId, 'public');
+
+      set({
+        formData: {
+          ...get().formData,
+          video: [{ id: actualAssetId, url: videoUrl, isVideo: true, isUploaded: true }],
+        },
+      });
+
+      return actualAssetId;
+    } catch (error: any) {
+      console.error('Error uploading video:', error);
+      set({ error: error.message || 'فشل رفع الفيديو' });
+      return null;
+    }
   },
 
   removeVideo: async (): Promise<void> => {
-    const { formData } = get();
+    const { draftId, formData } = get();
+
+    // Update local state first
     set({
       formData: {
         ...formData,
         video: [],
       },
     });
+
+    // Remove from backend if draft exists
+    if (draftId) {
+      try {
+        await graphqlRequest(REMOVE_VIDEO_FROM_DRAFT, { draftId });
+      } catch (error: any) {
+        console.error('Error removing video from draft:', error);
+        // Don't set error - local state is already updated
+      }
+    }
   },
 
   // ============ SUBMISSION ============

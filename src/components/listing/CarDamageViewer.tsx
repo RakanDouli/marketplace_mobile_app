@@ -159,7 +159,7 @@ export function CarDamageViewer({ damages }: CarDamageViewerProps) {
                   },
                 ]}
               >
-                <AlertTriangle size={10} color="#FFFFFF" />
+                <AlertTriangle size={10} color={theme.colors.textInverse} />
               </View>
             );
           })}
@@ -314,13 +314,13 @@ const createStyles = (theme: Theme) =>
       position: 'absolute',
       width: 20,
       height: 20,
-      borderRadius: 10,
+      borderRadius: theme.radius.full,
       alignItems: 'center',
       justifyContent: 'center',
       marginLeft: -10,
       marginTop: -10,
       borderWidth: 2,
-      borderColor: '#FFFFFF',
+      borderColor: theme.colors.textInverse,
     },
 
     // Legend
@@ -341,7 +341,7 @@ const createStyles = (theme: Theme) =>
     legendDot: {
       width: 10,
       height: 10,
-      borderRadius: 5,
+      borderRadius: theme.radius.full,
     },
 
     // Summary
@@ -377,7 +377,7 @@ const createStyles = (theme: Theme) =>
     summaryDot: {
       width: 8,
       height: 8,
-      borderRadius: 4,
+      borderRadius: theme.radius.full,
     },
     summaryText: {
       color: theme.colors.text,
