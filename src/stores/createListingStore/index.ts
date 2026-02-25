@@ -36,7 +36,9 @@ import {
   type ValidationErrors,
 } from '../../lib/validation/listingValidation';
 import { useCategoriesStore } from '../categoriesStore';
+import { useUserAuthStore } from '../userAuthStore';
 import { getCloudflareImageUrl } from '../../services/cloudflare/images';
+import { ENV } from '../../constants/env';
 import type {
   CreateListingStore,
   CreateListingFormData,
@@ -844,69 +846,82 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
     }
 
     try {
-      // 1. Get upload URL from backend (same mutation as images - Cloudflare Images accepts videos)
-      const uploadData = await graphqlRequest<{
-        createImageUploadUrl: { uploadUrl: string; assetKey: string };
-      }>(CREATE_IMAGE_UPLOAD_URL_MUTATION, {});
+      // Get auth token from Supabase session
+      const session = useUserAuthStore.getState().session;
+      if (!session?.access_token) {
+        throw new Error('يرجى تسجيل الدخول أولاً');
+      }
 
-      const { uploadUrl } = uploadData.createImageUploadUrl;
+      onProgress?.(5);
+
+      // 1. Upload video to R2 storage via backend REST API
+      // NOTE: Videos are NOT uploaded to Cloudflare Images - they go to R2 storage
+      // The web frontend uses the same approach: /api/listings/upload-video endpoint
+      const formDataUpload = new FormData();
+
+      // Detect video type from URI
+      const extension = uri.split('.').pop()?.toLowerCase() || 'mp4';
+      const mimeType = extension === 'mov' ? 'video/quicktime' :
+                       extension === 'webm' ? 'video/webm' :
+                       'video/mp4';
+
+      formDataUpload.append('video', {
+        uri,
+        type: mimeType,
+        name: `video-${Date.now()}.${extension}`,
+      } as any);
 
       onProgress?.(10);
 
-      // 2. Upload video to Cloudflare Images (same API as images)
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', {
-        uri,
-        type: 'video/mp4',
-        name: `video-${Date.now()}.mp4`,
-      } as any);
-
-      const uploadResponse = await fetch(uploadUrl, {
+      const uploadResponse = await fetch(`${ENV.API_URL}/api/listings/upload-video`, {
         method: 'POST',
         body: formDataUpload,
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${session.access_token}`,
+          // Note: Don't set Content-Type header - let fetch set it with boundary for multipart/form-data
         },
       });
 
+      onProgress?.(60);
+
       if (!uploadResponse.ok) {
-        throw new Error('فشل رفع الفيديو');
+        // Try to get error message from response
+        try {
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.message || 'فشل رفع الفيديو');
+        } catch {
+          throw new Error('فشل رفع الفيديو');
+        }
       }
 
-      // Extract ACTUAL asset ID from Cloudflare response
       const uploadResult = await uploadResponse.json();
 
-      if (!uploadResult.success) {
-        throw new Error('فشل رفع الفيديو إلى Cloudflare');
+      if (!uploadResult.videoUrl) {
+        throw new Error('لم يتم الحصول على رابط الفيديو');
       }
 
-      const actualAssetId = uploadResult?.result?.id;
-      if (!actualAssetId) {
-        throw new Error('لم يتم استلام معرف الفيديو من Cloudflare');
-      }
+      const videoUrl = uploadResult.videoUrl;
 
-      onProgress?.(70);
+      onProgress?.(80);
 
-      // 3. Add video to draft using the actual Cloudflare asset ID
+      // 2. Add video URL to draft
       const currentDraftId = get().draftId;
       await graphqlRequest(ADD_VIDEO_TO_DRAFT, {
         draftId: currentDraftId,
-        videoUrl: actualAssetId,
+        videoUrl: videoUrl,
       });
 
       onProgress?.(100);
 
-      // 4. Update local state with Cloudflare URL
-      const videoUrl = getCloudflareImageUrl(actualAssetId, 'public');
-
+      // 3. Update local state with R2 video URL
       set({
         formData: {
           ...get().formData,
-          video: [{ id: actualAssetId, url: videoUrl, isVideo: true, isUploaded: true }],
+          video: [{ id: videoUrl, url: videoUrl, isVideo: true, isUploaded: true }],
         },
       });
 
-      return actualAssetId;
+      return videoUrl;
     } catch (error: any) {
       console.error('Error uploading video:', error);
       set({ error: error.message || 'فشل رفع الفيديو' });

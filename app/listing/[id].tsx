@@ -251,10 +251,16 @@ export default function ListingDetailScreen() {
     }
 
     // Add video at the end if exists
+    // NOTE: Video URLs can be either:
+    // 1. Full R2 URLs (https://pub-xxx.r2.dev/videos/xxx.mp4) - use as-is
+    // 2. Cloudflare image IDs (legacy) - transform with getCloudflareImageUrl
     if (currentListing?.videoUrl) {
+      const videoUrl = currentListing.videoUrl.startsWith('http')
+        ? currentListing.videoUrl  // Already a full URL (R2 storage)
+        : getCloudflareImageUrl(currentListing.videoUrl, 'public');  // Cloudflare ID
       items.push({
         type: 'video',
-        url: getCloudflareImageUrl(currentListing.videoUrl, 'public'),
+        url: videoUrl,
         id: 'video',
       });
     }
