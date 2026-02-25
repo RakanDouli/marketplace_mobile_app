@@ -39,7 +39,7 @@ export default function SuccessScreen() {
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.content}>
           {/* Success Icon */}
-          <View style={[styles.iconContainer, { backgroundColor: theme.colors.success + '15' }]}>
+          <View style={[styles.iconContainer, { backgroundColor: theme.colors.successLight }]}>
             <CheckCircle size={80} color={theme.colors.success} />
           </View>
 

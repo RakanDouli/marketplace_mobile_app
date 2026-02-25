@@ -73,6 +73,19 @@ export const GET_VARIANTS_BY_MODEL_QUERY = `
   }
 `;
 
+// Query to get ALL variants by brand (for grouped dropdown like web frontend)
+export const GET_VARIANTS_BY_BRAND_QUERY = `
+  query GetVariantsByBrand($brandId: String!) {
+    variantsByBrand(brandId: $brandId) {
+      id
+      modelId
+      name
+      slug
+      isActive
+    }
+  }
+`;
+
 // Query to get auto-fill suggestions for brand + model + year
 export const GET_MODEL_SUGGESTION_QUERY = `
   query GetModelSuggestion($brandId: String!, $modelId: String!, $year: Int, $variantId: String) {

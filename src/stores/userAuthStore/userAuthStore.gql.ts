@@ -30,6 +30,29 @@ export const ME_QUERY = `
         bannedUntil
         banReason
       }
+      tokenExpiresAt
+    }
+    myPackage {
+      id
+      status
+      startDate
+      endDate
+      currentListings
+      userSubscription {
+        id
+        name
+        title
+        description
+        monthlyPrice
+        yearlyPrice
+        maxListings
+        maxImagesPerListing
+        videoAllowed
+        priorityPlacement
+        analyticsAccess
+        customBranding
+        featuredListings
+      }
     }
   }
 `;

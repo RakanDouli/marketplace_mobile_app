@@ -143,6 +143,12 @@ function RootContent() {
               presentation: 'card',
             }}
           />
+          <Stack.Screen
+            name="create"
+            options={{
+              headerShown: false,
+            }}
+          />
         </Stack>
       </AuthGuard>
     </View>

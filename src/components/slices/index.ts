@@ -31,11 +31,20 @@ export type { RangePickerModalProps, RangeOption as RangePickerOption } from './
 export { Select } from './Select';
 export type { SelectProps, SelectOption } from './Select';
 
+export { SelectWithAdd } from './SelectWithAdd';
+export type { SelectWithAddProps, SelectWithAddOption } from './SelectWithAdd';
+
 export { MultiSelect } from './MultiSelect';
 export type { MultiSelectProps, MultiSelectOption } from './MultiSelect';
 
 export { Form } from './Form';
 export type { FormProps } from './Form';
+
+export { ChipSelector } from './ChipSelector';
+export type { ChipSelectorProps, ChipOption } from './ChipSelector';
+
+export { ToggleField } from './ToggleField';
+export type { ToggleFieldProps } from './ToggleField';
 
 export { IconGridSelector } from './IconGridSelector';
 export type { IconGridOption, IconGridSelectorProps } from './IconGridSelector';

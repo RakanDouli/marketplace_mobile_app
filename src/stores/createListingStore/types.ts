@@ -183,6 +183,12 @@ export interface CreateListingState {
   variants: Variant[];
   isLoadingBrands: boolean;
   isLoadingModels: boolean;
+  isLoadingVariants: boolean;
+
+  // Auto-suggestion specs (from CarAPI)
+  // Keys are field names, values are arrays of possible options
+  suggestionSpecs: Record<string, (string | number)[]> | null;
+  isAutoFilling: boolean;
 
   // Form data
   formData: CreateListingFormData;
@@ -214,7 +220,10 @@ export interface CreateListingActions {
   fetchBrands: (categoryId: string) => Promise<void>;
   fetchModels: (brandId: string) => Promise<void>;
   fetchVariants: (modelId: string) => Promise<void>;
+  fetchModelsAndVariants: (brandId: string) => Promise<void>;
   fetchModelSuggestion: (brandId: string, modelId: string, year?: number, variantId?: string) => Promise<ModelSuggestion | null>;
+  fetchAndApplySuggestions: () => Promise<void>;
+  clearSuggestionSpecs: () => void;
 
   // Form field setters
   setFormField: <K extends keyof CreateListingFormData>(field: K, value: CreateListingFormData[K]) => void;

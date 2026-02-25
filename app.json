@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.shambay.marketplace"
+      "bundleIdentifier": "com.shambay.marketplace",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك لإنشاء رابط خريطة Google لإعلانك"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +27,11 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.shambay.marketplace"
+      "package": "com.shambay.marketplace",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -32,7 +39,13 @@
     "plugins": [
       "expo-font",
       "expo-secure-store",
-      "expo-router"
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "نحتاج إلى موقعك لإنشاء رابط خريطة Google لإعلانك"
+        }
+      ]
     ]
   }
 }

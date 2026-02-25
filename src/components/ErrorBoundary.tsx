@@ -33,8 +33,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error for debugging
-    console.error('[ErrorBoundary] Caught error:', error);
+    // Log error for debugging - include full error details
+    console.error('[ErrorBoundary] Caught error:', error?.message || error);
+    console.error('[ErrorBoundary] Error name:', error?.name);
+    console.error('[ErrorBoundary] Error stack:', error?.stack);
     console.error('[ErrorBoundary] Error info:', errorInfo);
 
     // Call optional error handler (for analytics/reporting)

@@ -11,10 +11,10 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, StyleSheet, TextInput, TouchableOpacity, Switch } from 'react-native';
-import { AlertCircle, ShoppingBag, Key } from 'lucide-react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { ShoppingBag, Key } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
-import { Text } from '../slices/Text';
+import { Text, Input, ChipSelector, ToggleField } from '../slices';
 import { PriceInput } from '../slices/PriceInput';
 import { useCreateListingStore } from '../../stores/createListingStore';
 import { useCategoriesStore } from '../../stores/categoriesStore';
@@ -41,7 +41,6 @@ export default function BasicInfoStep() {
     formData,
     categoryId,
     setFormField,
-    validationErrors,
     getValidationError,
     clearValidationError,
   } = useCreateListingStore();
@@ -63,21 +62,6 @@ export default function BasicInfoStep() {
     // PriceInput already converts to USD, store directly
     setFormField('biddingStartPrice', usdValue);
     clearValidationError('biddingStartPrice');
-  };
-
-  // Helper to render field error message
-  const renderFieldError = (fieldKey: string) => {
-    const error = getValidationError(fieldKey);
-    if (!error) return null;
-
-    return (
-      <View style={styles.errorContainer}>
-        <AlertCircle size={14} color={theme.colors.error} />
-        <Text variant="small" style={[styles.errorText, { color: theme.colors.error }]}>
-          {error}
-        </Text>
-      </View>
-    );
   };
 
   return (
@@ -116,61 +100,38 @@ export default function BasicInfoStep() {
               );
             })}
           </View>
-          {renderFieldError('listingType')}
+          {getValidationError('listingType') && (
+            <Text variant="xs" color="error">{getValidationError('listingType')}</Text>
+          )}
         </View>
       )}
 
       {/* Title */}
-      <View style={styles.field}>
-        <Text variant="body" style={styles.label}>عنوان الإعلان *</Text>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.bg,
-              borderColor: getValidationError('title') ? theme.colors.error : theme.colors.border,
-              color: theme.colors.text,
-              textAlign: isRTL ? 'right' : 'left',
-            },
-          ]}
-          value={formData.title}
-          onChangeText={(text) => {
-            setFormField('title', text);
-            clearValidationError('title');
-          }}
-          placeholder="مثال: سيارة تويوتا كامري 2020"
-          placeholderTextColor={theme.colors.textMuted}
-        />
-        {renderFieldError('title')}
-      </View>
+      <Input
+        label="عنوان الإعلان"
+        required
+        value={formData.title}
+        onChangeText={(text) => {
+          setFormField('title', text);
+          clearValidationError('title');
+        }}
+        placeholder="مثال: سيارة تويوتا كامري 2020"
+        error={getValidationError('title')}
+      />
 
       {/* Description */}
-      <View style={styles.field}>
-        <Text variant="body" style={styles.label}>الوصف</Text>
-        <TextInput
-          style={[
-            styles.input,
-            styles.textArea,
-            {
-              backgroundColor: theme.colors.bg,
-              borderColor: getValidationError('description') ? theme.colors.error : theme.colors.border,
-              color: theme.colors.text,
-              textAlign: isRTL ? 'right' : 'left',
-            },
-          ]}
-          value={formData.description}
-          onChangeText={(text) => {
-            setFormField('description', text);
-            clearValidationError('description');
-          }}
-          placeholder="أضف وصفاً تفصيلياً للإعلان..."
-          placeholderTextColor={theme.colors.textMuted}
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
-        />
-        {renderFieldError('description')}
-      </View>
+      <Input
+        label="الوصف"
+        value={formData.description}
+        onChangeText={(text) => {
+          setFormField('description', text);
+          clearValidationError('description');
+        }}
+        placeholder="أضف وصفاً تفصيلياً للإعلان..."
+        error={getValidationError('description')}
+        multiline
+        numberOfLines={4}
+      />
 
       {/* Price */}
       <View style={styles.field}>
@@ -182,62 +143,27 @@ export default function BasicInfoStep() {
           error={!!getValidationError('priceMinor')}
           required
         />
-        {renderFieldError('priceMinor')}
+        {getValidationError('priceMinor') && (
+          <Text variant="xs" color="error">{getValidationError('priceMinor')}</Text>
+        )}
       </View>
 
       {/* Condition */}
-      <View style={styles.field}>
-        <Text variant="body" style={styles.label}>الحالة</Text>
-        <View style={styles.conditionContainer}>
-          {CONDITIONS.map((condition) => (
-            <TouchableOpacity
-              key={condition.key}
-              style={[
-                styles.conditionChip,
-                {
-                  backgroundColor:
-                    formData.condition === condition.key
-                      ? theme.colors.primary
-                      : theme.colors.bg,
-                  borderColor:
-                    formData.condition === condition.key
-                      ? theme.colors.primary
-                      : theme.colors.border,
-                },
-              ]}
-              onPress={() => setFormField('condition', condition.key)}
-            >
-              <Text
-                variant="small"
-                style={{
-                  color:
-                    formData.condition === condition.key
-                      ? theme.colors.textInverse
-                      : theme.colors.text,
-                }}
-              >
-                {condition.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      <ChipSelector
+        label="الحالة"
+        options={CONDITIONS}
+        value={formData.condition || ''}
+        onChange={(value) => setFormField('condition', value as string)}
+        containerStyle={styles.chipSelectorContainer}
+      />
 
       {/* Bidding Toggle */}
-      <View style={[styles.field, styles.toggleField]}>
-        <View style={styles.toggleInfo}>
-          <Text variant="body">السماح بالمزايدة</Text>
-          <Text variant="small" color="secondary">
-            يمكن للمشترين تقديم عروض أسعار
-          </Text>
-        </View>
-        <Switch
-          value={formData.allowBidding}
-          onValueChange={(value) => setFormField('allowBidding', value)}
-          trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
-          thumbColor={formData.allowBidding ? theme.colors.primary : theme.colors.surface}
-        />
-      </View>
+      <ToggleField
+        label="السماح بالمزايدة"
+        description="يمكن للمشترين تقديم عروض أسعار"
+        value={formData.allowBidding || false}
+        onChange={(value) => setFormField('allowBidding', value)}
+      />
 
       {/* Bidding Start Price */}
       {formData.allowBidding && (
@@ -249,7 +175,9 @@ export default function BasicInfoStep() {
             placeholder="أدخل سعر البدء"
             error={!!getValidationError('biddingStartPrice')}
           />
-          {renderFieldError('biddingStartPrice')}
+          {getValidationError('biddingStartPrice') && (
+            <Text variant="xs" color="error">{getValidationError('biddingStartPrice')}</Text>
+          )}
         </View>
       )}
     </View>
@@ -268,28 +196,8 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     label: {
       // Text component handles RTL automatically
     },
-    input: {
-      borderWidth: 1,
-      borderRadius: theme.radius.lg,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-      fontSize: theme.fontSize.base,
-    },
-    textArea: {
-      minHeight: 100,
-      paddingTop: theme.spacing.md,
-    },
-    conditionContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      flexWrap: 'wrap',
-      gap: theme.spacing.sm,
-      justifyContent: 'flex-start',
-    },
-    conditionChip: {
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
-      borderRadius: theme.radius.full,
-      borderWidth: 1,
+    chipSelectorContainer: {
+      marginBottom: 0,
     },
     listingTypeContainer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
@@ -304,27 +212,5 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       paddingVertical: theme.spacing.md,
       borderRadius: theme.radius.lg,
       borderWidth: 1,
-    },
-    toggleField: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingVertical: theme.spacing.sm,
-    },
-    toggleInfo: {
-      flex: 1,
-      alignItems: isRTL ? 'flex-end' : 'flex-start',
-      gap: theme.spacing.xs,
-    },
-    // Error styles
-    errorContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      gap: theme.spacing.xs,
-      marginTop: theme.spacing.xs,
-      justifyContent: 'flex-start',
-    },
-    errorText: {
-      // Text component handles RTL automatically
     },
   });

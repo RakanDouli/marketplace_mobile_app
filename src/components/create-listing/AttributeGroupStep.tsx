@@ -1,25 +1,19 @@
 /**
  * Attribute Group Step
  * Renders dynamic attributes based on category configuration
- * Handles special fields: brandId, modelId, variantId with API-driven dropdowns
- * Supports "Other" option with switch toggle for custom entry
- * Includes real-time validation with Arabic error messages
+ * Uses AttributeFieldRenderer for regular attributes
+ * Uses CatalogSelector for brandId, modelId, variantId
+ * Skips car_damage (handled in ImagesStep)
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, TextInput, TouchableOpacity, ScrollView, Switch, Image } from 'react-native';
-import { Check, ChevronDown, Car, Plus, AlertCircle } from 'lucide-react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text, Loading } from '../slices';
 import { useCreateListingStore } from '../../stores/createListingStore';
-import { validateAttribute } from '../../lib/validation/listingValidation';
-import type { AttributeGroup, Attribute, Brand, Model, Variant } from '../../stores/createListingStore/types';
-
-// Convert Arabic numerals (٠١٢٣٤٥٦٧٨٩) to English (0123456789)
-const convertArabicToEnglish = (str: string): string => {
-  const arabicNumerals = '٠١٢٣٤٥٦٧٨٩';
-  return str.replace(/[٠-٩]/g, (d) => String(arabicNumerals.indexOf(d)));
-};
+import { AttributeFieldRenderer } from './AttributeFieldRenderer';
+import { CatalogSelector } from './CatalogSelector';
+import type { AttributeGroup, Attribute } from '../../stores/createListingStore/types';
 
 interface AttributeGroupStepProps {
   group: AttributeGroup;
@@ -39,15 +33,15 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
     variants,
     isLoadingBrands,
     isLoadingModels,
-    fetchModels,
-    fetchVariants,
-    validationErrors,
+    isLoadingVariants,
+    fetchModelsAndVariants,
+    fetchAndApplySuggestions,
+    clearSuggestionSpecs,
+    suggestionSpecs,
+    isAutoFilling,
     getValidationError,
     clearValidationError,
   } = useCreateListingStore();
-
-  // Track which selector is expanded
-  const [expandedSelector, setExpandedSelector] = useState<string | null>(null);
 
   // Track "Other" mode for brand/model/variant
   const [isOtherBrand, setIsOtherBrand] = useState(formData.isOtherBrand || false);
@@ -59,820 +53,236 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
   const [customModelName, setCustomModelName] = useState(formData.isOtherModel ? (formData.modelName || '') : '');
   const [customVariantName, setCustomVariantName] = useState('');
 
-  // Pre-fill specs from pre-steps selection (brandId, modelId, variantId)
-  // This runs once when the component mounts to sync pre-step selections to specs
+  // Pre-fill specs from pre-steps selection
   useEffect(() => {
-    // If brand was selected in pre-steps but not yet in specs, sync it
     if (formData.brandId && !formData.specs.brandId) {
       setSpecField('brandId', formData.brandId);
     }
-    // If model was selected in pre-steps but not yet in specs, sync it
     if (formData.modelId && !formData.specs.modelId) {
       setSpecField('modelId', formData.modelId);
     }
-    // If variant was selected in pre-steps but not yet in specs, sync it
     if (formData.variantId && !formData.specs.variantId) {
       setSpecField('variantId', formData.variantId);
     }
-  }, []); // Run once on mount
+  }, []);
 
-  // When brand changes, fetch models
+  // Fetch models when brand changes
   useEffect(() => {
     const brandId = formData.specs.brandId;
-    if (brandId && typeof brandId === 'string') {
-      fetchModels(brandId);
+    if (brandId && typeof brandId === 'string' && !brandId.startsWith('other:')) {
+      fetchModelsAndVariants(brandId);
+      clearSuggestionSpecs();
     }
   }, [formData.specs.brandId]);
 
-  // When model changes, fetch variants
+  // Fetch suggestions when brand + model changes
   useEffect(() => {
-    const modelId = formData.specs.modelId;
-    if (modelId && typeof modelId === 'string') {
-      fetchVariants(modelId);
+    const { brandId, modelId } = formData.specs;
+    if (brandId && modelId && !String(brandId).startsWith('other:') && !String(modelId).startsWith('other:')) {
+      fetchAndApplySuggestions();
     }
-  }, [formData.specs.modelId]);
+  }, [formData.specs.brandId, formData.specs.modelId, formData.specs.variantId, formData.specs.year]);
 
-  // Get selected brand/model/variant names for display
-  // Check both specs and formData for pre-filled values from pre-steps
-  const selectedBrandName = useMemo(() => {
-    // First check specs (wizard in-progress selection)
-    const brandId = formData.specs.brandId || formData.brandId;
-    if (!brandId) return null;
-    // Check if it's a custom "other" value
-    if (typeof brandId === 'string' && brandId.startsWith('other:')) {
-      return brandId.replace('other:', '');
-    }
-    const brand = brands.find(b => b.id === brandId);
-    // Show both Arabic and English names with dash
-    if (brand) {
-      return brand.nameAr && brand.name ? `${brand.nameAr} - ${brand.name}` : (brand.nameAr || brand.name);
-    }
-    return formData.brandName || null;
-  }, [formData.specs.brandId, formData.brandId, formData.brandName, brands]);
-
-  const selectedModelName = useMemo(() => {
-    const modelId = formData.specs.modelId || formData.modelId;
-    if (!modelId) return null;
-    // Check if it's a custom "other" value
-    if (typeof modelId === 'string' && modelId.startsWith('other:')) {
-      return modelId.replace('other:', '');
-    }
-    const model = models.find(m => m.id === modelId);
-    return model?.name || formData.modelName || null;
-  }, [formData.specs.modelId, formData.modelId, formData.modelName, models]);
-
-  const selectedVariantName = useMemo(() => {
-    const variantId = formData.specs.variantId || formData.variantId;
-    if (!variantId) return null;
-    // Check if it's a custom "other" value
-    if (typeof variantId === 'string' && variantId.startsWith('other:')) {
-      return variantId.replace('other:', '');
-    }
-    const variant = variants.find(v => v.id === variantId);
-    return variant?.name || formData.variantName || null;
-  }, [formData.specs.variantId, formData.variantId, formData.variantName, variants]);
-
-  // Handle brand selection
-  const handleBrandSelect = (brand: Brand) => {
-    setSpecField('brandId', brand.id);
-    setFormField('brandName', brand.name);
+  // Brand handlers
+  const handleBrandChange = (id: string, name?: string) => {
+    setSpecField('brandId', id);
+    setFormField('brandName', name);
     setFormField('isOtherBrand', false);
     // Clear dependent fields
     setSpecField('modelId', '');
     setSpecField('variantId', '');
     setFormField('modelName', undefined);
     setFormField('variantName', undefined);
-    setExpandedSelector(null);
+    clearValidationError('brandId');
   };
 
-  // Handle model selection
-  const handleModelSelect = (model: Model) => {
-    setSpecField('modelId', model.id);
-    setFormField('modelName', model.name);
-    setFormField('isOtherModel', false);
-    // Clear variant
-    setSpecField('variantId', '');
-    setFormField('variantName', undefined);
-    setExpandedSelector(null);
-  };
-
-  // Handle variant selection
-  const handleVariantSelect = (variant: Variant) => {
-    setSpecField('variantId', variant.id);
-    setFormField('variantName', variant.name);
-    setExpandedSelector(null);
-  };
-
-  // Handle "Other" brand toggle
-  const handleOtherBrandToggle = (enabled: boolean) => {
+  const handleBrandOtherToggle = (enabled: boolean) => {
     setIsOtherBrand(enabled);
     setFormField('isOtherBrand', enabled);
     if (enabled) {
-      // Clear selected brand, keep custom text
       setSpecField('brandId', '');
       setFormField('brandName', customBrandName || undefined);
-      // Also clear model/variant since brand changed
       setSpecField('modelId', '');
       setSpecField('variantId', '');
       setFormField('modelName', undefined);
       setFormField('variantName', undefined);
-      setIsOtherModel(true); // Force "other" for model too
+      setIsOtherModel(true);
       setFormField('isOtherModel', true);
     } else {
-      // Clear custom text, prepare for selection
       setCustomBrandName('');
       setFormField('brandName', undefined);
     }
-    setExpandedSelector(null);
   };
 
-  // Handle "Other" model toggle
-  const handleOtherModelToggle = (enabled: boolean) => {
+  const handleBrandCustomChange = (text: string) => {
+    setCustomBrandName(text);
+    setFormField('brandName', text || undefined);
+    setSpecField('brandId', `other:${text}`);
+  };
+
+  // Model handlers
+  const handleModelChange = (id: string, name?: string) => {
+    setSpecField('modelId', id);
+    setFormField('modelName', name);
+    setFormField('isOtherModel', false);
+    setSpecField('variantId', '');
+    setFormField('variantName', undefined);
+    clearValidationError('modelId');
+  };
+
+  const handleModelOtherToggle = (enabled: boolean) => {
     setIsOtherModel(enabled);
     setFormField('isOtherModel', enabled);
     if (enabled) {
-      // Clear selected model, keep custom text
       setSpecField('modelId', '');
       setFormField('modelName', customModelName || undefined);
-      // Also clear variant and force "other" variant
       setSpecField('variantId', '');
       setFormField('variantName', undefined);
       setIsOtherVariant(true);
     } else {
-      // Clear custom text, prepare for selection
       setCustomModelName('');
       setFormField('modelName', undefined);
       setIsOtherVariant(false);
     }
-    setExpandedSelector(null);
   };
 
-  // Handle "Other" variant toggle
-  const handleOtherVariantToggle = (enabled: boolean) => {
-    setIsOtherVariant(enabled);
-    if (enabled) {
-      // Clear selected variant, prepare for custom entry
-      setSpecField('variantId', '');
-      setFormField('variantName', customVariantName || undefined);
-    } else {
-      // Clear custom text, prepare for selection
-      setCustomVariantName('');
-      setFormField('variantName', undefined);
-    }
-    setExpandedSelector(null);
-  };
-
-  // Handle custom brand name input
-  const handleCustomBrandChange = (text: string) => {
-    setCustomBrandName(text);
-    setFormField('brandName', text || undefined);
-    // Store as custom spec value for submission
-    setSpecField('brandId', `other:${text}`);
-  };
-
-  // Handle custom model name input
-  const handleCustomModelChange = (text: string) => {
+  const handleModelCustomChange = (text: string) => {
     setCustomModelName(text);
     setFormField('modelName', text || undefined);
-    // Store as custom spec value for submission
     setSpecField('modelId', `other:${text}`);
   };
 
-  // Handle custom variant name input
-  const handleCustomVariantChange = (text: string) => {
+  // Variant handlers
+  const handleVariantChange = (id: string, name?: string) => {
+    setSpecField('variantId', id);
+    setFormField('variantName', name);
+    clearValidationError('variantId');
+  };
+
+  const handleVariantOtherToggle = (enabled: boolean) => {
+    setIsOtherVariant(enabled);
+    if (enabled) {
+      setSpecField('variantId', '');
+      setFormField('variantName', customVariantName || undefined);
+    } else {
+      setCustomVariantName('');
+      setFormField('variantName', undefined);
+    }
+  };
+
+  const handleVariantCustomChange = (text: string) => {
     setCustomVariantName(text);
     setFormField('variantName', text || undefined);
-    // Store as custom spec value for submission
     setSpecField('variantId', `other:${text}`);
   };
 
-  // Helper to render field error message
-  const renderFieldError = (fieldKey: string) => {
-    const error = getValidationError(fieldKey);
-    if (!error) return null;
+  // Check if model/variant fields should be disabled
+  const hasBrand = !!formData.specs.brandId || isOtherBrand;
+  const hasModel = !!formData.specs.modelId || isOtherModel || isOtherBrand;
+  const hasVariants = variants.length > 0;
 
-    return (
-      <View style={styles.errorContainer}>
-        <AlertCircle size={14} color={theme.colors.error} />
-        <Text variant="small" style={[styles.errorText, { color: theme.colors.error }]}>
-          {error}
-        </Text>
-      </View>
-    );
+  // Force "other" when parent is "other"
+  const forceOtherModel = isOtherBrand;
+  const forceOtherVariant = isOtherBrand || isOtherModel || (hasModel && !isLoadingModels && !hasVariants);
+
+  // Get suggestions for a field
+  const getSuggestions = (fieldKey: string): any[] | undefined => {
+    const suggestions = suggestionSpecs?.[fieldKey];
+    return Array.isArray(suggestions) && suggestions.length > 1 ? suggestions : undefined;
   };
 
-  // Render brand selector with dropdown and "Other" switch below
-  const renderBrandSelector = (attr: Attribute) => {
-    const isExpanded = expandedSelector === 'brandId';
-    const isRequired = attr.validation === 'REQUIRED' || attr.validation === 'required';
-
-    return (
-      <View key={attr.key} style={styles.field}>
-        <Text variant="body" style={styles.label}>
-          {attr.name} {isRequired && '*'}
-        </Text>
-
-        {isOtherBrand ? (
-          // Custom brand input field
-          <View style={styles.otherInputContainer}>
-            <Plus size={20} color={theme.colors.primary} style={styles.otherInputIcon} />
-            <TextInput
-              style={[
-                styles.input,
-                styles.otherInput,
-                {
-                  backgroundColor: theme.colors.bg,
-                  borderColor: theme.colors.primary,
-                  color: theme.colors.text,
-                },
-              ]}
-              value={customBrandName}
-              onChangeText={handleCustomBrandChange}
-              placeholder="أدخل اسم الماركة"
-              placeholderTextColor={theme.colors.textMuted}
-              textAlign={isRTL ? 'right' : 'left'}
-            />
-          </View>
-        ) : (
-          <>
-            {/* Selected value or placeholder */}
-            <TouchableOpacity
-              style={[styles.selector, { borderColor: theme.colors.border, backgroundColor: theme.colors.bg }]}
-              onPress={() => setExpandedSelector(isExpanded ? null : 'brandId')}
-            >
-              <Text
-                variant="body"
-                style={{ color: selectedBrandName ? theme.colors.text : theme.colors.textMuted }}
-              >
-                {selectedBrandName || 'اختر الماركة'}
-              </Text>
-              <ChevronDown size={20} color={theme.colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* Dropdown list */}
-            {isExpanded && (
-              <View style={[styles.dropdownContainer, { backgroundColor: theme.colors.bg, borderColor: theme.colors.border }]}>
-                {isLoadingBrands ? (
-                  <View style={styles.loadingContainer}>
-                    <Loading type="svg" size="sm" />
-                  </View>
-                ) : (
-                  <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
-                    {brands.map((brand) => (
-                      <TouchableOpacity
-                        key={brand.id}
-                        style={[
-                          styles.dropdownItem,
-                          formData.specs.brandId === brand.id && { backgroundColor: theme.colors.primaryLight },
-                        ]}
-                        onPress={() => handleBrandSelect(brand)}
-                      >
-                        <View style={styles.brandItemContent}>
-                          <View style={[styles.brandIcon, { backgroundColor: theme.colors.surface }]}>
-                            {brand.logoUrl ? (
-                              <Image
-                                source={{ uri: brand.logoUrl }}
-                                style={styles.brandLogoImage}
-                                resizeMode="contain"
-                              />
-                            ) : (
-                              <Car size={16} color={theme.colors.textMuted} />
-                            )}
-                          </View>
-                          <Text variant="body">
-                            {brand.nameAr && brand.name ? `${brand.nameAr} - ${brand.name}` : (brand.nameAr || brand.name)}
-                          </Text>
-                        </View>
-                        {formData.specs.brandId === brand.id && (
-                          <Check size={18} color={theme.colors.primary} />
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
-            )}
-          </>
-        )}
-
-        {/* "Other" switch below the selector */}
-        <View style={styles.otherSwitchRow}>
-          <Text variant="small" color="secondary">ماركة أخرى</Text>
-          <Switch
-            value={isOtherBrand}
-            onValueChange={handleOtherBrandToggle}
-            trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
-            thumbColor={isOtherBrand ? theme.colors.primary : theme.colors.surface}
-          />
-        </View>
-
-        {/* Validation error */}
-        {renderFieldError('brandId')}
-      </View>
-    );
+  // Check if field was auto-filled
+  const wasAutoFilled = (fieldKey: string): boolean => {
+    const suggestions = suggestionSpecs?.[fieldKey];
+    const currentValue = formData.specs[fieldKey];
+    return Array.isArray(suggestions) && suggestions.length === 1 && currentValue !== undefined && currentValue !== '';
   };
 
-  // Render model selector with dropdown and "Other" switch below
-  const renderModelSelector = (attr: Attribute) => {
-    const isExpanded = expandedSelector === 'modelId';
-    const isRequired = attr.validation === 'REQUIRED' || attr.validation === 'required';
-    const hasBrand = !!formData.specs.brandId || isOtherBrand;
-
-    // If brand is "other", model must also be "other"
-    const forceOtherModel = isOtherBrand;
-
-    return (
-      <View key={attr.key} style={styles.field}>
-        <Text variant="body" style={styles.label}>
-          {attr.name} {isRequired && '*'}
-        </Text>
-
-        {(isOtherModel || forceOtherModel) ? (
-          // Custom model input field
-          <View style={styles.otherInputContainer}>
-            <Plus size={20} color={theme.colors.primary} style={styles.otherInputIcon} />
-            <TextInput
-              style={[
-                styles.input,
-                styles.otherInput,
-                {
-                  backgroundColor: theme.colors.bg,
-                  borderColor: theme.colors.primary,
-                  color: theme.colors.text,
-                },
-                !hasBrand && styles.inputDisabled,
-              ]}
-              value={customModelName}
-              onChangeText={handleCustomModelChange}
-              placeholder={hasBrand ? "أدخل اسم الموديل" : "اختر الماركة أولاً"}
-              placeholderTextColor={theme.colors.textMuted}
-              textAlign={isRTL ? 'right' : 'left'}
-              editable={hasBrand}
-            />
-          </View>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={[
-                styles.selector,
-                { borderColor: theme.colors.border, backgroundColor: theme.colors.bg },
-                !hasBrand && styles.selectorDisabled,
-              ]}
-              onPress={() => hasBrand && setExpandedSelector(isExpanded ? null : 'modelId')}
-              disabled={!hasBrand}
-            >
-              <Text
-                variant="body"
-                style={{ color: selectedModelName ? theme.colors.text : theme.colors.textMuted }}
-              >
-                {selectedModelName || (hasBrand ? 'اختر الموديل' : 'اختر الماركة أولاً')}
-              </Text>
-              <ChevronDown size={20} color={theme.colors.textMuted} />
-            </TouchableOpacity>
-
-            {isExpanded && (
-              <View style={[styles.dropdownContainer, { backgroundColor: theme.colors.bg, borderColor: theme.colors.border }]}>
-                {isLoadingModels ? (
-                  <View style={styles.loadingContainer}>
-                    <Loading type="svg" size="sm" />
-                  </View>
-                ) : (
-                  <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
-                    {models.map((model) => (
-                      <TouchableOpacity
-                        key={model.id}
-                        style={[
-                          styles.dropdownItem,
-                          formData.specs.modelId === model.id && { backgroundColor: theme.colors.primaryLight },
-                        ]}
-                        onPress={() => handleModelSelect(model)}
-                      >
-                        <Text variant="body">{model.name}</Text>
-                        {formData.specs.modelId === model.id && (
-                          <Check size={18} color={theme.colors.primary} />
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
-            )}
-          </>
-        )}
-
-        {/* "Other" switch below the selector - hidden if brand is "other" */}
-        {!forceOtherModel && (
-          <View style={[styles.otherSwitchRow, !hasBrand && styles.switchDisabled]}>
-            <Text variant="small" color="secondary">موديل آخر</Text>
-            <Switch
-              value={isOtherModel}
-              onValueChange={handleOtherModelToggle}
-              trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
-              thumbColor={isOtherModel ? theme.colors.primary : theme.colors.surface}
-              disabled={!hasBrand}
-            />
-          </View>
-        )}
-
-        {/* Validation error */}
-        {renderFieldError('modelId')}
-      </View>
-    );
-  };
-
-  // Render variant selector with dropdown and "Other" switch below
-  const renderVariantSelector = (attr: Attribute) => {
-    const isExpanded = expandedSelector === 'variantId';
-    const isRequired = attr.validation === 'REQUIRED' || attr.validation === 'required';
-    const hasModel = !!formData.specs.modelId || isOtherModel || isOtherBrand;
-    const hasVariants = variants.length > 0;
-
-    // If brand or model is "other", force variant to be "other" too
-    const forceOtherVariant = isOtherBrand || isOtherModel;
-
-    // Show text input if: forced other, user toggled other, or no variants available
-    const showAsTextInput = forceOtherVariant || isOtherVariant || (hasModel && !isLoadingModels && !hasVariants);
-
-    return (
-      <View key={attr.key} style={styles.field}>
-        <Text variant="body" style={styles.label}>
-          {attr.name} {isRequired && '*'}
-        </Text>
-
-        {showAsTextInput ? (
-          // Custom variant input field (when "other" or no variants available)
-          <View style={styles.otherInputContainer}>
-            <Plus size={20} color={theme.colors.primary} style={styles.otherInputIcon} />
-            <TextInput
-              style={[
-                styles.input,
-                styles.otherInput,
-                {
-                  backgroundColor: theme.colors.bg,
-                  borderColor: theme.colors.primary,
-                  color: theme.colors.text,
-                },
-                !hasModel && styles.inputDisabled,
-              ]}
-              value={customVariantName || (formData.variantName || '')}
-              onChangeText={handleCustomVariantChange}
-              placeholder={hasModel ? "أدخل الطراز (اختياري)" : "اختر الموديل أولاً"}
-              placeholderTextColor={theme.colors.textMuted}
-              textAlign={isRTL ? 'right' : 'left'}
-              editable={hasModel}
-            />
-          </View>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={[
-                styles.selector,
-                { borderColor: theme.colors.border, backgroundColor: theme.colors.bg },
-                !hasModel && styles.selectorDisabled,
-              ]}
-              onPress={() => hasModel && setExpandedSelector(isExpanded ? null : 'variantId')}
-              disabled={!hasModel}
-            >
-              <Text
-                variant="body"
-                style={{ color: selectedVariantName ? theme.colors.text : theme.colors.textMuted }}
-              >
-                {selectedVariantName || (hasModel ? 'اختر الطراز' : 'اختر الموديل أولاً')}
-              </Text>
-              <ChevronDown size={20} color={theme.colors.textMuted} />
-            </TouchableOpacity>
-
-            {isExpanded && (
-              <View style={[styles.dropdownContainer, { backgroundColor: theme.colors.bg, borderColor: theme.colors.border }]}>
-                <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
-                  {variants.map((variant) => (
-                    <TouchableOpacity
-                      key={variant.id}
-                      style={[
-                        styles.dropdownItem,
-                        formData.specs.variantId === variant.id && { backgroundColor: theme.colors.primaryLight },
-                      ]}
-                      onPress={() => handleVariantSelect(variant)}
-                    >
-                      <Text variant="body">{variant.name}</Text>
-                      {formData.specs.variantId === variant.id && (
-                        <Check size={18} color={theme.colors.primary} />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </>
-        )}
-
-        {/* "Other" switch below the selector - hidden if brand/model is "other" or no variants exist */}
-        {!forceOtherVariant && hasVariants && (
-          <View style={[styles.otherSwitchRow, !hasModel && styles.switchDisabled]}>
-            <Text variant="small" color="secondary">طراز آخر</Text>
-            <Switch
-              value={isOtherVariant}
-              onValueChange={handleOtherVariantToggle}
-              trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
-              thumbColor={isOtherVariant ? theme.colors.primary : theme.colors.surface}
-              disabled={!hasModel}
-            />
-          </View>
-        )}
-
-        {/* Validation error */}
-        {renderFieldError('variantId')}
-      </View>
-    );
-  };
-
-  // Render regular attribute field
+  // Render attribute
   const renderAttribute = (attr: Attribute) => {
-    // Handle special catalog fields
-    if (attr.key === 'brandId') return renderBrandSelector(attr);
-    if (attr.key === 'modelId') return renderModelSelector(attr);
-    if (attr.key === 'variantId') return renderVariantSelector(attr);
-
-    const currentValue = formData.specs[attr.key];
-    const isRequired = attr.validation === 'REQUIRED' || attr.validation === 'required';
-
-    // Normalize type to lowercase for comparison
-    const attrType = attr.type?.toLowerCase() || 'text';
-
-    switch (attrType) {
-      case 'select':
-      case 'single_select':
-      case 'selector':
-        return (
-          <View key={attr.key} style={styles.field}>
-            <Text variant="body" style={styles.label}>
-              {attr.name} {isRequired && '*'}
-            </Text>
-            <View style={styles.optionsContainer}>
-              {(attr.options || []).map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[
-                    styles.optionChip,
-                    {
-                      backgroundColor:
-                        currentValue === option.key
-                          ? theme.colors.primary
-                          : theme.colors.bg,
-                      borderColor:
-                        currentValue === option.key
-                          ? theme.colors.primary
-                          : theme.colors.border,
-                    },
-                  ]}
-                  onPress={() => setSpecField(attr.key, option.key)}
-                >
-                  <Text
-                    variant="small"
-                    style={{
-                      color:
-                        currentValue === option.key ? theme.colors.textInverse : theme.colors.text,
-                    }}
-                  >
-                    {option.value}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            {renderFieldError(attr.key)}
-          </View>
-        );
-
-      case 'multi_select':
-      case 'multi_selector':
-        const selectedValues = Array.isArray(currentValue) ? currentValue : [];
-        return (
-          <View key={attr.key} style={styles.field}>
-            <Text variant="body" style={styles.label}>
-              {attr.name} {isRequired && '*'}
-            </Text>
-            <View style={styles.optionsContainer}>
-              {(attr.options || []).map((option) => {
-                const isSelected = selectedValues.includes(option.key);
-                return (
-                  <TouchableOpacity
-                    key={option.id}
-                    style={[
-                      styles.optionChip,
-                      {
-                        backgroundColor: isSelected
-                          ? theme.colors.primary
-                          : theme.colors.bg,
-                        borderColor: isSelected
-                          ? theme.colors.primary
-                          : theme.colors.border,
-                      },
-                    ]}
-                    onPress={() => {
-                      const newValues = isSelected
-                        ? selectedValues.filter((v) => v !== option.key)
-                        : [...selectedValues, option.key];
-                      setSpecField(attr.key, newValues);
-                    }}
-                  >
-                    {isSelected && <Check size={14} color={theme.colors.textInverse} />}
-                    <Text
-                      variant="small"
-                      style={{ color: isSelected ? theme.colors.textInverse : theme.colors.text }}
-                    >
-                      {option.value}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            {renderFieldError(attr.key)}
-          </View>
-        );
-
-      case 'number':
-      case 'integer':
-        return (
-          <View key={attr.key} style={styles.field}>
-            <Text variant="body" style={styles.label}>
-              {attr.name} {isRequired && '*'}
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.colors.bg,
-                  borderColor: getValidationError(attr.key) ? theme.colors.error : theme.colors.border,
-                  color: theme.colors.text,
-                },
-              ]}
-              value={currentValue?.toString() || ''}
-              onChangeText={(text) => {
-                const converted = convertArabicToEnglish(text);
-                const numValue = parseInt(converted.replace(/[^0-9]/g, ''), 10) || 0;
-                setSpecField(attr.key, numValue);
-                clearValidationError(attr.key);
-              }}
-              placeholder={`أدخل ${attr.name}`}
-              placeholderTextColor={theme.colors.textMuted}
-              textAlign={isRTL ? 'right' : 'left'}
-              keyboardType="number-pad"
-            />
-            {renderFieldError(attr.key)}
-          </View>
-        );
-
-      case 'range_selector':
-        return (
-          <View key={attr.key} style={styles.field}>
-            <Text variant="body" style={styles.label}>
-              {attr.name} {isRequired && '*'}
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.colors.bg,
-                  borderColor: getValidationError(attr.key) ? theme.colors.error : theme.colors.border,
-                  color: theme.colors.text,
-                },
-              ]}
-              value={currentValue?.toString() || ''}
-              onChangeText={(text) => {
-                const converted = convertArabicToEnglish(text);
-                const numValue = parseInt(converted.replace(/[^0-9]/g, ''), 10) || 0;
-                setSpecField(attr.key, numValue);
-                clearValidationError(attr.key);
-              }}
-              placeholder={`أدخل ${attr.name}`}
-              placeholderTextColor={theme.colors.textMuted}
-              textAlign={isRTL ? 'right' : 'left'}
-              keyboardType="number-pad"
-            />
-            {renderFieldError(attr.key)}
-          </View>
-        );
-
-      case 'textarea':
-        return (
-          <View key={attr.key} style={styles.field}>
-            <Text variant="body" style={styles.label}>
-              {attr.name} {isRequired && '*'}
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                styles.textareaInput,
-                {
-                  backgroundColor: theme.colors.bg,
-                  borderColor: getValidationError(attr.key) ? theme.colors.error : theme.colors.border,
-                  color: theme.colors.text,
-                },
-              ]}
-              value={currentValue || ''}
-              onChangeText={(text) => {
-                setSpecField(attr.key, text);
-                clearValidationError(attr.key);
-              }}
-              placeholder={`أدخل ${attr.name}`}
-              placeholderTextColor={theme.colors.textMuted}
-              textAlign={isRTL ? 'right' : 'left'}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-            {renderFieldError(attr.key)}
-          </View>
-        );
-
-      case 'text':
-      case 'string':
-      default:
-        return (
-          <View key={attr.key} style={styles.field}>
-            <Text variant="body" style={styles.label}>
-              {attr.name} {isRequired && '*'}
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.colors.bg,
-                  borderColor: getValidationError(attr.key) ? theme.colors.error : theme.colors.border,
-                  color: theme.colors.text,
-                },
-              ]}
-              value={currentValue || ''}
-              onChangeText={(text) => {
-                setSpecField(attr.key, text);
-                clearValidationError(attr.key);
-              }}
-              placeholder={`أدخل ${attr.name}`}
-              placeholderTextColor={theme.colors.textMuted}
-              textAlign={isRTL ? 'right' : 'left'}
-            />
-            {renderFieldError(attr.key)}
-          </View>
-        );
-
-      case 'boolean':
-        return (
-          <View key={attr.key} style={styles.field}>
-            <Text variant="body" style={styles.label}>
-              {attr.name} {isRequired && '*'}
-            </Text>
-            <View style={styles.booleanContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.booleanOption,
-                  {
-                    backgroundColor:
-                      currentValue === true
-                        ? theme.colors.primary
-                        : theme.colors.bg,
-                    borderColor:
-                      currentValue === true
-                        ? theme.colors.primary
-                        : theme.colors.border,
-                  },
-                ]}
-                onPress={() => setSpecField(attr.key, true)}
-              >
-                <Text
-                  variant="body"
-                  style={{ color: currentValue === true ? theme.colors.textInverse : theme.colors.text }}
-                >
-                  نعم
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.booleanOption,
-                  {
-                    backgroundColor:
-                      currentValue === false
-                        ? theme.colors.primary
-                        : theme.colors.bg,
-                    borderColor:
-                      currentValue === false
-                        ? theme.colors.primary
-                        : theme.colors.border,
-                  },
-                ]}
-                onPress={() => setSpecField(attr.key, false)}
-              >
-                <Text
-                  variant="body"
-                  style={{ color: currentValue === false ? theme.colors.textInverse : theme.colors.text }}
-                >
-                  لا
-                </Text>
-              </TouchableOpacity>
-            </View>
-            {renderFieldError(attr.key)}
-          </View>
-        );
+    // Handle catalog selectors
+    if (attr.key === 'brandId') {
+      return (
+        <CatalogSelector
+          key={attr.key}
+          type="brand"
+          label={attr.name}
+          items={brands}
+          value={formData.specs.brandId || ''}
+          customValue={customBrandName}
+          isOther={isOtherBrand}
+          onChange={handleBrandChange}
+          onCustomChange={handleBrandCustomChange}
+          onOtherToggle={handleBrandOtherToggle}
+          required={attr.validation === 'REQUIRED' || attr.validation === 'required'}
+          loading={isLoadingBrands}
+          error={getValidationError('brandId')}
+        />
+      );
     }
+
+    if (attr.key === 'modelId') {
+      return (
+        <CatalogSelector
+          key={attr.key}
+          type="model"
+          label={attr.name}
+          items={models}
+          value={formData.specs.modelId || ''}
+          customValue={customModelName}
+          isOther={isOtherModel || forceOtherModel}
+          onChange={handleModelChange}
+          onCustomChange={handleModelCustomChange}
+          onOtherToggle={handleModelOtherToggle}
+          required={attr.validation === 'REQUIRED' || attr.validation === 'required'}
+          loading={isLoadingModels}
+          disabled={!hasBrand}
+          error={getValidationError('modelId')}
+          showOtherToggle={!forceOtherModel}
+        />
+      );
+    }
+
+    if (attr.key === 'variantId') {
+      return (
+        <CatalogSelector
+          key={attr.key}
+          type="variant"
+          label={attr.name}
+          items={variants}
+          value={formData.specs.variantId || ''}
+          customValue={customVariantName || formData.variantName || ''}
+          isOther={forceOtherVariant || isOtherVariant}
+          onChange={handleVariantChange}
+          onCustomChange={handleVariantCustomChange}
+          onOtherToggle={handleVariantOtherToggle}
+          required={attr.validation === 'REQUIRED' || attr.validation === 'required'}
+          loading={isLoadingVariants}
+          disabled={!hasModel}
+          error={getValidationError('variantId')}
+          showOtherToggle={!forceOtherVariant && hasVariants}
+        />
+      );
+    }
+
+    // Skip car_damage - handled in ImagesStep
+    if (attr.key === 'car_damage' || attr.key === 'body_damage') {
+      return null;
+    }
+
+    // Render regular attribute using AttributeFieldRenderer
+    return (
+      <AttributeFieldRenderer
+        key={attr.key}
+        attribute={attr}
+        value={formData.specs[attr.key]}
+        onChange={(value) => setSpecField(attr.key, value)}
+        error={getValidationError(attr.key)}
+        onClearError={() => clearValidationError(attr.key)}
+        suggestions={getSuggestions(attr.key)}
+        wasAutoFilled={wasAutoFilled(attr.key)}
+      />
+    );
   };
 
   return (
@@ -881,6 +291,16 @@ export default function AttributeGroupStep({ group }: AttributeGroupStepProps) {
       <Text variant="paragraph" color="secondary" style={styles.subtitle}>
         أدخل معلومات {group.name}
       </Text>
+
+      {/* Auto-fill loading indicator */}
+      {isAutoFilling && (
+        <View style={[styles.autoFillLoadingContainer, { backgroundColor: theme.colors.primaryLight }]}>
+          <Loading type="svg" size="sm" />
+          <Text variant="small" style={{ color: theme.colors.primary }}>
+            جاري التعبئة التلقائية...
+          </Text>
+        </View>
+      )}
 
       {group.attributes.map((attr) => renderAttribute(attr))}
     </View>
@@ -899,143 +319,13 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     subtitle: {
       marginBottom: theme.spacing.sm,
     },
-    field: {
-      gap: theme.spacing.sm,
-    },
-    label: {
-      // Text component handles RTL automatically
-    },
-    otherSwitchRow: {
+    autoFillLoadingContainer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      justifyContent: 'flex-start',
-      gap: theme.spacing.sm,
-      marginTop: theme.spacing.xs,
-    },
-    switchDisabled: {
-      opacity: 0.5,
-    },
-    otherInputContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-    },
-    otherInputIcon: {
-      position: 'absolute',
-      [isRTL ? 'right' : 'left']: theme.spacing.md,
-      zIndex: 1,
-    },
-    otherInput: {
-      flex: 1,
-      [isRTL ? 'paddingRight' : 'paddingLeft']: 44,
-      borderWidth: 2,
-    },
-    inputDisabled: {
-      opacity: 0.5,
-    },
-    input: {
-      borderWidth: 1,
-      borderRadius: theme.radius.lg,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-      fontSize: theme.fontSize.base,
-      textAlign: isRTL ? 'right' : 'left',
-    },
-    textareaInput: {
-      minHeight: 100,
-      paddingTop: theme.spacing.md,
-    },
-    optionsContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      flexWrap: 'wrap',
-      gap: theme.spacing.sm,
-      justifyContent: 'flex-start',
-    },
-    optionChip: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      gap: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
-      borderRadius: theme.radius.full,
-      borderWidth: 1,
-    },
-    booleanContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      gap: theme.spacing.md,
-      justifyContent: 'flex-start',
-    },
-    booleanOption: {
-      flex: 1,
-      maxWidth: 120,
-      paddingVertical: theme.spacing.md,
-      borderRadius: theme.radius.lg,
-      borderWidth: 1,
-      alignItems: 'center',
-    },
-
-    // Error styles
-    errorContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      gap: theme.spacing.xs,
-      marginTop: theme.spacing.xs,
-      justifyContent: 'flex-start',
-    },
-    errorText: {
-      // Text component handles RTL automatically
-    },
-
-    // Selector (dropdown) styles
-    selector: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      borderWidth: 1,
-      borderRadius: theme.radius.lg,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-    },
-    selectorDisabled: {
-      opacity: 0.5,
-    },
-    dropdownContainer: {
-      borderWidth: 1,
-      borderRadius: theme.radius.lg,
-      marginTop: theme.spacing.xs,
-      maxHeight: 250,
-      overflow: 'hidden',
-    },
-    dropdownScroll: {
-      maxHeight: 250,
-    },
-    dropdownItem: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    brandItemContent: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      gap: theme.spacing.md,
-    },
-    brandIcon: {
-      width: 32,
-      height: 32,
-      borderRadius: theme.radius.md,
       justifyContent: 'center',
-      alignItems: 'center',
-      overflow: 'hidden',
-    },
-    brandLogoImage: {
-      width: 28,
-      height: 28,
-    },
-    loadingContainer: {
-      padding: theme.spacing.lg,
-      alignItems: 'center',
+      gap: theme.spacing.sm,
+      padding: theme.spacing.md,
+      borderRadius: theme.radius.lg,
+      marginBottom: theme.spacing.md,
     },
   });

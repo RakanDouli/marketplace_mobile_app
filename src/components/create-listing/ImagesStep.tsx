@@ -10,16 +10,16 @@
  * - videoAllowed from subscription
  */
 
-import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { ImageIcon, Video, AlertCircle, Info } from 'lucide-react-native';
+import React, { useMemo, useCallback, useState } from 'react';
+import { View, StyleSheet, Alert, Switch, TouchableOpacity } from 'react-native';
+import { ImageIcon, Video, AlertCircle, Info, CarFront } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text } from '../slices/Text';
 import { ImageUploadGrid, ImageItem } from '../slices/ImageUploadGrid';
 import { useCreateListingStore } from '../../stores/createListingStore';
 import { useUserAuthStore } from '../../stores/userAuthStore';
-import { useSubscriptionPlansStore } from '../../stores/subscriptionPlansStore';
 import { getCloudflareImageUrl } from '../../services/cloudflare/images';
+import { CarInspection, fromBackendFormat, toBackendFormat, DamageReport } from './CarInspection';
 
 // Default limits (used if subscription not loaded)
 const DEFAULT_MAX_IMAGES = 5;
@@ -32,32 +32,48 @@ export default function ImagesStep() {
 
   const {
     formData,
+    attributes,
     uploadAndAddImage,
     removeImage,
     uploadAndAddVideo,
     removeVideo,
     getValidationError,
+    setSpecField,
   } = useCreateListingStore();
 
-  // Get user's subscription limits
-  const profile = useUserAuthStore((state) => state.profile);
-  const { fetchPublicPlans, getPlanByAccountType } = useSubscriptionPlansStore();
-
-  // Fetch subscription plans on mount
-  useEffect(() => {
-    fetchPublicPlans();
-  }, [fetchPublicPlans]);
-
-  // Get user's plan limits
-  const userPlan = profile?.accountType ? getPlanByAccountType(profile.accountType) : null;
-  const maxImages = userPlan?.maxImagesPerListing ?? DEFAULT_MAX_IMAGES;
-  const videoAllowed = userPlan?.videoAllowed ?? DEFAULT_VIDEO_ALLOWED;
+  // Get user's subscription limits from their actual package (not public plans)
+  const userPackage = useUserAuthStore((state) => state.userPackage);
+  const maxImages = userPackage?.userSubscription?.maxImagesPerListing ?? DEFAULT_MAX_IMAGES;
+  const videoAllowed = userPackage?.userSubscription?.videoAllowed ?? DEFAULT_VIDEO_ALLOWED;
 
   // Track pending uploads (images being uploaded, not yet in store)
   const [pendingUploads, setPendingUploads] = useState<Map<string, ImageItem>>(new Map());
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
+
+  // Car damage state
+  const [showCarDamage, setShowCarDamage] = useState(false);
+
+  // Check if category has car_damage attribute (only for cars category)
+  const hasCarDamageAttribute = useMemo(() => {
+    return attributes.some(attr =>
+      attr.key === 'car_damage' || attr.key === 'body_damage'
+    );
+  }, [attributes]);
+
+  // Get current car damage from specs
+  const currentCarDamage: DamageReport[] = useMemo(() => {
+    const rawValue = formData.specs?.car_damage;
+    if (!rawValue) return [];
+    return fromBackendFormat(rawValue as string[]);
+  }, [formData.specs?.car_damage]);
+
+  // Handle car damage changes
+  const handleCarDamageChange = useCallback((damages: DamageReport[]) => {
+    const backendFormat = toBackendFormat(damages);
+    setSpecField('car_damage', backendFormat.length > 0 ? backendFormat : undefined);
+  }, [setSpecField]);
 
   const imagesValidationError = getValidationError('images');
 
@@ -309,6 +325,70 @@ export default function ImagesStep() {
         </View>
       )}
 
+      {/* Section: Car Body Inspection (only for cars category) */}
+      {hasCarDamageAttribute && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIconContainer, { backgroundColor: theme.colors.primaryLight }]}>
+              <CarFront size={20} color={theme.colors.primary} />
+            </View>
+            <Text variant="h3" style={styles.sectionTitle}>فحص الهيكل</Text>
+            <Text variant="small" color="secondary" style={styles.optionalBadge}>
+              اختياري
+            </Text>
+          </View>
+
+          {/* Toggle switch */}
+          <TouchableOpacity
+            style={[styles.toggleRow, { borderColor: theme.colors.border }]}
+            onPress={() => {
+              const newValue = !showCarDamage;
+              setShowCarDamage(newValue);
+              // Clear car damage when toggle is off
+              if (!newValue && currentCarDamage.length > 0) {
+                setSpecField('car_damage', undefined);
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.toggleTextContainer}>
+              <Text variant="body" style={styles.toggleLabel}>
+                هل يوجد ملاحظات على الهيكل؟
+              </Text>
+              <Text variant="small" color="secondary">
+                حدد الأجزاء المدهونة أو المُستبدلة في السيارة
+              </Text>
+            </View>
+            <Switch
+              value={showCarDamage || currentCarDamage.length > 0}
+              onValueChange={(value) => {
+                setShowCarDamage(value);
+                if (!value && currentCarDamage.length > 0) {
+                  setSpecField('car_damage', undefined);
+                }
+              }}
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primaryLight,
+              }}
+              thumbColor={
+                (showCarDamage || currentCarDamage.length > 0)
+                  ? theme.colors.primary
+                  : theme.colors.textSecondary
+              }
+            />
+          </TouchableOpacity>
+
+          {/* Car Inspection Component */}
+          {(showCarDamage || currentCarDamage.length > 0) && (
+            <CarInspection
+              value={currentCarDamage}
+              onChange={handleCarDamageChange}
+            />
+          )}
+        </View>
+      )}
+
       {/* Info note */}
       <View style={[styles.infoNote, { backgroundColor: theme.colors.primaryLight }]}>
         <Info size={20} color={theme.colors.primary} />
@@ -373,6 +453,25 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       justifyContent: isRTL ? 'flex-end' : 'flex-start',
     },
     errorText: {
+      textAlign: isRTL ? 'right' : 'left',
+    },
+    // Toggle row styles
+    toggleRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing.md,
+      borderWidth: 1,
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.surface,
+    },
+    toggleTextContainer: {
+      flex: 1,
+      gap: theme.spacing.xs,
+      marginRight: isRTL ? 0 : theme.spacing.md,
+      marginLeft: isRTL ? theme.spacing.md : 0,
+    },
+    toggleLabel: {
       textAlign: isRTL ? 'right' : 'left',
     },
   });

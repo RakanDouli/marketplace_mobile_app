@@ -1,65 +1,147 @@
 /**
  * Location & Review Step
- * Final step before submission - location selection and listing review
- * Includes validation error display
+ * Final step before submission - location selection and listing preview
+ * Includes validation error display and preview modal
  */
 
-import React, { useMemo } from 'react';
-import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
-import { MapPin, Check, AlertCircle } from 'lucide-react-native';
+import React, { useMemo, useState, useCallback } from 'react';
+import { View, StyleSheet, Alert } from 'react-native';
+import { MapPin, Navigation, Eye } from 'lucide-react-native';
+import * as Location from 'expo-location';
 import { useTheme, Theme } from '../../theme';
-import { Text } from '../slices/Text';
+import { Text, Button, Select, Input } from '../slices';
 import { useCreateListingStore } from '../../stores/createListingStore';
+import { ListingPreviewModal } from './ListingPreviewModal';
 
-// Syrian provinces
+// Syrian provinces - converted to Select option format
 const PROVINCES = [
-  { key: 'damascus', label: 'دمشق' },
-  { key: 'rif_dimashq', label: 'ريف دمشق' },
-  { key: 'aleppo', label: 'حلب' },
-  { key: 'homs', label: 'حمص' },
-  { key: 'hama', label: 'حماة' },
-  { key: 'latakia', label: 'اللاذقية' },
-  { key: 'tartus', label: 'طرطوس' },
-  { key: 'deir_ezzor', label: 'دير الزور' },
-  { key: 'idlib', label: 'إدلب' },
-  { key: 'daraa', label: 'درعا' },
-  { key: 'suwayda', label: 'السويداء' },
-  { key: 'quneitra', label: 'القنيطرة' },
-  { key: 'raqqa', label: 'الرقة' },
-  { key: 'hasaka', label: 'الحسكة' },
+  { value: 'damascus', label: 'دمشق' },
+  { value: 'rif_dimashq', label: 'ريف دمشق' },
+  { value: 'aleppo', label: 'حلب' },
+  { value: 'homs', label: 'حمص' },
+  { value: 'hama', label: 'حماة' },
+  { value: 'latakia', label: 'اللاذقية' },
+  { value: 'tartus', label: 'طرطوس' },
+  { value: 'deir_ezzor', label: 'دير الزور' },
+  { value: 'idlib', label: 'إدلب' },
+  { value: 'daraa', label: 'درعا' },
+  { value: 'suwayda', label: 'السويداء' },
+  { value: 'quneitra', label: 'القنيطرة' },
+  { value: 'raqqa', label: 'الرقة' },
+  { value: 'hasaka', label: 'الحسكة' },
 ];
 
 export default function LocationReviewStep() {
   const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
   const {
     formData,
     setLocationField,
-    steps,
-    validateStep,
     getValidationError,
     clearValidationError,
   } = useCreateListingStore();
 
-  // Check validation for all steps
-  const allStepsValid = steps.every((_, index) => validateStep(index));
+  // State
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const provinceError = getValidationError('location.province');
 
-  // Helper to render field error message
-  const renderFieldError = (fieldKey: string) => {
-    const error = getValidationError(fieldKey);
-    if (!error) return null;
+  // Get current location and generate Google Maps link
+  const handleGetLocationLink = useCallback(async () => {
+    setIsGettingLocation(true);
+    console.log('[Location] Starting location request...');
 
-    return (
-      <View style={styles.errorContainer}>
-        <AlertCircle size={14} color={theme.colors.error} />
-        <Text variant="small" style={[styles.errorText, { color: theme.colors.error }]}>
-          {error}
-        </Text>
-      </View>
-    );
-  };
+    try {
+      // Check if location services are enabled
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+      console.log('[Location] Services enabled:', servicesEnabled);
+
+      if (!servicesEnabled) {
+        Alert.alert(
+          'خدمات الموقع',
+          'يرجى تفعيل خدمات الموقع في إعدادات الجهاز',
+          [{ text: 'حسناً' }]
+        );
+        setIsGettingLocation(false);
+        return;
+      }
+
+      // Request permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      console.log('[Location] Permission status:', status);
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'صلاحية الموقع',
+          'يرجى السماح بالوصول إلى الموقع للحصول على رابط الخريطة',
+          [{ text: 'حسناً' }]
+        );
+        setIsGettingLocation(false);
+        return;
+      }
+
+      console.log('[Location] Getting current position...');
+
+      // Get current location - use Balanced for faster response
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+        timeInterval: 5000,
+        distanceInterval: 0,
+      });
+
+      console.log('[Location] Got location:', location.coords);
+
+      const { latitude, longitude } = location.coords;
+
+      // Validate coordinates
+      if (!latitude || !longitude || latitude === 0 || longitude === 0) {
+        console.log('[Location] Invalid coordinates:', { latitude, longitude });
+        Alert.alert(
+          'خطأ',
+          'لم يتم الحصول على إحداثيات صحيحة. حاول مرة أخرى.',
+          [{ text: 'حسناً' }]
+        );
+        setIsGettingLocation(false);
+        return;
+      }
+
+      // Generate Google Maps link
+      const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+      console.log('[Location] Generated link:', mapsLink);
+
+      // Set the link
+      setLocationField('link', mapsLink);
+
+      // Show success feedback
+      Alert.alert(
+        'تم',
+        `تم الحصول على الموقع بنجاح\n${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+        [{ text: 'حسناً' }]
+      );
+
+    } catch (error: any) {
+      console.error('[Location] Error:', error);
+      console.error('[Location] Error code:', error?.code);
+      console.error('[Location] Error message:', error?.message);
+
+      let errorMessage = 'فشل الحصول على الموقع.';
+
+      // Handle specific error codes
+      if (error?.code === 'E_LOCATION_UNAVAILABLE') {
+        errorMessage = 'الموقع غير متاح. تأكد من تفعيل GPS.';
+      } else if (error?.code === 'E_LOCATION_TIMEOUT') {
+        errorMessage = 'انتهت مهلة الحصول على الموقع. حاول مرة أخرى.';
+      } else if (error?.message) {
+        errorMessage = `خطأ: ${error.message}`;
+      }
+
+      Alert.alert('خطأ', errorMessage, [{ text: 'حسناً' }]);
+    } finally {
+      setIsGettingLocation(false);
+    }
+  }, [setLocationField]);
 
   return (
     <View style={styles.container}>
@@ -70,189 +152,86 @@ export default function LocationReviewStep() {
           <Text variant="h3">الموقع</Text>
         </View>
 
-        {/* Province Selection */}
-        <View style={styles.field}>
-          <Text variant="body" style={styles.label}>المحافظة *</Text>
-          <View style={styles.provincesGrid}>
-            {PROVINCES.map((province) => (
-              <TouchableOpacity
-                key={province.key}
-                style={[
-                  styles.provinceChip,
-                  {
-                    backgroundColor:
-                      formData.location.province === province.key
-                        ? theme.colors.primary
-                        : theme.colors.bg,
-                    borderColor:
-                      formData.location.province === province.key
-                        ? theme.colors.primary
-                        : theme.colors.border,
-                  },
-                ]}
-                onPress={() => {
-                  setLocationField('province', province.key);
-                  clearValidationError('location.province');
-                }}
-              >
-                <Text
-                  variant="small"
-                  style={{
-                    color:
-                      formData.location.province === province.key
-                        ? theme.colors.textInverse
-                        : theme.colors.text,
-                  }}
-                >
-                  {province.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          {renderFieldError('location.province')}
-        </View>
+        {/* Province Selection - Dropdown */}
+        <Select
+          label="المحافظة"
+          placeholder="اختر المحافظة..."
+          options={PROVINCES}
+          value={formData.location.province}
+          onChange={(value) => {
+            setLocationField('province', value);
+            clearValidationError('location.province');
+          }}
+          error={provinceError}
+          required
+          searchable
+        />
 
         {/* City */}
-        <View style={styles.field}>
-          <Text variant="body" style={styles.label}>المدينة</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.colors.bg,
-                borderColor: theme.colors.border,
-                color: theme.colors.text,
-              },
-            ]}
-            value={formData.location.city}
-            onChangeText={(text) => setLocationField('city', text)}
-            placeholder="أدخل اسم المدينة"
-            placeholderTextColor={theme.colors.textMuted}
-            textAlign="right"
-          />
-        </View>
+        <Input
+          label="المدينة"
+          value={formData.location.city}
+          onChangeText={(text) => setLocationField('city', text)}
+          placeholder="أدخل اسم المدينة"
+        />
 
         {/* Area */}
-        <View style={styles.field}>
-          <Text variant="body" style={styles.label}>المنطقة / الحي</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.colors.bg,
-                borderColor: theme.colors.border,
-                color: theme.colors.text,
-              },
-            ]}
-            value={formData.location.area}
-            onChangeText={(text) => setLocationField('area', text)}
-            placeholder="أدخل اسم المنطقة أو الحي"
-            placeholderTextColor={theme.colors.textMuted}
-            textAlign="right"
-          />
-        </View>
+        <Input
+          label="المنطقة / الحي"
+          value={formData.location.area}
+          onChangeText={(text) => setLocationField('area', text)}
+          placeholder="أدخل اسم المنطقة أو الحي"
+        />
 
-        {/* Google Maps Link */}
-        <View style={styles.field}>
-          <Text variant="body" style={styles.label}>رابط خرائط Google (اختياري)</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.colors.bg,
-                borderColor: theme.colors.border,
-                color: theme.colors.text,
-              },
-            ]}
+        {/* Google Maps Link with Get Location Button */}
+        <View style={styles.linkField}>
+          <View style={styles.linkLabelRow}>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Navigation size={16} color={theme.colors.primary} />}
+              onPress={handleGetLocationLink}
+              loading={isGettingLocation}
+              disabled={isGettingLocation}
+            >
+              موقعي الحالي
+            </Button>
+            <Text variant="body">رابط خرائط Google</Text>
+          </View>
+          <Input
             value={formData.location.link}
             onChangeText={(text) => setLocationField('link', text)}
             placeholder="https://goo.gl/maps/..."
-            placeholderTextColor={theme.colors.textMuted}
-            textAlign="left"
             autoCapitalize="none"
             keyboardType="url"
+            containerStyle={styles.linkInput}
           />
         </View>
       </View>
 
-      {/* Review Summary */}
+      {/* Preview Button */}
       <View style={styles.section}>
-        <Text variant="h3" style={styles.sectionTitle}>مراجعة الإعلان</Text>
-
-        {/* Summary Card */}
-        <View
-          style={[
-            styles.summaryCard,
-            { backgroundColor: theme.colors.bg, borderColor: theme.colors.border },
-          ]}
+        <Button
+          variant="outline"
+          size="lg"
+          icon={<Eye size={20} color={theme.colors.primary} />}
+          onPress={() => setShowPreviewModal(true)}
+          style={styles.previewButton}
         >
-          <View style={styles.summaryRow}>
-            <Text variant="body">{formData.title || 'بدون عنوان'}</Text>
-            <Text variant="small" color="secondary">العنوان</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.summaryRow}>
-            <Text variant="body">
-              {formData.priceMinor > 0
-                ? `${formData.priceMinor.toLocaleString()} ل.س`
-                : 'غير محدد'}
-            </Text>
-            <Text variant="small" color="secondary">السعر</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.summaryRow}>
-            <Text variant="body">{formData.images.length} صور</Text>
-            <Text variant="small" color="secondary">الصور</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.summaryRow}>
-            <Text variant="body">
-              {PROVINCES.find((p) => p.key === formData.location.province)?.label ||
-                'غير محدد'}
-            </Text>
-            <Text variant="small" color="secondary">الموقع</Text>
-          </View>
-        </View>
-
-        {/* Validation Status */}
-        <View
-          style={[
-            styles.validationCard,
-            {
-              backgroundColor: allStepsValid
-                ? theme.colors.successLight
-                : theme.colors.warningLight,
-            },
-          ]}
-        >
-          {allStepsValid ? (
-            <>
-              <Check size={20} color={theme.colors.success} />
-              <Text variant="body" style={{ color: theme.colors.success }}>
-                جميع الحقول المطلوبة مكتملة
-              </Text>
-            </>
-          ) : (
-            <>
-              <AlertCircle size={20} color={theme.colors.warning} />
-              <Text variant="body" style={{ color: theme.colors.warning }}>
-                يرجى استكمال جميع الحقول المطلوبة
-              </Text>
-            </>
-          )}
-        </View>
+          معاينة الإعلان
+        </Button>
       </View>
+
+      {/* Preview Modal */}
+      <ListingPreviewModal
+        visible={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+      />
     </View>
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, isRTL: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -262,71 +241,22 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.md,
     },
     sectionHeader: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      justifyContent: 'flex-end',
       gap: theme.spacing.sm,
     },
-    sectionTitle: {
-      textAlign: 'right',
-    },
-    field: {
+    linkField: {
       gap: theme.spacing.sm,
     },
-    label: {
-      textAlign: 'right',
-    },
-    input: {
-      borderWidth: 1,
-      borderRadius: theme.radius.lg,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-      fontSize: theme.fontSize.base,
-    },
-    provincesGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: theme.spacing.sm,
-      justifyContent: 'flex-end',
-    },
-    provinceChip: {
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
-      borderRadius: theme.radius.full,
-      borderWidth: 1,
-    },
-    summaryCard: {
-      borderWidth: 1,
-      borderRadius: theme.radius.xl,
-      padding: theme.spacing.md,
-    },
-    summaryRow: {
-      flexDirection: 'row',
+    linkLabelRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingVertical: theme.spacing.sm,
     },
-    divider: {
-      height: 1,
-      backgroundColor: theme.colors.border,
+    linkInput: {
+      marginBottom: 0,
     },
-    validationCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      gap: theme.spacing.sm,
-      padding: theme.spacing.md,
-      borderRadius: theme.radius.lg,
-    },
-    // Error styles
-    errorContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.xs,
-      marginTop: theme.spacing.xs,
-      justifyContent: 'flex-end',
-    },
-    errorText: {
-      textAlign: 'right',
+    previewButton: {
+      marginTop: theme.spacing.md,
     },
   });

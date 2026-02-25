@@ -14,9 +14,8 @@ import {
   Linking,
   FlatList,
   Image,
-  Alert,
 } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import {
   MapPin,
@@ -27,7 +26,6 @@ import {
   MessageCircle,
   ChevronLeft,
   ChevronRight,
-  ArrowRight,
   Play,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -57,6 +55,38 @@ import { ENV } from '../../src/constants/env';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_HEIGHT = 300;
+
+// Separate component for video playback using expo-video
+// Must be a separate component because useVideoPlayer is a hook
+interface VideoItemProps {
+  url: string;
+  style: any;
+  badgeStyle: any;
+  badgeTextStyle: any;
+}
+
+const VideoItem: React.FC<VideoItemProps> = ({ url, style, badgeStyle, badgeTextStyle }) => {
+  const player = useVideoPlayer(url, (player) => {
+    player.loop = false;
+  });
+
+  return (
+    <View style={style}>
+      <VideoView
+        player={player}
+        style={style}
+        nativeControls={true}
+        contentFit="contain"
+        allowsFullscreen={true}
+      />
+      {/* Video indicator badge */}
+      <View style={badgeStyle}>
+        <Play size={16} color="#FFFFFF" fill="#FFFFFF" />
+        <Text variant="xs" style={badgeTextStyle}>فيديو</Text>
+      </View>
+    </View>
+  );
+};
 
 export default function ListingDetailScreen() {
   const theme = useTheme();
@@ -192,6 +222,56 @@ export default function ListingDetailScreen() {
     );
   }, [currentListing?.id, currentListing?.userId, shareMetadata, styles]);
 
+  // Build media items array: images first, video at the end (same as web frontend)
+  // IMPORTANT: Must be defined before early returns to follow React hooks rules
+  const mediaItems = useMemo(() => {
+    const items: { type: 'image' | 'video'; url: string; id: string }[] = [];
+
+    // Add images first
+    if (currentListing?.imageKeys) {
+      currentListing.imageKeys.forEach((key, index) => {
+        items.push({
+          type: 'image',
+          url: getCloudflareImageUrl(key, 'large'),
+          id: key,
+        });
+      });
+    }
+
+    // Add video at the end if exists
+    // NOTE: Video URLs can be either:
+    // 1. Full R2 URLs (https://pub-xxx.r2.dev/videos/xxx.mp4) - use as-is
+    // 2. Cloudflare image IDs (legacy) - transform with getCloudflareImageUrl
+    if (currentListing?.videoUrl) {
+      const videoUrl = currentListing.videoUrl.startsWith('http')
+        ? currentListing.videoUrl  // Already a full URL (R2 storage)
+        : getCloudflareImageUrl(currentListing.videoUrl, 'public');  // Cloudflare ID
+      items.push({
+        type: 'video',
+        url: videoUrl,
+        id: 'video',
+      });
+    }
+
+    return items;
+  }, [currentListing?.imageKeys, currentListing?.videoUrl]);
+
+  // Media navigation (images + video)
+  // IMPORTANT: Must be defined before early returns to follow React hooks rules
+  const goToNextImage = useCallback(() => {
+    if (mediaItems.length === 0) return;
+    const nextIndex = (activeImageIndex + 1) % mediaItems.length;
+    setActiveImageIndex(nextIndex);
+    flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+  }, [activeImageIndex, mediaItems.length]);
+
+  const goToPrevImage = useCallback(() => {
+    if (mediaItems.length === 0) return;
+    const prevIndex = activeImageIndex === 0 ? mediaItems.length - 1 : activeImageIndex - 1;
+    setActiveImageIndex(prevIndex);
+    flatListRef.current?.scrollToIndex({ index: prevIndex, animated: true });
+  }, [activeImageIndex, mediaItems.length]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -235,54 +315,7 @@ export default function ListingDetailScreen() {
     );
   }
 
-  // Build media items array: images first, video at the end (same as web frontend)
-  const mediaItems = useMemo(() => {
-    const items: { type: 'image' | 'video'; url: string; id: string }[] = [];
-
-    // Add images first
-    if (currentListing?.imageKeys) {
-      currentListing.imageKeys.forEach((key, index) => {
-        items.push({
-          type: 'image',
-          url: getCloudflareImageUrl(key, 'large'),
-          id: key,
-        });
-      });
-    }
-
-    // Add video at the end if exists
-    // NOTE: Video URLs can be either:
-    // 1. Full R2 URLs (https://pub-xxx.r2.dev/videos/xxx.mp4) - use as-is
-    // 2. Cloudflare image IDs (legacy) - transform with getCloudflareImageUrl
-    if (currentListing?.videoUrl) {
-      const videoUrl = currentListing.videoUrl.startsWith('http')
-        ? currentListing.videoUrl  // Already a full URL (R2 storage)
-        : getCloudflareImageUrl(currentListing.videoUrl, 'public');  // Cloudflare ID
-      items.push({
-        type: 'video',
-        url: videoUrl,
-        id: 'video',
-      });
-    }
-
-    return items;
-  }, [currentListing?.imageKeys, currentListing?.videoUrl]);
-
-  // Media navigation (images + video)
-  const goToNextImage = useCallback(() => {
-    if (mediaItems.length === 0) return;
-    const nextIndex = (activeImageIndex + 1) % mediaItems.length;
-    setActiveImageIndex(nextIndex);
-    flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-  }, [activeImageIndex, mediaItems.length]);
-
-  const goToPrevImage = useCallback(() => {
-    if (mediaItems.length === 0) return;
-    const prevIndex = activeImageIndex === 0 ? mediaItems.length - 1 : activeImageIndex - 1;
-    setActiveImageIndex(prevIndex);
-    flatListRef.current?.scrollToIndex({ index: prevIndex, animated: true });
-  }, [activeImageIndex, mediaItems.length]);
-
+  // Main render - currentListing is guaranteed to exist here
   const images = currentListing.imageKeys || [];
   const location = formatLocation(currentListing.location);
   const hasPhone = owner?.showPhone && (owner?.phone || owner?.contactPhone);
@@ -339,20 +372,12 @@ export default function ListingDetailScreen() {
                 }}
                 renderItem={({ item }) => (
                   item.type === 'video' ? (
-                    <View style={styles.galleryImage}>
-                      <Video
-                        source={{ uri: item.url }}
-                        style={styles.galleryVideo}
-                        useNativeControls
-                        resizeMode={ResizeMode.CONTAIN}
-                        isLooping={false}
-                      />
-                      {/* Video indicator badge */}
-                      <View style={styles.videoBadge}>
-                        <Play size={16} color="#FFFFFF" fill="#FFFFFF" />
-                        <Text variant="xs" style={styles.videoBadgeText}>فيديو</Text>
-                      </View>
-                    </View>
+                    <VideoItem
+                      url={item.url}
+                      style={styles.galleryVideo}
+                      badgeStyle={styles.videoBadge}
+                      badgeTextStyle={styles.videoBadgeText}
+                    />
                   ) : (
                     <TouchableOpacity
                       activeOpacity={0.95}

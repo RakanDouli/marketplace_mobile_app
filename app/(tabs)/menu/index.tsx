@@ -32,6 +32,7 @@ import { useTheme, useThemeMode } from '../../../src/theme';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
 import { useCurrencyStore, CURRENCY_SYMBOLS, type Currency } from '../../../src/stores/currencyStore';
 import { useTranslation } from '../../../src/hooks/useTranslation';
+import { getCloudflareImageUrl } from '../../../src/services/cloudflare/images';
 
 interface MenuItem {
   icon: React.ReactNode;
@@ -44,7 +45,7 @@ export default function MenuScreen() {
   const theme = useTheme();
   const { themeMode, setThemeMode } = useThemeMode();
   const router = useRouter();
-  const { user, signOut, isAuthenticated } = useUserAuthStore();
+  const { user, profile, userPackage, signOut, isAuthenticated } = useUserAuthStore();
   const { preferredCurrency, setPreferredCurrency, exchangeRates } = useCurrencyStore();
   const { t } = useTranslation();
 
@@ -64,8 +65,8 @@ export default function MenuScreen() {
   // Currency options
   const currencyOptions: Currency[] = ['USD', 'EUR', 'SYP'];
 
-  // Check if user has analytics access from subscription
-  const hasAnalyticsAccess = user?.user_metadata?.subscription?.analyticsAccess === true;
+  // Check if user has analytics access from their actual subscription package
+  const hasAnalyticsAccess = userPackage?.userSubscription?.analyticsAccess === true;
 
   // Menu items grouped by section - matching web dashboard
   const accountMenuItems: MenuItem[] = [
@@ -296,14 +297,32 @@ export default function MenuScreen() {
         <View style={[styles.header, { flexDirection: theme.isRTL ? 'row' : 'row-reverse' }]}>
           <View style={styles.userInfo}>
             <Text style={[styles.userName, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
-              {user?.user_metadata?.full_name || t('chat.user')}
+              {profile?.name || user?.user_metadata?.full_name || t('chat.user')}
             </Text>
             <Text style={[styles.userEmail, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
-              {user?.email}
+              {profile?.email || user?.email}
             </Text>
+            {/* Subscription title */}
+            {userPackage?.userSubscription?.title && (
+              <View style={[styles.subscriptionBadge, { alignSelf: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
+                <Crown size={12} color={theme.colors.primary} />
+                <Text style={styles.subscriptionTitle}>
+                  {userPackage.userSubscription.title}
+                </Text>
+              </View>
+            )}
           </View>
           <View style={styles.avatar}>
-            {user?.user_metadata?.avatar_url ? (
+            {profile?.avatar ? (
+              <Image
+                source={{
+                  uri: profile.avatar.startsWith('http')
+                    ? profile.avatar  // Full URL (e.g., Unsplash)
+                    : getCloudflareImageUrl(profile.avatar, 'thumbnail')  // Cloudflare asset key - use thumbnail for avatars
+                }}
+                style={styles.avatarImage}
+              />
+            ) : user?.user_metadata?.avatar_url ? (
               <Image
                 source={{ uri: user.user_metadata.avatar_url }}
                 style={styles.avatarImage}
@@ -420,6 +439,21 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       color: theme.colors.textSecondary,
       // textAlign applied dynamically
       marginTop: 2,
+    },
+    subscriptionBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginTop: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 2,
+      backgroundColor: theme.colors.primaryLight,
+      borderRadius: theme.radius.sm,
+    },
+    subscriptionTitle: {
+      fontSize: theme.fontSize.xs,
+      fontFamily: theme.fontFamily.bodyMedium,
+      color: theme.colors.primary,
     },
     guestTitle: {
       fontSize: theme.fontSize.lg,

@@ -14,13 +14,13 @@
  * - Navigation buttons: Next always on the forward side, Back on the back side
  */
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Check } from 'lucide-react-native';
 import { useTheme, Theme } from '../../src/theme';
-import { Text, Button } from '../../src/components/slices';
+import { Text, Button, Form } from '../../src/components/slices';
 import { useCreateListingStore } from '../../src/stores/createListingStore';
 
 // Import step components
@@ -31,10 +31,14 @@ import LocationReviewStep from '../../src/components/create-listing/LocationRevi
 
 export default function WizardScreen() {
   const theme = useTheme();
+
   const isRTL = theme.isRTL;
   const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
   const router = useRouter();
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
+
+  // Ref to ScrollView for programmatic scrolling
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const {
     currentStep,
@@ -52,28 +56,38 @@ export default function WizardScreen() {
     generateSteps,
     deleteDraft,
     reset,
+    validationErrors,
   } = useCreateListingStore();
 
   // Keys that are handled in BasicInfoStep (not dynamic attributes)
   const basicInfoKeys = ['search', 'title', 'description', 'price', 'listingType', 'condition', 'location'];
 
-  // Check if category has dynamic attributes (excluding basic info keys)
-  const hasDynamicAttributes = attributes.some(attr => !basicInfoKeys.includes(attr.key));
+  // Check if category has dynamic attributes that are NOT in 'other' group
+  // These are attributes that will create actual attribute_group steps
+  const hasDynamicAttributeGroups = attributes.some(attr =>
+    !basicInfoKeys.includes(attr.key) && attr.group && attr.group !== 'other'
+  );
 
-  // Regenerate steps if dynamic attributes exist but steps don't include attribute groups
+  // Regenerate steps if dynamic attribute groups exist but steps don't include them
   // This handles the case where navigation happened before generateSteps completed
+  // IMPORTANT: Only check attributes.length to avoid infinite loop (don't include steps in deps)
   useEffect(() => {
-    if (hasDynamicAttributes && !steps.some(s => s.type === 'attribute_group')) {
+    if (hasDynamicAttributeGroups && !steps.some(s => s.type === 'attribute_group')) {
       generateSteps();
     }
-  }, [attributes, steps, hasDynamicAttributes]);
+  }, [attributes.length, hasDynamicAttributeGroups]); // Only depend on attributes.length, not steps
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  }, [currentStep]);
 
   const currentStepData = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
 
-  // Show loading if dynamic attributes exist but steps haven't been regenerated yet
-  const stepsNotReady = hasDynamicAttributes && !steps.some(s => s.type === 'attribute_group');
+  // Show loading if dynamic attribute groups exist but steps haven't been regenerated yet
+  const stepsNotReady = hasDynamicAttributeGroups && !steps.some(s => s.type === 'attribute_group');
 
   // Ensure draft exists when starting wizard
   useEffect(() => {
@@ -90,9 +104,15 @@ export default function WizardScreen() {
         router.replace('/create/success');
       } catch (err) {
         // Error is handled by store
+        // Scroll to top to show error
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
       }
     } else {
-      nextStep();
+      const success = nextStep();
+      if (!success) {
+        // Validation failed - scroll to top to show errors
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      }
     }
   };
 
@@ -236,23 +256,19 @@ export default function WizardScreen() {
         {/* Step Content - Wrapped in KeyboardAvoidingView to handle keyboard */}
         <KeyboardAvoidingView
           style={styles.keyboardAvoidingView}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         >
           <ScrollView
+            ref={scrollViewRef}
             style={styles.content}
             contentContainerStyle={styles.contentContainer}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {renderStepContent()}
-
-            {/* Error Message */}
-            {error && (
-              <View style={[styles.errorContainer, { backgroundColor: theme.colors.error + '15' }]}>
-                <Text variant="paragraph" color="error">{error}</Text>
-              </View>
-            )}
+            <Form error={error}>
+              {renderStepContent()}
+            </Form>
           </ScrollView>
         </KeyboardAvoidingView>
 
@@ -351,11 +367,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       justifyContent: 'center',
       alignItems: 'center',
       padding: 40,
-    },
-    errorContainer: {
-      padding: 12,
-      borderRadius: 8,
-      marginTop: 16,
     },
     footer: {
       // RTL: row-reverse puts buttons in correct order for RTL

@@ -2,6 +2,7 @@
  * Select Component
  * Modal-based select with search and creatable support
  * Matches web frontend react-select functionality
+ * Supports RTL
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -76,7 +77,8 @@ export function Select({
   containerStyle,
 }: SelectProps) {
   const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,7 +113,6 @@ export function Select({
     if (!searchQuery.trim() || !onCreateOption) return;
     onCreateOption(searchQuery.trim());
     setSearchQuery('');
-    // Note: Parent should add the new option and set it as value
   }, [searchQuery, onCreateOption]);
 
   const getBorderColor = () => {
@@ -212,15 +213,16 @@ export function Select({
           <View style={styles.modalContent}>
             {/* Header */}
             <View style={styles.modalHeader}>
-              <Text variant="h4" style={styles.modalTitle}>
-                {label || 'اختر'}
-              </Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setIsOpen(false)}
               >
                 <X size={24} color={theme.colors.text} />
               </TouchableOpacity>
+              <Text variant="h4" style={styles.modalTitle}>
+                {label || 'اختر'}
+              </Text>
+              <View style={styles.closeButtonPlaceholder} />
             </View>
 
             {/* Search Input */}
@@ -234,7 +236,7 @@ export function Select({
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   autoCorrect={false}
-                  textAlign="right"
+                  textAlign={isRTL ? 'right' : 'left'}
                 />
               </View>
             )}
@@ -274,13 +276,13 @@ export function Select({
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, isRTL: boolean) =>
   StyleSheet.create({
     container: {
       marginBottom: theme.spacing.md,
     },
     labelContainer: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       marginBottom: theme.spacing.sm,
     },
     label: {
@@ -290,7 +292,7 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.error,
     },
     selectButton: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       borderWidth: 1,
@@ -304,11 +306,11 @@ const createStyles = (theme: Theme) =>
     },
     selectText: {
       flex: 1,
-      textAlign: 'right',
+      textAlign: isRTL ? 'right' : 'left',
     },
     helperText: {
       marginTop: theme.spacing.xs,
-      textAlign: 'right',
+      textAlign: isRTL ? 'right' : 'left',
     },
     // Modal styles
     modalOverlay: {
@@ -327,7 +329,7 @@ const createStyles = (theme: Theme) =>
       paddingBottom: theme.spacing.xl,
     },
     modalHeader: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: theme.spacing.lg,
@@ -339,13 +341,14 @@ const createStyles = (theme: Theme) =>
       textAlign: 'center',
     },
     closeButton: {
-      position: 'absolute',
-      right: theme.spacing.lg,
       padding: theme.spacing.xs,
+    },
+    closeButtonPlaceholder: {
+      width: 32,
     },
     // Search
     searchContainer: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       marginHorizontal: theme.spacing.lg,
       marginVertical: theme.spacing.md,
@@ -362,7 +365,7 @@ const createStyles = (theme: Theme) =>
     },
     // Create new option
     createOption: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
@@ -375,7 +378,7 @@ const createStyles = (theme: Theme) =>
       flexGrow: 0,
     },
     option: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: theme.spacing.lg,
@@ -389,7 +392,7 @@ const createStyles = (theme: Theme) =>
     },
     optionText: {
       flex: 1,
-      textAlign: 'right',
+      textAlign: isRTL ? 'right' : 'left',
     },
     emptyState: {
       padding: theme.spacing.xl,

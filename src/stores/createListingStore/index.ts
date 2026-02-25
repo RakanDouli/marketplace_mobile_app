@@ -11,6 +11,7 @@ import {
   GET_BRANDS_QUERY,
   GET_MODELS_QUERY,
   GET_VARIANTS_BY_MODEL_QUERY,
+  GET_VARIANTS_BY_BRAND_QUERY,
   GET_MODEL_SUGGESTION_QUERY,
   CREATE_DRAFT_LISTING,
   UPDATE_DRAFT_LISTING,
@@ -123,6 +124,11 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
   variants: [],
   isLoadingBrands: false,
   isLoadingModels: false,
+  isLoadingVariants: false,
+
+  // Auto-suggestion specs (from CarAPI)
+  suggestionSpecs: null,
+  isAutoFilling: false,
 
   // Form data
   formData: initialFormData,
@@ -163,6 +169,7 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
     // Check if category has brandId attribute and fetch brands
     const { attributes } = get();
     const hasBrandAttribute = attributes.some(attr => attr.key === 'brandId');
+
     if (hasBrandAttribute) {
       await get().fetchBrands(categoryId);
     }
@@ -223,16 +230,38 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
   },
 
   fetchVariants: async (modelId: string): Promise<void> => {
+    set({ isLoadingVariants: true });
     try {
       const data = await cachedGraphqlRequest<{ variants: Variant[] }>(
         GET_VARIANTS_BY_MODEL_QUERY,
         { modelId },
         5 * 60 * 1000
       );
-      set({ variants: data.variants || [] });
+      set({ variants: data.variants || [], isLoadingVariants: false });
     } catch (error: any) {
       console.error('Failed to fetch variants:', error);
-      set({ variants: [] });
+      set({ variants: [], isLoadingVariants: false });
+    }
+  },
+
+  // Fetch both models AND variants by brand (for grouped dropdown like web)
+  fetchModelsAndVariants: async (brandId: string): Promise<void> => {
+    set({ isLoadingModels: true, isLoadingVariants: true, models: [], variants: [], suggestionSpecs: null });
+
+    try {
+      const [modelsData, variantsData] = await Promise.all([
+        cachedGraphqlRequest<{ models: Model[] }>(GET_MODELS_QUERY, { brandId }, 5 * 60 * 1000),
+        cachedGraphqlRequest<{ variantsByBrand: Variant[] }>(GET_VARIANTS_BY_BRAND_QUERY, { brandId }, 5 * 60 * 1000),
+      ]);
+      set({
+        models: modelsData.models || [],
+        variants: variantsData.variantsByBrand || [],
+        isLoadingModels: false,
+        isLoadingVariants: false,
+      });
+    } catch (error: any) {
+      console.error('Failed to fetch models/variants:', error);
+      set({ models: [], variants: [], isLoadingModels: false, isLoadingVariants: false });
     }
   },
 
@@ -253,6 +282,63 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       console.error('Failed to fetch model suggestion:', error);
       return null;
     }
+  },
+
+  // Fetch suggestions and auto-fill fields with single options
+  fetchAndApplySuggestions: async (): Promise<void> => {
+    const { formData, setSpecField } = get();
+    const { brandId, modelId, variantId, year } = formData.specs;
+
+    // Need at least brand and model to fetch suggestions
+    if (!brandId || !modelId) {
+      set({ suggestionSpecs: null });
+      return;
+    }
+
+    // Skip if using custom "other" values
+    if (String(brandId).startsWith('other:') || String(modelId).startsWith('other:')) {
+      set({ suggestionSpecs: null });
+      return;
+    }
+
+    set({ isAutoFilling: true });
+
+    try {
+      const suggestion = await get().fetchModelSuggestion(
+        brandId as string,
+        modelId as string,
+        year ? parseInt(String(year)) : undefined,
+        variantId as string | undefined
+      );
+
+      if (suggestion?.specs) {
+        const specs = suggestion.specs as Record<string, (string | number)[]>;
+        set({ suggestionSpecs: specs });
+
+        // Auto-fill fields that have exactly 1 option
+        Object.entries(specs).forEach(([field, options]) => {
+          if (Array.isArray(options) && options.length === 1) {
+            // Only auto-fill if the field is currently empty
+            const currentValue = formData.specs[field];
+            if (!currentValue || currentValue === '') {
+              setSpecField(field, String(options[0]));
+            }
+          }
+        });
+      } else {
+        set({ suggestionSpecs: null });
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      set({ suggestionSpecs: null });
+    } finally {
+      set({ isAutoFilling: false });
+    }
+  },
+
+  // Clear suggestion specs (when brand/model changes)
+  clearSuggestionSpecs: (): void => {
+    set({ suggestionSpecs: null });
   },
 
   // ============ FORM FIELD SETTERS ============
@@ -884,14 +970,26 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
 
       onProgress?.(60);
 
+      // Log response status for debugging
+      console.log('[Video Upload] Response status:', uploadResponse.status, uploadResponse.statusText);
+
       if (!uploadResponse.ok) {
         // Try to get error message from response
+        let errorMessage = 'فشل رفع الفيديو';
         try {
-          const errorData = await uploadResponse.json();
-          throw new Error(errorData.message || 'فشل رفع الفيديو');
-        } catch {
-          throw new Error('فشل رفع الفيديو');
+          const responseText = await uploadResponse.text();
+          console.log('[Video Upload] Error response:', responseText);
+          try {
+            const errorData = JSON.parse(responseText);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch {
+            // Response wasn't JSON
+            errorMessage = `فشل رفع الفيديو (${uploadResponse.status}: ${responseText.slice(0, 100)})`;
+          }
+        } catch (e) {
+          console.log('[Video Upload] Could not read error response:', e);
         }
+        throw new Error(errorMessage);
       }
 
       const uploadResult = await uploadResponse.json();
@@ -958,15 +1056,16 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
 
     if (!draftId) {
       set({ error: 'لم يتم إنشاء مسودة. يرجى اختيار الفئة أولاً.' });
-      return;
+      throw new Error('No draft exists');
     }
 
     // Validate all steps
     for (let i = 0; i < steps.length; i++) {
       const isValid = validateStep(i);
       if (!isValid) {
-        set({ error: `يرجى ملء جميع الحقول المطلوبة في الخطوة ${i + 1}` });
-        return;
+        const stepName = steps[i]?.title || `الخطوة ${i + 1}`;
+        set({ error: `يرجى ملء جميع الحقول المطلوبة في ${stepName}` });
+        throw new Error(`Validation failed at step ${i + 1}: ${stepName}`);
       }
     }
 

@@ -105,11 +105,37 @@ interface UserProfile {
   createdAt: string;
 }
 
+interface UserSubscription {
+  id: string;
+  name: string;
+  title: string;
+  description?: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  maxListings: number;
+  maxImagesPerListing: number;
+  videoAllowed: boolean;
+  priorityPlacement: boolean;
+  analyticsAccess: boolean;
+  customBranding: boolean;
+  featuredListings: number;
+}
+
+interface UserPackage {
+  id: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  currentListings: number;
+  userSubscription: UserSubscription;
+}
+
 interface UserAuthState {
   // State
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
+  userPackage: UserPackage | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -134,6 +160,7 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
   user: null,
   session: null,
   profile: null,
+  userPackage: null,
   isAuthenticated: false,
   isLoading: true,
   error: null,
@@ -157,11 +184,17 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
           isLoading: false,
         });
 
-        // Fetch full profile from GraphQL (contains backend database ID)
+        // Fetch full profile and subscription from GraphQL
         try {
-          const data = await graphqlRequest<{ me: { user: UserProfile } }>(ME_QUERY, {}, false);
+          const data = await graphqlRequest<{
+            me: { user: UserProfile };
+            myPackage: UserPackage | null;
+          }>(ME_QUERY, {}, false);
           if (data?.me?.user) {
-            set({ profile: data.me.user });
+            set({
+              profile: data.me.user,
+              userPackage: data.myPackage || null,
+            });
           }
         } catch (profileError) {
           console.warn('[Auth] Failed to fetch profile:', profileError);
@@ -187,11 +220,17 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             isAuthenticated: true,
           });
 
-          // Fetch profile for OAuth logins (Google, etc.)
+          // Fetch profile and subscription for OAuth logins (Google, etc.)
           try {
-            const data = await graphqlRequest<{ me: { user: UserProfile } }>(ME_QUERY, {}, false);
+            const data = await graphqlRequest<{
+              me: { user: UserProfile };
+              myPackage: UserPackage | null;
+            }>(ME_QUERY, {}, false);
             if (data?.me?.user) {
-              set({ profile: data.me.user });
+              set({
+                profile: data.me.user,
+                userPackage: data.myPackage || null,
+              });
             }
           } catch (profileError) {
             console.warn('[Auth] Failed to fetch profile on auth change:', profileError);
@@ -201,6 +240,7 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             session: null,
             user: null,
             profile: null,
+            userPackage: null,
             isAuthenticated: false,
           });
         } else if (event === 'TOKEN_REFRESHED' && session) {
@@ -238,11 +278,17 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         isLoading: false,
       });
 
-      // Fetch full profile from GraphQL (contains backend database ID)
+      // Fetch full profile and subscription from GraphQL
       try {
-        const data = await graphqlRequest<{ me: { user: UserProfile } }>(ME_QUERY, {}, false);
+        const data = await graphqlRequest<{
+          me: { user: UserProfile };
+          myPackage: UserPackage | null;
+        }>(ME_QUERY, {}, false);
         if (data?.me?.user) {
-          set({ profile: data.me.user });
+          set({
+            profile: data.me.user,
+            userPackage: data.myPackage || null,
+          });
         }
       } catch (profileError) {
         console.warn('[Auth] Failed to fetch profile:', profileError);
@@ -323,11 +369,17 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         isLoading: false,
       });
 
-      // Fetch full profile from GraphQL (contains backend database ID)
+      // Fetch full profile and subscription from GraphQL
       try {
-        const data = await graphqlRequest<{ me: { user: UserProfile } }>(ME_QUERY, {}, false);
+        const data = await graphqlRequest<{
+          me: { user: UserProfile };
+          myPackage: UserPackage | null;
+        }>(ME_QUERY, {}, false);
         if (data?.me?.user) {
-          set({ profile: data.me.user });
+          set({
+            profile: data.me.user,
+            userPackage: data.myPackage || null,
+          });
         }
       } catch (profileError) {
         console.warn('[Auth] Failed to fetch profile:', profileError);
@@ -353,6 +405,7 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         session: null,
         user: null,
         profile: null,
+        userPackage: null,
         isAuthenticated: false,
         isLoading: false,
       });
@@ -363,6 +416,7 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         session: null,
         user: null,
         profile: null,
+        userPackage: null,
         isAuthenticated: false,
         isLoading: false,
       });
