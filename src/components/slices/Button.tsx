@@ -58,23 +58,24 @@ export interface ButtonProps {
   fullWidth?: boolean;
 }
 
-export function Button({
-  variant = 'primary',
-  size = 'md',
-  loading = false,
-  disabled = false,
-  iconStart,
-  iconEnd,
-  icon, // legacy
-  children,
-  arrow, // legacy
-  arrowBack,
-  arrowForward,
-  onPress,
-  style,
-  textStyle,
-  fullWidth = false,
-}: ButtonProps) {
+export function Button(props: ButtonProps) {
+  const {
+    variant = 'primary',
+    size = 'md',
+    loading = false,
+    disabled = false,
+    iconStart,
+    iconEnd,
+    icon, // legacy
+    children,
+    arrow, // legacy
+    arrowBack,
+    arrowForward,
+    onPress,
+    style,
+    textStyle,
+    fullWidth = false,
+  } = props || {};
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const isDisabled = loading || disabled;
@@ -136,8 +137,24 @@ export function Button({
     }
   };
 
+  // Check if button is icon-only (no text children)
+  const isIconOnly = !children && (iconStart || iconEnd || icon || arrowBack || arrowForward || arrow);
+
   // Size styles using theme.spacing
+  // Icon-only buttons use equal padding for circular shape
   const getSizeStyles = (): ViewStyle => {
+    if (isIconOnly) {
+      // Equal padding for circular icon buttons
+      switch (size) {
+        case 'sm':
+          return { padding: theme.spacing.sm };
+        case 'lg':
+          return { padding: theme.spacing.lg };
+        default:
+          return { padding: theme.spacing.md };
+      }
+    }
+    // Regular buttons with text
     switch (size) {
       case 'sm':
         return {

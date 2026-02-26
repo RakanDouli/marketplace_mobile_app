@@ -222,13 +222,23 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       }>(LISTING_BY_ID_QUERY, { id });
 
       if (!data.listing) {
-        throw new Error('Listing not found');
+        // Not a critical error - listing may be deleted/archived
+        // Don't log error, just set state - this is expected for old chat threads
+        set({
+          isLoading: false,
+          error: 'Listing not found',
+          currentListing: null,
+        });
+        return;
       }
 
       const listing = parseListingResponse(data.listing);
       set({ currentListing: listing, isLoading: false });
     } catch (error: any) {
-      console.error('Failed to fetch listing:', error);
+      // Only log actual fetch errors, not "not found"
+      if (!error?.message?.toLowerCase().includes('not found')) {
+        console.error('[ListingsStore] Failed to fetch listing:', error?.message || error);
+      }
       set({
         isLoading: false,
         error: error.message || 'Failed to load listing',

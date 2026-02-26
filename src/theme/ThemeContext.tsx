@@ -60,8 +60,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   const systemColorScheme = useColorScheme();
   const [themeMode, setThemeMode] = useState<ThemeMode>(defaultMode);
 
-  // Get direction from language store
-  const direction = useLanguageStore((state) => state.direction);
+  // Get direction from language store (zustand store always returns a value)
+  const direction = useLanguageStore((state) => state.direction) || 'rtl';
 
   // Determine actual theme based on mode
   const isDark = themeMode === 'system'
@@ -107,14 +107,35 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   );
 };
 
+// Default theme for fallback (prevents crashes during initialization)
+const defaultTheme: Theme = {
+  colors: colors.light,
+  spacing,
+  radius,
+  layout,
+  iconSize,
+  shadows,
+  fontFamily,
+  fontSize,
+  fontWeight,
+  lineHeight,
+  textStyles,
+  isDark: false,
+  direction: 'rtl',
+  isRTL: true,
+};
+
 /**
  * Hook to access theme values
  * Must be used within a ThemeProvider
+ * Returns default theme if context not available (prevents crashes during initialization)
  */
 export const useTheme = (): Theme => {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    // Return default theme instead of throwing - prevents crashes during initialization
+    console.warn('useTheme called outside ThemeProvider, using default theme');
+    return defaultTheme;
   }
   return context.theme;
 };

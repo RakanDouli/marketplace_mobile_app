@@ -60,6 +60,7 @@ export default function MessagesScreen() {
   }, [isAuthenticated]);
 
   // Fetch listing details for each thread (like web frontend)
+  // Note: Listings may be deleted/archived - this is expected for old threads
   useEffect(() => {
     if (threads.length === 0) {
       setThreadsWithListings([]);
@@ -72,14 +73,11 @@ export default function MessagesScreen() {
       const threadsWithData: ThreadWithListing[] = [];
 
       for (const thread of threads) {
-        try {
-          await fetchListingById(thread.listingId);
-          const listing = useListingsStore.getState().currentListing;
-          threadsWithData.push({ ...thread, fetchedListing: listing });
-        } catch (error) {
-          // Listing might be deleted/archived - still show thread
-          threadsWithData.push({ ...thread, fetchedListing: null });
-        }
+        // Try to fetch listing - may not exist (deleted/archived)
+        await fetchListingById(thread.listingId);
+        const listing = useListingsStore.getState().currentListing;
+        // Always add thread, listing will be null if not found
+        threadsWithData.push({ ...thread, fetchedListing: listing });
       }
 
       if (isMounted) {
@@ -167,7 +165,7 @@ export default function MessagesScreen() {
         <View style={styles.imageContainer}>
           {listingImage ? (
             <Image
-              source={{ uri: getCloudflareImageUrl(listingImage, 'thumbnail') }}
+              source={{ uri: getCloudflareImageUrl(listingImage, 'small') }}
               style={styles.listingImage}
             />
           ) : (

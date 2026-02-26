@@ -83,6 +83,12 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, isLoading, segments]);
 
+  // Don't render children until auth is initialized
+  // This prevents crashes from components that depend on auth state
+  if (isLoading) {
+    return null;
+  }
+
   return <>{children}</>;
 }
 
