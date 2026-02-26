@@ -17,7 +17,7 @@ import {
 import { X, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Text } from './Text';
 import { useTheme, Theme } from '../../theme';
-import { getCloudflareImageUrl } from '../../services/cloudflare/images';
+import { getCloudflareImageUrl, getResponsiveImageUrl } from '../../services/cloudflare/images';
 import {
   GestureHandlerRootView,
   PinchGestureHandler,
@@ -122,7 +122,7 @@ export function ImagePreviewModal({
           >
             <Animated.View style={[styles.imageWrapper, isActive && animatedStyle]}>
               <Image
-                source={{ uri: getCloudflareImageUrl(item, 'desktop') }}
+                source={{ uri: getResponsiveImageUrl(item, SCREEN_WIDTH, 'preview') }}
                 style={styles.image}
                 resizeMode="contain"
               />
@@ -218,7 +218,7 @@ export function ImagePreviewModal({
                   ]}
                 >
                   <Image
-                    source={{ uri: getCloudflareImageUrl(item, 'thumbnail') }}
+                    source={{ uri: getCloudflareImageUrl(item, 'small') }}
                     style={styles.thumbnailImage}
                   />
                 </TouchableOpacity>

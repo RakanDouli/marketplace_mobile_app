@@ -39,9 +39,9 @@ const environments: Record<string, EnvironmentConfig> = {
   },
 
   staging: {
-    API_URL: 'http://46.224.146.155:4000',
-    GRAPHQL_URL: 'http://46.224.146.155:4000/graphql',
-    WS_URL: 'ws://46.224.146.155:4000/ws',
+    API_URL: 'https://staging-api.shambay.com',
+    GRAPHQL_URL: 'https://staging-api.shambay.com/graphql',
+    WS_URL: 'wss://staging-api.shambay.com/ws',
     WEB_URL: 'https://staging.shambay.com',
     SUPABASE_URL: 'https://zokgmrriwhllyapgtuiu.supabase.co',
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpva2dtcnJpd2hsbHlhcGd0dWl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0MDg2NTQsImV4cCI6MjA4MTk4NDY1NH0.1fYgF_F3kOPrA4UjYjmCy0YE6zpsMtDTOEUA2-ZrjuE',

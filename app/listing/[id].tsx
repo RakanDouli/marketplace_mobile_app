@@ -50,7 +50,7 @@ import { FavoriteButton } from '../../src/components/listing/FavoriteButton';
 import { ShareButton } from '../../src/components/listing/ShareButton';
 import { ContactSellerModal } from '../../src/components/ContactSellerModal';
 
-import { getCloudflareImageUrl } from '../../src/services/cloudflare/images';
+import { getCloudflareImageUrl, getResponsiveImageUrl } from '../../src/services/cloudflare/images';
 import { ENV } from '../../src/constants/env';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -227,12 +227,12 @@ export default function ListingDetailScreen() {
   const mediaItems = useMemo(() => {
     const items: { type: 'image' | 'video'; url: string; id: string }[] = [];
 
-    // Add images first
+    // Add images first - use responsive variant based on screen width
     if (currentListing?.imageKeys) {
       currentListing.imageKeys.forEach((key, index) => {
         items.push({
           type: 'image',
-          url: getCloudflareImageUrl(key, 'large'),
+          url: getResponsiveImageUrl(key, SCREEN_WIDTH, 'gallery'),
           id: key,
         });
       });
@@ -293,19 +293,26 @@ export default function ListingDetailScreen() {
 
   // Error state
   if (error || !currentListing) {
+    // Determine appropriate error message
+    const isNotFound = error?.toLowerCase().includes('not found') || !currentListing;
+    const errorTitle = isNotFound ? 'الإعلان غير موجود' : 'خطأ';
+    const errorMessage = isNotFound
+      ? 'هذا الإعلان غير متاح. قد يكون تم حذفه أو أرشفته.'
+      : (error || 'حدث خطأ أثناء تحميل الإعلان');
+
     return (
       <>
         <Stack.Screen
           options={{
             headerShown: true,
-            headerTitle: 'خطأ',
+            headerTitle: errorTitle,
             headerBackButtonDisplayMode: 'minimal',
             headerTintColor: theme.colors.text,
           }}
         />
         <View style={styles.errorContainer}>
-          <Text variant="h4" color="secondary">
-            {error || 'لم يتم العثور على الإعلان'}
+          <Text variant="h4" color="secondary" center>
+            {errorMessage}
           </Text>
           <Button variant="primary" onPress={() => router.back()} style={{ marginTop: 16 }}>
             العودة

@@ -95,3 +95,47 @@ export function getResponsiveImageUrls(imageId: string): {
     desktop: getCloudflareImageUrl(imageId, 'desktop'),
   };
 }
+
+/**
+ * Get optimal variant based on screen width
+ * Used for gallery images, preview modals, and detail pages
+ * @param screenWidth - Current screen width in pixels
+ * @param usage - What the image is used for
+ */
+export function getResponsiveVariant(
+  screenWidth: number,
+  usage: 'gallery' | 'preview' | 'card' | 'thumbnail' = 'gallery'
+): CloudflareVariant {
+  // Tablet threshold: 768px (standard tablet width)
+  const isTablet = screenWidth >= 768;
+
+  switch (usage) {
+    case 'gallery':
+      // Detail page gallery: tablet gets desktop quality, phone gets large
+      return isTablet ? 'desktop' : 'large';
+    case 'preview':
+      // Full screen preview: tablet gets public (full), phone gets desktop
+      return isTablet ? 'public' : 'desktop';
+    case 'card':
+      // Card grids: tablet gets card (400x300), phone gets mobile (360x270)
+      return isTablet ? 'card' : 'mobile';
+    case 'thumbnail':
+      // Small thumbnails: tablet gets small (300x200), phone gets thumbnail (150x150)
+      return isTablet ? 'small' : 'thumbnail';
+    default:
+      return 'large';
+  }
+}
+
+/**
+ * Get Cloudflare image URL with responsive variant
+ * Automatically selects best variant based on screen width
+ */
+export function getResponsiveImageUrl(
+  imageId: string,
+  screenWidth: number,
+  usage: 'gallery' | 'preview' | 'card' | 'thumbnail' = 'gallery'
+): string {
+  const variant = getResponsiveVariant(screenWidth, usage);
+  return getCloudflareImageUrl(imageId, variant);
+}

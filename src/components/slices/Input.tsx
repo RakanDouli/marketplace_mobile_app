@@ -208,8 +208,8 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.md,
     },
     labelContainer: {
-      flexDirection: 'row',
-      marginBottom: theme.spacing.sm,
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
+      marginBottom: theme.spacing.xs,
     },
     label: {
       fontWeight: '500',
@@ -220,13 +220,13 @@ const createStyles = (theme: Theme) =>
     inputContainer: {
       alignItems: 'center',
       borderWidth: 1,
-      borderRadius: theme.radius.md,
-      minHeight: theme.layout.inputHeight,
+      borderRadius: theme.radius.full,
+      minHeight: 40,
     },
     input: {
       flex: 1,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
       fontSize: theme.fontSize.base,
     },
     inputWithLeftIcon: {
@@ -236,10 +236,10 @@ const createStyles = (theme: Theme) =>
       paddingEnd: theme.spacing.sm,
     },
     leftIcon: {
-      paddingStart: theme.spacing.lg,
+      paddingStart: theme.spacing.md,
     },
     rightIcon: {
-      paddingEnd: theme.spacing.lg,
+      paddingEnd: theme.spacing.md,
     },
     helperText: {
       marginTop: theme.spacing.xs,

@@ -610,7 +610,7 @@ export default function ChatScreen() {
         >
           {thread.listing?.images?.[0] && (
             <RNImage
-              source={{ uri: getCloudflareImageUrl(thread.listing.images[0], 'thumbnail') }}
+              source={{ uri: getCloudflareImageUrl(thread.listing.images[0], 'small') }}
               style={styles.listingThumbnail}
             />
           )}

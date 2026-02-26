@@ -136,7 +136,7 @@ export const ListingCard = memo(function ListingCard({
       <View style={styles.imageContainer}>
         <Image
           src={imageSrc}
-          variant="thumbnail"
+          variant="mobile"
           aspectRatio={4 / 3}
           borderRadius={theme.radius.xl}
         />
