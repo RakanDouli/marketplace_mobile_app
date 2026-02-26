@@ -94,7 +94,7 @@ const translateAuthError = (error: any): string => {
 // TYPES
 // =============================================================================
 
-interface UserProfile {
+export interface UserProfile {
   id: string;
   email: string;
   name: string;
@@ -103,6 +103,12 @@ interface UserProfile {
   status: string;
   accountType: string;
   createdAt: string;
+  // Warning/ban system fields
+  warningCount?: number;
+  currentWarningMessage?: string | null;
+  warningAcknowledged?: boolean;
+  bannedUntil?: string | null;
+  banReason?: string | null;
 }
 
 interface UserSubscription {

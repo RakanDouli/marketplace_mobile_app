@@ -101,10 +101,12 @@ export default function MyListingsScreen() {
     loadMyListings({ search: searchText || undefined, status: status || undefined }, 1);
   };
 
-  // Get user status info
-  const userStatus = (profile as any)?.status;
-  const bannedUntil = (profile as any)?.bannedUntil;
-  const banReason = (profile as any)?.banReason;
+  // Get user status info (properly typed from UserProfile)
+  const userStatus = profile?.status;
+  const bannedUntil = profile?.bannedUntil;
+  const banReason = profile?.banReason;
+  const warningCount = profile?.warningCount || 0;
+  const currentWarningMessage = profile?.currentWarningMessage;
   const isBanned = userStatus === 'BANNED';
   const isSuspended = userStatus === 'SUSPENDED' && !!bannedUntil; // !! ensures boolean
 
@@ -347,10 +349,10 @@ export default function MyListingsScreen() {
 
       {/* Warning Banner */}
       <WarningBanner
-        warningCount={(profile as any)?.warningCount}
-        warningMessage={(profile as any)?.currentWarningMessage}
-        bannedUntil={(profile as any)?.bannedUntil}
-        banReason={(profile as any)?.banReason}
+        warningCount={warningCount}
+        warningMessage={currentWarningMessage}
+        bannedUntil={bannedUntil}
+        banReason={banReason}
       />
 
       {/* Limit Progress Bar - Only show if maxListings > 0 */}
