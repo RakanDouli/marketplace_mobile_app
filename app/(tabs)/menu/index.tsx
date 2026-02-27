@@ -39,6 +39,8 @@ interface MenuItem {
   labelKey: string;
   route: string;
   dividerAfter?: boolean;
+  isWebView?: boolean;  // Opens in WebView instead of native screen
+  webViewAuth?: boolean; // Whether WebView needs authentication (default true)
 }
 
 export default function MenuScreen() {
@@ -114,12 +116,14 @@ export default function MenuScreen() {
     {
       icon: <Crown size={22} color={theme.colors.text} />,
       labelKey: 'menu.subscriptionPlans',
-      route: '/user-subscriptions',
+      route: '/webview?path=/user-subscriptions&title=باقات الاشتراك',
+      isWebView: true,
     },
     {
       icon: <Megaphone size={22} color={theme.colors.text} />,
       labelKey: 'menu.advertise',
-      route: '/menu/advertise',
+      route: '/webview?path=/advertise&title=أعلن معنا',
+      isWebView: true,
       dividerAfter: true,
     },
   ];
@@ -128,7 +132,9 @@ export default function MenuScreen() {
     {
       icon: <Mail size={22} color={theme.colors.text} />,
       labelKey: 'menu.contact',
-      route: '/menu/contact',
+      route: '/webview?path=/contact&title=اتصل بنا&auth=false',
+      isWebView: true,
+      webViewAuth: false,
     },
     {
       icon: <HelpCircle size={22} color={theme.colors.text} />,
@@ -138,12 +144,16 @@ export default function MenuScreen() {
     {
       icon: <Shield size={22} color={theme.colors.text} />,
       labelKey: 'menu.privacy',
-      route: '/menu/privacy',
+      route: '/webview?path=/privacy&title=سياسة الخصوصية&auth=false',
+      isWebView: true,
+      webViewAuth: false,
     },
     {
       icon: <FileText size={22} color={theme.colors.text} />,
       labelKey: 'menu.terms',
-      route: '/menu/terms',
+      route: '/webview?path=/terms&title=الشروط والأحكام&auth=false',
+      isWebView: true,
+      webViewAuth: false,
     },
     {
       icon: <Settings size={22} color={theme.colors.text} />,

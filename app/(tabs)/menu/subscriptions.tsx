@@ -69,11 +69,13 @@ export default function SubscriptionsScreen() {
   const overLimitCount = isOverLimit ? currentListingsCount - maxListings : 0;
 
   const handleUpgrade = () => {
-    router.push('/user-subscriptions');
+    // Open WebView to subscription plans page
+    router.push('/webview?path=/user-subscriptions&title=باقات الاشتراك');
   };
 
   const handleExtend = () => {
-    router.push('/user-subscriptions');
+    // Open WebView to subscription plans page
+    router.push('/webview?path=/user-subscriptions&title=باقات الاشتراك');
   };
 
   // Not authenticated - show login prompt
@@ -251,7 +253,7 @@ export default function SubscriptionsScreen() {
         <Button
           variant="link"
           arrow
-          onPress={() => router.push('/user-subscriptions')}
+          onPress={() => router.push('/webview?path=/user-subscriptions&title=باقات الاشتراك')}
         >
           عرض جميع الخطط المتاحة
         </Button>

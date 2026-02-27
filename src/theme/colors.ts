@@ -38,6 +38,7 @@ export const colors = {
     textSecondary: '#4b5563', // Secondary text (web: --text-secondary)
     textMuted: '#1e293b',    // Muted text (web: --text-body-dark)
     textInverse: '#f8fafc',  // Light text (web: --text-light)
+    textLight: '#f8fafc',    // Always light text (for buttons with colored backgrounds)
 
     // Overlay
     overlay: 'rgba(0, 0, 0, 0.5)',
@@ -82,6 +83,7 @@ export const colors = {
     textSecondary: '#9ca3af', // Secondary text
     textMuted: '#e8eaee',    // Muted text (web: --text-body-light)
     textInverse: '#0f172a',
+    textLight: '#f8fafc',    // Always light text (for buttons with colored backgrounds)
 
     // Overlay
     overlay: 'rgba(0, 0, 0, 0.7)',

@@ -106,14 +106,17 @@ const validateUserStatus = async (
   user: { status: string; bannedUntil?: string | null; banReason?: string | null },
   signOutFn: () => Promise<void>
 ): Promise<void> => {
+  // Normalize status to lowercase for comparison (backend returns lowercase)
+  const status = user.status?.toLowerCase();
+
   // Check BANNED first (most severe - permanent)
-  if (user.status === 'BANNED') {
+  if (status === 'banned') {
     await signOutFn();
     throw new Error('تم حظر حسابك نهائياً. يرجى التواصل مع الإدارة');
   }
 
   // Check for suspension (Strike 2 - temporary ban)
-  if (user.status === 'SUSPENDED') {
+  if (status === 'suspended') {
     await signOutFn();
     const suspensionEnd = user.bannedUntil ? new Date(user.bannedUntil) : null;
     if (suspensionEnd) {
@@ -220,10 +223,13 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
 
         // Fetch full profile and subscription from GraphQL
         try {
+          console.log('[Auth] Initialize: Fetching user profile...');
           const data = await graphqlRequest<{
             me: { user: UserProfile };
             myPackage: UserPackage | null;
           }>(ME_QUERY, {}, false);
+
+          console.log('[Auth] Initialize: User status:', data?.me?.user?.status);
 
           if (data?.me?.user) {
             // Validate user status (banned/suspended check)
@@ -239,14 +245,19 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
               userPackage: data.myPackage || null,
             });
           } else {
+            // No profile found - sign out and clear state
+            console.warn('[Auth] Initialize: No user profile found, signing out');
+            await supabaseSignOut();
             set({
-              session,
-              user,
-              isAuthenticated: true,
+              session: null,
+              user: null,
+              isAuthenticated: false,
               isLoading: false,
             });
           }
         } catch (profileError: any) {
+          console.error('[Auth] Initialize: Profile fetch error:', profileError?.message);
+
           // If validation throws (banned/suspended), sign out
           if (profileError?.message?.includes('حسابك')) {
             set({
@@ -257,12 +268,13 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
               error: profileError.message,
             });
           } else {
-            console.warn('[Auth] Failed to fetch profile:', profileError);
-            // Allow login without profile for other errors
+            // Other errors - sign out to be safe
+            console.warn('[Auth] Initialize: Failed to fetch profile, signing out');
+            await supabaseSignOut();
             set({
-              session,
-              user,
-              isAuthenticated: true,
+              session: null,
+              user: null,
+              isAuthenticated: false,
               isLoading: false,
             });
           }
@@ -283,10 +295,13 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         if (event === 'SIGNED_IN' && session) {
           // Fetch profile and validate status for OAuth logins (Google, etc.)
           try {
+            console.log('[Auth] onAuthStateChange: Fetching user profile...');
             const data = await graphqlRequest<{
               me: { user: UserProfile };
               myPackage: UserPackage | null;
             }>(ME_QUERY, {}, false);
+
+            console.log('[Auth] onAuthStateChange: User status:', data?.me?.user?.status);
 
             if (data?.me?.user) {
               // Validate user status (banned/suspended check)
@@ -300,13 +315,18 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
                 userPackage: data.myPackage || null,
               });
             } else {
+              // No profile found - sign out
+              console.warn('[Auth] onAuthStateChange: No user profile, signing out');
+              await supabaseSignOut();
               set({
-                session,
-                user: session.user,
-                isAuthenticated: true,
+                session: null,
+                user: null,
+                isAuthenticated: false,
               });
             }
           } catch (profileError: any) {
+            console.error('[Auth] onAuthStateChange error:', profileError?.message);
+
             if (profileError?.message?.includes('حسابك')) {
               set({
                 session: null,
@@ -315,11 +335,13 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
                 error: profileError.message,
               });
             } else {
-              console.warn('[Auth] Failed to fetch profile on auth change:', profileError);
+              // Other errors - sign out to be safe
+              console.warn('[Auth] onAuthStateChange: Failed to fetch profile, signing out');
+              await supabaseSignOut();
               set({
-                session,
-                user: session.user,
-                isAuthenticated: true,
+                session: null,
+                user: null,
+                isAuthenticated: false,
               });
             }
           }
@@ -361,13 +383,26 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
 
       // Fetch full profile and subscription from GraphQL BEFORE setting authenticated
       // This allows us to check ban/suspension status
+      // IMPORTANT: Pass the token directly from sign-in response to avoid timing issues
+      const token = session?.access_token;
+      if (!token) {
+        console.error('[Auth] No access token in session');
+        set({ isLoading: false, error: 'فشل في تحميل بيانات المستخدم' });
+        return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
+      }
+
       try {
+        console.log('[Auth] Fetching user profile from GraphQL with token...');
         const data = await graphqlRequest<{
           me: { user: UserProfile };
           myPackage: UserPackage | null;
-        }>(ME_QUERY, {}, false);
+        }>(ME_QUERY, {}, false, token);
+
+        console.log('[Auth] GraphQL response:', JSON.stringify(data?.me?.user?.status));
 
         if (data?.me?.user) {
+          console.log('[Auth] User status from backend:', data.me.user.status);
+
           // Validate user status (banned/suspended check)
           await validateUserStatus(data.me.user, supabaseSignOut);
 
@@ -381,15 +416,21 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             userPackage: data.myPackage || null,
           });
         } else {
-          // No profile found, allow login with basic info
+          console.warn('[Auth] No user profile found in response, blocking login');
+          // Don't allow login without profile - this prevents bypassing status check
+          await supabaseSignOut();
           set({
-            session,
-            user,
-            isAuthenticated: true,
+            session: null,
+            user: null,
+            isAuthenticated: false,
             isLoading: false,
+            error: 'فشل في تحميل بيانات المستخدم',
           });
+          return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
         }
       } catch (profileError: any) {
+        console.error('[Auth] Profile fetch error:', profileError?.message);
+
         // If validation throws (banned/suspended), handle the error
         if (profileError?.message?.includes('حسابك')) {
           set({
@@ -401,14 +442,17 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
           });
           return { success: false, error: profileError.message };
         }
-        // Other profile errors - allow login without profile
-        console.warn('[Auth] Failed to fetch profile:', profileError);
+        // Other profile errors - DON'T allow login, sign out
+        console.warn('[Auth] Failed to fetch profile, blocking login:', profileError);
+        await supabaseSignOut();
         set({
-          session,
-          user,
-          isAuthenticated: true,
+          session: null,
+          user: null,
+          isAuthenticated: false,
           isLoading: false,
+          error: 'فشل في تحميل بيانات المستخدم',
         });
+        return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
       }
 
       return { success: true };

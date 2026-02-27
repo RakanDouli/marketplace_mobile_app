@@ -83,7 +83,7 @@ export default function HomeTab() {
 
   // Stores
   const { categories, isLoading: categoriesLoading } = useCategoriesStore();
-  const { listings, featuredListings, isLoading: listingsLoading } = useListingsStore();
+  const { listings, isLoading: listingsLoading } = useListingsStore();
   const { loadMyWishlist, isInitialized: wishlistInitialized } = useWishlistStore();
   const { isAuthenticated, isLoading: authLoading } = useUserAuthStore();
 
@@ -203,19 +203,19 @@ export default function HomeTab() {
           paddingY="sm"
         />
 
-        {/* Featured Listings - Uses Slider component with RTL support */}
+        {/* Listings Slider */}
         <FeaturedListings
-          listings={featuredListings}
-          title="عروض لك"
+          listings={listings}
+          title="إعلانات جديدة"
           viewAllText="عرض الكل"
           onViewAll={() => goToCategory('cars', 'سيارات')}
           onListingPress={goToListing}
           variant="slider"
-          isLoading={listingsLoading && featuredListings.length === 0}
+          isLoading={listingsLoading && listings.length === 0}
           paddingY="md"
         />
 
-        {/* New Listings Grid - Uses Grid component with RTL support */}
+        {/* Listings Grid */}
         <FeaturedListings
           listings={listings}
           title="إعلانات جديدة"

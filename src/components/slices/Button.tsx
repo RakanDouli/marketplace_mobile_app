@@ -112,13 +112,14 @@ export function Button(props: ButtonProps) {
       case 'secondary':
       case 'success':
       case 'danger':
-        return theme.colors.textInverse;
+        // Always use light text for solid colored buttons (regardless of theme)
+        return theme.colors.textLight;
       case 'outline':
       case 'ghost':
       case 'link':
         return theme.colors.text;
       default:
-        return theme.colors.textInverse;
+        return theme.colors.textLight;
     }
   };
 

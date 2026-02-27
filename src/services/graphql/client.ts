@@ -17,15 +17,21 @@ const graphqlClient = new GraphQLClient(ENV.GRAPHQL_URL, {
 /**
  * Make an authenticated GraphQL request
  * Automatically adds Authorization header if user is logged in
+ *
+ * @param document - GraphQL query/mutation
+ * @param variables - Query variables
+ * @param requireAuth - Whether auth is required (throws if no token)
+ * @param providedToken - Optional token to use instead of fetching from Supabase
  */
 export async function graphqlRequest<T = any>(
   document: RequestDocument,
   variables?: Variables,
-  requireAuth: boolean = false
+  requireAuth: boolean = false,
+  providedToken?: string | null
 ): Promise<T> {
   try {
-    // Get access token if available
-    const token = await getAccessToken();
+    // Use provided token or get from Supabase
+    const token = providedToken ?? (await getAccessToken());
 
     // Check if auth is required but not available
     if (requireAuth && !token) {

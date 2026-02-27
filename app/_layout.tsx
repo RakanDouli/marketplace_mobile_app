@@ -155,6 +155,13 @@ function RootContent() {
               headerShown: false,
             }}
           />
+          <Stack.Screen
+            name="webview"
+            options={{
+              headerShown: false,
+              presentation: 'fullScreenModal',
+            }}
+          />
         </Stack>
       </AuthGuard>
     </View>

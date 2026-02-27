@@ -8,7 +8,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { HelpCircle, Mail, MapPin, Clock, ExternalLink } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../../src/theme';
-import { Text, Button } from '../../../src/components/slices';
+import { Text, Button, ListItem } from '../../../src/components/slices';
 import { Collapsible } from '../../../src/components/slices';
 
 // Static FAQ items - grouped by category
@@ -99,24 +99,24 @@ export default function HelpScreen() {
             تواصل معنا مباشرة وسنرد عليك في أقرب وقت
           </Text>
 
-          {/* Contact Info */}
+          {/* Contact Info - RTL layout: icon on right, text on left */}
           <View style={styles.contactInfoList}>
             {contactInfo.map((info, index) => {
               const Icon = info.icon;
               return (
                 <View key={index} style={styles.contactInfoItem}>
                   <Icon size={18} color={theme.colors.primary} />
-                  <Text variant="small" color="secondary" style={{ marginRight: 8 }}>{info.value}</Text>
+                  <Text variant="small" color="secondary">{info.value}</Text>
                 </View>
               );
             })}
           </View>
 
-          {/* Go to Contact Page */}
+          {/* Go to Contact Page - Opens WebView */}
           <Button
             variant="secondary"
-            icon={<ExternalLink size={18} color="#FFFFFF" />}
-            onPress={() => router.push('/menu/contact')}
+            iconEnd={<ExternalLink size={18} color="#FFFFFF" />}
+            onPress={() => router.push('/webview?path=/contact&title=تواصل معنا&auth=false')}
             fullWidth
           >
             الذهاب لصفحة التواصل
@@ -124,26 +124,19 @@ export default function HelpScreen() {
         </View>
       </View>
 
-      {/* Quick Links */}
+      {/* Quick Links - Open in WebView */}
       <View style={styles.section}>
         <Text variant="h4" style={styles.sectionTitle}>روابط مفيدة</Text>
         <View style={styles.linksContainer}>
-          <Button
-            variant="ghost"
-            arrow
-            onPress={() => router.push('/menu/privacy')}
-            style={styles.linkItem}
-          >
-            سياسة الخصوصية
-          </Button>
-          <Button
-            variant="ghost"
-            arrow
-            onPress={() => router.push('/menu/terms')}
-            style={{ ...styles.linkItem, borderBottomWidth: 0 }}
-          >
-            الشروط والأحكام
-          </Button>
+          <ListItem
+            label="سياسة الخصوصية"
+            onPress={() => router.push('/webview?path=/privacy&title=سياسة الخصوصية&auth=false')}
+          />
+          <ListItem
+            label="الشروط والأحكام"
+            onPress={() => router.push('/webview?path=/terms&title=الشروط والأحكام&auth=false')}
+            showBorder={false}
+          />
         </View>
       </View>
     </ScrollView>
@@ -201,21 +194,16 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       marginBottom: 16,
     },
     contactInfoItem: {
-      flexDirection: 'row',
+      flexDirection: 'row-reverse',
       alignItems: 'center',
-      justifyContent: 'flex-end',
+      justifyContent: 'flex-start',
       paddingVertical: 8,
+      gap: 8,
     },
     linksContainer: {
       backgroundColor: theme.colors.bg,
       marginHorizontal: 16,
       borderRadius: theme.radius.md,
       overflow: 'hidden',
-    },
-    linkItem: {
-      borderRadius: 0,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-      justifyContent: 'flex-start',
     },
   });

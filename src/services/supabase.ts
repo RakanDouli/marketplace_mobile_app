@@ -139,6 +139,20 @@ export const getAccessToken = async (): Promise<string | null> => {
 };
 
 /**
+ * Get both tokens for WebView auth
+ */
+export const getTokensForWebView = async (): Promise<{ accessToken: string; refreshToken: string } | null> => {
+  const session = await getSession();
+  if (!session?.access_token || !session?.refresh_token) {
+    return null;
+  }
+  return {
+    accessToken: session.access_token,
+    refreshToken: session.refresh_token,
+  };
+};
+
+/**
  * Listen to auth state changes
  */
 export const onAuthStateChange = (
