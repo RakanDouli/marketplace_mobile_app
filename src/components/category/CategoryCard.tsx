@@ -9,8 +9,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ImageBackground,
-  Image,
 } from 'react-native';
+import { SvgXml } from 'react-native-svg';
+import { LayoutGrid } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text } from '../slices/Text';
 
@@ -41,6 +42,29 @@ export function CategoryCard({
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // Helper to render category icon from SVG string
+  const renderCategoryIcon = (
+    iconSvg: string | undefined,
+    size: number,
+    color: string
+  ) => {
+    if (!iconSvg) return <LayoutGrid size={size} color={color} />;
+    // Handle both SVG strings and URLs
+    if (iconSvg.startsWith('http')) {
+      // If it's a URL, use LayoutGrid as fallback
+      return <LayoutGrid size={size} color={color} />;
+    }
+    const styledSvg = iconSvg
+      .replace(/<svg/, `<svg width="${size}" height="${size}"`)
+      .replace(/stroke="[^"]*"/g, `stroke="${color}"`)
+      .replace(/fill="[^"]*"/g, 'fill="none"');
+    try {
+      return <SvgXml xml={styledSvg} width={size} height={size} />;
+    } catch {
+      return <LayoutGrid size={size} color={color} />;
+    }
+  };
+
   // Chip style - horizontal scrollable chips
   if (size === 'chip') {
     return (
@@ -50,9 +74,7 @@ export function CategoryCard({
         activeOpacity={0.8}
       >
         <View style={styles.chipIconContainer}>
-          {iconComponent || (
-            <View style={styles.chipIconPlaceholder} />
-          )}
+          {iconComponent || renderCategoryIcon(icon, theme.iconSize.md, theme.colors.primary)}
         </View>
         <Text variant="xs" style={styles.chipName}>
           {name}
@@ -106,17 +128,7 @@ export function CategoryCard({
       activeOpacity={0.8}
     >
       <View style={styles.iconOnlyContainer}>
-        {iconComponent ? (
-          iconComponent
-        ) : icon ? (
-          <Image
-            source={{ uri: icon }}
-            style={styles.iconImage}
-            resizeMode="contain"
-          />
-        ) : (
-          <View style={styles.iconPlaceholder} />
-        )}
+        {iconComponent || renderCategoryIcon(icon, theme.iconSize.lg, theme.colors.primary)}
         <Text variant="small" bold style={styles.iconOnlyName}>
           {name}
         </Text>

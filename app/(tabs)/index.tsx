@@ -49,7 +49,7 @@ const CMS_ASSETS = {
   },
 };
 
-const COMING_SOON_CATEGORIES = ['real-estate'];
+const COMING_SOON_CATEGORIES: string[] = [];
 
 const PROMO_CATEGORIES = [
   {
