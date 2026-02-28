@@ -28,7 +28,7 @@ import { Text } from '../../src/components/slices/Text';
 import { FeaturedListings } from '../../src/components/listing';
 import { Loading } from '../../src/components/slices/Loading';
 import { SearchBar } from '../../src/components/search';
-import { useCategoriesStore, useListingsStore, useWishlistStore, useUserAuthStore } from '../../src/stores';
+import { useCategoriesStore, useListingsStore, useWishlistStore, useUserAuthStore, useFiltersStore } from '../../src/stores';
 import {
   Container,
   FeatureCard,
@@ -86,6 +86,7 @@ export default function HomeTab() {
   const { listings, isLoading: listingsLoading } = useListingsStore();
   const { loadMyWishlist, isInitialized: wishlistInitialized } = useWishlistStore();
   const { isAuthenticated, isLoading: authLoading } = useUserAuthStore();
+  const { resetFilters } = useFiltersStore();
 
   // Lower breakpoints to better support Android tablets (dp values vary)
   const isTablet = screenWidth >= 600;
@@ -115,8 +116,9 @@ export default function HomeTab() {
 
   // Navigation with expo-router - memoized to prevent re-renders
   const goToCategory = useCallback((categorySlug: string, categoryName: string) => {
+    resetFilters(); // Clear filters when navigating to a new category
     router.push(`/search/${categorySlug}`);
-  }, [router]);
+  }, [router, resetFilters]);
 
   const goToListing = useCallback((listingId: string) => {
     router.push({ pathname: '/listing/[id]', params: { id: listingId } });
@@ -142,8 +144,8 @@ export default function HomeTab() {
     if (!iconSvg) return <LayoutGrid size={size} color={color} />;
     const styledSvg = iconSvg
       .replace(/<svg/, `<svg width="${size}" height="${size}"`)
-      .replace(/stroke="[^"]*"/g, `stroke="${color}"`)
-      .replace(/fill="[^"]*"/g, 'fill="none"');
+      .replace(/stroke="currentColor"/g, `stroke="${color}"`)
+      .replace(/fill="currentColor"/g, `fill="${color}"`);
     try { return <SvgXml xml={styledSvg} width={size} height={size} />; }
     catch { return <LayoutGrid size={size} color={color} />; }
   };

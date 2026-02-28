@@ -191,9 +191,17 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
     const { currentCategorySlug, cacheTimestamp } = get();
     const now = Date.now();
 
-    // Check if cache is valid
+    // If category changed (or was reset), clear old data and fetch fresh
+    const categoryChanged = currentCategorySlug !== categorySlug;
+
+    if (categoryChanged) {
+      // Clear old category data immediately
+      set({ appliedFilters: [], attributes: [], totalResults: 0, currentCategorySlug: categorySlug });
+    }
+
+    // Check if cache is valid (only if same category)
     if (
-      currentCategorySlug === categorySlug &&
+      !categoryChanged &&
       cacheTimestamp &&
       now - cacheTimestamp < CACHE_TTL
     ) {

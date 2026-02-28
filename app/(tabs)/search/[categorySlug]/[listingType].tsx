@@ -140,7 +140,12 @@ export default function CategoryListingsScreen() {
   // This prevents flash of listings before we know if category has brands
   const [initialFilterLoadComplete, setInitialFilterLoadComplete] = useState(false);
 
-  // Mark initial load as complete when filter attributes are loaded
+  // Reset initialFilterLoadComplete when category changes
+  useEffect(() => {
+    setInitialFilterLoadComplete(false);
+  }, [categorySlug]);
+
+  // Mark initial load as complete when filter attributes are loaded for THIS category
   useEffect(() => {
     if (filterAttributes.length > 0 && !initialFilterLoadComplete) {
       setInitialFilterLoadComplete(true);
@@ -511,7 +516,7 @@ export default function CategoryListingsScreen() {
   const category = getCategoryBySlug(categorySlug || '');
   const listingTypeLabel = LISTING_TYPE_LABELS[listingType || 'sale'] || 'للبيع';
 
-  // Fetch categories, provinces, and filter attributes if not loaded
+  // Fetch categories and provinces if not loaded
   useEffect(() => {
     if (categories.length === 0) {
       fetchCategories();
@@ -519,8 +524,12 @@ export default function CategoryListingsScreen() {
     if (provinces.length === 0) {
       fetchLocationMetadata();
     }
-    // Fetch filter attributes for proper label display in chips
-    if (categorySlug && filterAttributes.length === 0) {
+  }, []);
+
+  // Fetch filter attributes when category or listingType changes
+  // Always call fetchFilterData - it handles caching internally
+  useEffect(() => {
+    if (categorySlug) {
       fetchFilterData(categorySlug, listingType);
     }
   }, [categorySlug, listingType]);

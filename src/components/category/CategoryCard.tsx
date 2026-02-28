@@ -56,8 +56,8 @@ export function CategoryCard({
     }
     const styledSvg = iconSvg
       .replace(/<svg/, `<svg width="${size}" height="${size}"`)
-      .replace(/stroke="[^"]*"/g, `stroke="${color}"`)
-      .replace(/fill="[^"]*"/g, 'fill="none"');
+      .replace(/stroke="currentColor"/g, `stroke="${color}"`)
+      .replace(/fill="currentColor"/g, `fill="${color}"`);
     try {
       return <SvgXml xml={styledSvg} width={size} height={size} />;
     } catch {
