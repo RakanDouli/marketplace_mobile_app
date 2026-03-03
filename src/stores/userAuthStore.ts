@@ -319,6 +319,14 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       onAuthStateChange(async (event, session) => {
         console.log('[Auth] State changed:', event);
 
+        // IMPORTANT: Don't interfere with registration flow
+        // If registrationComplete is true, the user just signed up and is viewing success screen
+        const currentState = get();
+        if (currentState.registrationComplete) {
+          console.log('[Auth] onAuthStateChange: Skipping - registration in progress');
+          return;
+        }
+
         if (event === 'SIGNED_IN' && session) {
           // Fetch profile and validate status for OAuth logins (Google, etc.)
           try {
@@ -373,6 +381,12 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             }
           }
         } else if (event === 'SIGNED_OUT') {
+          // Don't reset registration state on sign out during registration flow
+          const stateBeforeSignout = get();
+          if (stateBeforeSignout.registrationComplete) {
+            console.log('[Auth] onAuthStateChange SIGNED_OUT: Preserving registration state');
+            return;
+          }
           set({
             session: null,
             user: null,
