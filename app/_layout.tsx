@@ -65,7 +65,7 @@ const loadFonts = async (): Promise<boolean> => {
  * Auth guard - redirects based on auth state
  */
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useUserAuthStore();
+  const { isAuthenticated, isLoading, registrationComplete } = useUserAuthStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -74,14 +74,19 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
     const inAuthGroup = segments[0] === 'auth';
 
+    // Don't redirect if registration just completed - let user see success screen
+    if (registrationComplete && inAuthGroup) {
+      return;
+    }
+
     if (!isAuthenticated && !inAuthGroup) {
       // Redirect to login if not authenticated
       router.replace('/auth/login');
-    } else if (isAuthenticated && inAuthGroup) {
-      // Redirect to home if authenticated and in auth group
+    } else if (isAuthenticated && inAuthGroup && !registrationComplete) {
+      // Redirect to home if authenticated and in auth group (but not just registered)
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading, segments, registrationComplete]);
 
   // Don't render children until auth is initialized
   // This prevents crashes from components that depend on auth state

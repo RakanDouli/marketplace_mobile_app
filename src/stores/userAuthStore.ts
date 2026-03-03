@@ -13,9 +13,13 @@ import {
   signUpWithEmail,
   signOut as supabaseSignOut,
   onAuthStateChange,
+  sendEmailOtp,
+  verifyEmailOtp,
+  resendEmailOtp,
+  signInWithGoogle as supabaseSignInWithGoogle,
 } from '../services/supabase';
 import { graphqlRequest } from '../services/graphql/client';
-import { ME_QUERY } from './userAuthStore/userAuthStore.gql';
+import { ME_QUERY, UPDATE_ME_MUTATION } from './userAuthStore/userAuthStore.gql';
 
 // =============================================================================
 // ERROR TRANSLATION
@@ -183,6 +187,14 @@ interface UserAuthState {
   isLoading: boolean;
   error: string | null;
 
+  // OTP State
+  otpEmail: string | null; // Email waiting for OTP verification
+  otpSent: boolean; // Whether OTP has been sent
+
+  // Registration State
+  registrationComplete: boolean; // Whether registration just completed (for showing success screen)
+  registeredEmail: string | null; // Email that was just registered
+
   // Actions
   initialize: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -192,6 +204,13 @@ interface UserAuthState {
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   clearError: () => void;
+  clearRegistrationState: () => void;
+
+  // OTP Actions
+  sendOtp: (email: string, isSignup?: boolean) => Promise<{ success: boolean; error?: string }>;
+  verifyOtp: (code: string) => Promise<{ success: boolean; error?: string }>;
+  resendOtp: () => Promise<{ success: boolean; error?: string }>;
+  clearOtpState: () => void;
 }
 
 // =============================================================================
@@ -207,6 +226,14 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
   isAuthenticated: false,
   isLoading: true,
   error: null,
+
+  // OTP initial state
+  otpEmail: null,
+  otpSent: false,
+
+  // Registration initial state
+  registrationComplete: false,
+  registeredEmail: null,
 
   /**
    * Initialize auth state on app start
@@ -464,22 +491,13 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
   },
 
   /**
-   * Sign in with Google OAuth
+   * Sign in with Google OAuth using expo-auth-session
    */
   signInWithGoogle: async () => {
     try {
       set({ isLoading: true, error: null });
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'shambay://auth/callback',
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
+      const { session, user, error } = await supabaseSignInWithGoogle();
 
       if (error) {
         const arabicError = translateAuthError(error);
@@ -487,8 +505,34 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         return { success: false, error: arabicError };
       }
 
-      // OAuth will redirect, so we don't set loading to false here
-      return { success: true };
+      if (session && user) {
+        set({
+          session,
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+
+        // Fetch user profile from backend
+        try {
+          const profileData = await graphqlRequest<{ me: any }>(
+            ME_QUERY,
+            {},
+            false,
+            session.access_token
+          );
+          if (profileData?.me) {
+            set({ profile: profileData.me });
+          }
+        } catch (profileError) {
+          console.error('Failed to fetch profile after Google sign-in:', profileError);
+        }
+
+        return { success: true };
+      }
+
+      set({ isLoading: false });
+      return { success: false, error: 'فشل تسجيل الدخول بجوجل' };
     } catch (error: any) {
       const arabicError = translateAuthError(error);
       set({ isLoading: false, error: arabicError });
@@ -515,18 +559,26 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
 
       // If email confirmation is required, user will need to verify
       if (!session) {
-        set({ isLoading: false });
+        // Set registration complete state to show success screen
+        set({
+          isLoading: false,
+          registrationComplete: true,
+          registeredEmail: email,
+        });
         return {
           success: true,
           // Message: Check your email for verification link
         };
       }
 
+      // User was auto-logged in (no email confirmation required)
       set({
         session,
         user,
         isAuthenticated: true,
         isLoading: false,
+        registrationComplete: true,
+        registeredEmail: email,
       });
 
       // Fetch full profile and subscription from GraphQL
@@ -614,16 +666,27 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
 
-      // TODO: Call GraphQL mutation to update profile
-      // const result = await updateUserProfile(updates);
+      // Get current session for token
+      const session = get().session;
+      if (!session?.access_token) {
+        set({ isLoading: false, error: 'غير مسجل الدخول' });
+        return { success: false, error: 'غير مسجل الدخول' };
+      }
 
-      // For now, just update local state
+      // Call GraphQL mutation to update profile
+      const result = await graphqlRequest<{
+        updateMe: Partial<UserProfile>;
+      }>(UPDATE_ME_MUTATION, { input: updates }, false, session.access_token);
+
+      // Update local state with returned data
       const currentProfile = get().profile;
-      if (currentProfile) {
+      if (currentProfile && result?.updateMe) {
         set({
-          profile: { ...currentProfile, ...updates },
+          profile: { ...currentProfile, ...result.updateMe },
           isLoading: false,
         });
+      } else {
+        set({ isLoading: false });
       }
 
       return { success: true };
@@ -639,6 +702,187 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
    */
   clearError: () => {
     set({ error: null });
+  },
+
+  /**
+   * Clear registration state (after user navigates away from success screen)
+   */
+  clearRegistrationState: () => {
+    set({ registrationComplete: false, registeredEmail: null });
+  },
+
+  // =============================================================================
+  // OTP ACTIONS
+  // =============================================================================
+
+  /**
+   * Send OTP code to email
+   * @param email - User's email address
+   * @param isSignup - If true, creates user if doesn't exist
+   */
+  sendOtp: async (email: string, isSignup: boolean = false) => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const { error } = await sendEmailOtp(email, isSignup);
+
+      if (error) {
+        const arabicError = translateAuthError(error);
+        set({ isLoading: false, error: arabicError });
+        return { success: false, error: arabicError };
+      }
+
+      // OTP sent successfully - store email for verification
+      set({
+        isLoading: false,
+        otpEmail: email,
+        otpSent: true,
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
+    }
+  },
+
+  /**
+   * Verify OTP code entered by user
+   * @param code - 6-digit OTP code
+   */
+  verifyOtp: async (code: string) => {
+    const { otpEmail } = get();
+
+    if (!otpEmail) {
+      set({ error: 'يرجى إدخال البريد الإلكتروني أولاً' });
+      return { success: false, error: 'يرجى إدخال البريد الإلكتروني أولاً' };
+    }
+
+    try {
+      set({ isLoading: true, error: null });
+
+      const { session, user, error } = await verifyEmailOtp(otpEmail, code);
+
+      if (error) {
+        const arabicError = translateAuthError(error);
+        set({ isLoading: false, error: arabicError });
+        return { success: false, error: arabicError };
+      }
+
+      if (!session) {
+        set({ isLoading: false, error: 'فشل في التحقق من الرمز' });
+        return { success: false, error: 'فشل في التحقق من الرمز' };
+      }
+
+      // Fetch full profile from GraphQL
+      try {
+        const token = session.access_token;
+        const data = await graphqlRequest<{
+          me: { user: UserProfile };
+          myPackage: UserPackage | null;
+        }>(ME_QUERY, {}, false, token);
+
+        if (data?.me?.user) {
+          // Validate user status (banned/suspended check)
+          await validateUserStatus(data.me.user, supabaseSignOut);
+
+          set({
+            session,
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            profile: data.me.user,
+            userPackage: data.myPackage || null,
+            otpEmail: null,
+            otpSent: false,
+          });
+        } else {
+          // No profile - sign out
+          await supabaseSignOut();
+          set({
+            session: null,
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: 'فشل في تحميل بيانات المستخدم',
+            otpEmail: null,
+            otpSent: false,
+          });
+          return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
+        }
+      } catch (profileError: any) {
+        if (profileError?.message?.includes('حسابك')) {
+          set({
+            session: null,
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: profileError.message,
+            otpEmail: null,
+            otpSent: false,
+          });
+          return { success: false, error: profileError.message };
+        }
+
+        // Profile error but auth succeeded - try again
+        await supabaseSignOut();
+        set({
+          session: null,
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          error: 'فشل في تحميل بيانات المستخدم',
+          otpEmail: null,
+          otpSent: false,
+        });
+        return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
+    }
+  },
+
+  /**
+   * Resend OTP code to email
+   */
+  resendOtp: async () => {
+    const { otpEmail } = get();
+
+    if (!otpEmail) {
+      set({ error: 'يرجى إدخال البريد الإلكتروني أولاً' });
+      return { success: false, error: 'يرجى إدخال البريد الإلكتروني أولاً' };
+    }
+
+    try {
+      set({ isLoading: true, error: null });
+
+      const { error } = await resendEmailOtp(otpEmail);
+
+      if (error) {
+        const arabicError = translateAuthError(error);
+        set({ isLoading: false, error: arabicError });
+        return { success: false, error: arabicError };
+      }
+
+      set({ isLoading: false });
+      return { success: true };
+    } catch (error: any) {
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
+    }
+  },
+
+  /**
+   * Clear OTP state (go back to email input)
+   */
+  clearOtpState: () => {
+    set({ otpEmail: null, otpSent: false, error: null });
   },
 }));
 
