@@ -63,6 +63,11 @@ const loadFonts = async (): Promise<boolean> => {
 
 /**
  * Auth guard - redirects based on auth state
+ *
+ * IMPORTANT: This guard should NOT redirect when:
+ * 1. Auth is still loading (isLoading)
+ * 2. User just completed registration (registrationComplete)
+ * 3. User is on register page (to allow seeing success screen)
  */
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, registrationComplete } = useUserAuthStore();
@@ -73,17 +78,24 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     if (isLoading) return; // Wait for auth to initialize
 
     const inAuthGroup = segments[0] === 'auth';
+    const isOnRegisterPage = segments[1] === 'register';
 
     // Don't redirect if registration just completed - let user see success screen
-    if (registrationComplete && inAuthGroup) {
+    if (registrationComplete) {
+      return;
+    }
+
+    // Don't redirect away from register page - user might be seeing success screen
+    // The register page handles its own navigation after showing success
+    if (isOnRegisterPage) {
       return;
     }
 
     if (!isAuthenticated && !inAuthGroup) {
       // Redirect to login if not authenticated
       router.replace('/auth/login');
-    } else if (isAuthenticated && inAuthGroup && !registrationComplete) {
-      // Redirect to home if authenticated and in auth group (but not just registered)
+    } else if (isAuthenticated && inAuthGroup) {
+      // Redirect to home if authenticated and in auth group
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, isLoading, segments, registrationComplete]);
