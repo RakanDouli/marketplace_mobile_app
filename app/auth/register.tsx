@@ -70,6 +70,10 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
 
+  // Local success state - this prevents AuthGuard redirect race condition
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successEmail, setSuccessEmail] = useState('');
+
   // Handle registration
   const handleRegister = async () => {
     const nameError = validateName(name);
@@ -80,8 +84,16 @@ export default function RegisterScreen() {
     if (nameError || emailError || passwordError || confirmError || !acceptTerms) return;
 
     clearError();
-    // signUp will set registrationComplete and registeredEmail in the store
-    await signUp(email, password, name);
+
+    // Call signUp and check result
+    const result = await signUp(email, password, name);
+
+    // If signup succeeded, show success screen using local state
+    // This prevents the AuthGuard redirect from hiding the success screen
+    if (result.success) {
+      setSuccessEmail(email);
+      setShowSuccess(true);
+    }
   };
 
   // Handle Google Sign Up
@@ -98,8 +110,8 @@ export default function RegisterScreen() {
     !validateConfirmPassword(password, confirmPassword) &&
     acceptTerms;
 
-  // Show success screen after registration
-  if (registrationComplete) {
+  // Show success screen after registration (using local state to avoid AuthGuard race condition)
+  if (showSuccess) {
     // Check if user was auto-logged in (no email confirmation needed) or needs to confirm email
     const needsEmailConfirmation = !isAuthenticated;
 
@@ -134,7 +146,7 @@ export default function RegisterScreen() {
                 </Text>
 
                 <Text variant="body" center style={styles.emailText}>
-                  {registeredEmail || email}
+                  {successEmail}
                 </Text>
 
                 <Text variant="small" center color="muted" style={styles.successHint}>
@@ -152,8 +164,9 @@ export default function RegisterScreen() {
           <Button
             variant="primary"
             onPress={() => {
-              // Clear registration state before navigating
+              // Clear states and navigate
               clearRegistrationState();
+              setShowSuccess(false);
               if (isAuthenticated) {
                 router.replace('/(tabs)');
               } else {
