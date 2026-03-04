@@ -8,7 +8,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Image,
 } from 'react-native';
 import {
   User,
@@ -19,10 +18,9 @@ import {
   Calendar,
   Flag,
 } from 'lucide-react-native';
-import { Text, Button } from '../slices';
+import { Text, Button, Image } from '../slices';
 import { useTheme, Theme } from '../../theme';
 import { useListingOwnerStore, ListingOwner } from '../../stores/listingOwnerStore';
-import { getCloudflareImageUrl } from '../../services/cloudflare/images';
 import { formatMonthYear } from '../../utils';
 
 interface OwnerCardProps {
@@ -95,8 +93,11 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
         <View style={styles.avatarContainer}>
           {hasAvatar ? (
             <Image
-              source={{ uri: getCloudflareImageUrl(owner.avatar!, 'thumbnail') }}
-              style={styles.avatar}
+              src={owner.avatar}
+              variant="card"
+              width={64}
+              height={64}
+              borderRadius={theme.radius.full}
             />
           ) : (
             <View style={styles.avatarPlaceholder}>

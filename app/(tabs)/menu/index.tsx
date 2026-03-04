@@ -4,8 +4,8 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { Text, Button, ListItem } from '../../../src/components/slices';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, Button, ListItem, Image } from '../../../src/components/slices';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -32,7 +32,7 @@ import { useTheme, useThemeMode } from '../../../src/theme';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
 import { useCurrencyStore, CURRENCY_SYMBOLS, type Currency } from '../../../src/stores/currencyStore';
 import { useTranslation } from '../../../src/hooks/useTranslation';
-import { getCloudflareImageUrl } from '../../../src/services/cloudflare/images';
+// Image component from slices handles Cloudflare URLs internally
 
 interface MenuItem {
   icon: React.ReactNode;
@@ -325,17 +325,21 @@ export default function MenuScreen() {
           <View style={styles.avatar}>
             {profile?.avatar ? (
               <Image
-                source={{
-                  uri: profile.avatar.startsWith('http')
-                    ? profile.avatar  // Full URL (e.g., Unsplash)
-                    : getCloudflareImageUrl(profile.avatar, 'thumbnail')  // Cloudflare asset key - use thumbnail for avatars
-                }}
-                style={styles.avatarImage}
+                src={profile.avatar}
+                variant="card"
+                width={80}
+                height={80}
+                borderRadius={40}
+                resizeMode="cover"
               />
             ) : user?.user_metadata?.avatar_url ? (
               <Image
-                source={{ uri: user.user_metadata.avatar_url }}
-                style={styles.avatarImage}
+                src={user.user_metadata.avatar_url}
+                variant="card"
+                width={80}
+                height={80}
+                borderRadius={40}
+                resizeMode="cover"
               />
             ) : (
               <User size={40} color={theme.colors.primary} />

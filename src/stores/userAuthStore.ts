@@ -19,7 +19,15 @@ import {
   signInWithGoogle as supabaseSignInWithGoogle,
 } from '../services/supabase';
 import { graphqlRequest } from '../services/graphql/client';
-import { ME_QUERY, UPDATE_ME_MUTATION } from './userAuthStore/userAuthStore.gql';
+import { ENV } from '../constants/env';
+import {
+  ME_QUERY,
+  UPDATE_ME_MUTATION,
+  REQUEST_PASSWORD_RESET_MUTATION,
+  CHANGE_EMAIL_MUTATION,
+  CREATE_AVATAR_UPLOAD_URL_MUTATION,
+  DELETE_AVATAR_MUTATION,
+} from './userAuthStore/userAuthStore.gql';
 
 // =============================================================================
 // ERROR TRANSLATION
@@ -33,13 +41,16 @@ const translateAuthError = (error: any): string => {
   const message = error?.message || error?.error_description || String(error);
   const messageLower = message.toLowerCase();
 
-  // Invalid credentials
+  // Invalid credentials / wrong password
   if (
     messageLower.includes('invalid login credentials') ||
     messageLower.includes('invalid email or password') ||
-    messageLower.includes('wrong password')
+    messageLower.includes('wrong password') ||
+    messageLower.includes('current password') ||
+    messageLower.includes('password is incorrect') ||
+    messageLower.includes('كلمة المرور الحالية غير صحيحة')
   ) {
-    return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+    return 'كلمة المرور غير صحيحة';
   }
 
   // Email not confirmed
@@ -144,6 +155,19 @@ export interface UserProfile {
   status: string;
   accountType: string;
   createdAt: string;
+  updatedAt?: string;
+  // Phone preferences
+  phoneIsWhatsApp?: boolean;
+  showPhone?: boolean;
+  showContactPhone?: boolean;
+  // Business fields (DEALER & BUSINESS only)
+  companyName?: string | null;
+  contactPhone?: string | null;
+  website?: string | null;
+  companyRegistrationNumber?: string | null; // BUSINESS only
+  // Personal info
+  gender?: string | null;
+  dateOfBirth?: string | null;
   // Warning/ban system fields
   warningCount?: number;
   currentWarningMessage?: string | null;
@@ -205,6 +229,12 @@ interface UserAuthState {
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   clearError: () => void;
   clearRegistrationState: () => void;
+
+  // Profile Actions
+  sendPasswordResetEmail: () => Promise<{ success: boolean; error?: string }>;
+  changeEmail: (newEmail: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  uploadAvatar: (imageUri: string) => Promise<{ success: boolean; error?: string }>;
+  deleteAvatar: () => Promise<{ success: boolean; error?: string }>;
 
   // OTP Actions
   sendOtp: (email: string, isSignup?: boolean) => Promise<{ success: boolean; error?: string }>;
@@ -317,7 +347,7 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
 
       // Listen for auth state changes
       onAuthStateChange(async (event, session) => {
-        console.log('[Auth] State changed:', event);
+        console.log('[Auth] State changed:', event, 'Session:', session ? 'exists' : 'null');
 
         // IMPORTANT: Don't interfere with registration flow
         // If registrationComplete is true, the user just signed up and is viewing success screen
@@ -559,7 +589,9 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
    */
   signUp: async (email: string, password: string, name: string) => {
     try {
-      set({ isLoading: true, error: null });
+      // IMPORTANT: Set registrationComplete BEFORE calling Supabase
+      // This prevents onAuthStateChange from redirecting user away from success screen
+      set({ isLoading: true, error: null, registrationComplete: true, registeredEmail: email });
 
       const { session, user, error } = await signUpWithEmail(email, password, {
         full_name: name,
@@ -567,7 +599,7 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
 
       if (error) {
         const arabicError = translateAuthError(error);
-        set({ isLoading: false, error: arabicError });
+        set({ isLoading: false, error: arabicError, registrationComplete: false, registeredEmail: null });
         return { success: false, error: arabicError };
       }
 
@@ -586,10 +618,13 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       }
 
       // User was auto-logged in (no email confirmation required)
+      // IMPORTANT: Do NOT set isAuthenticated yet - this would trigger AuthGuard redirect
+      // before user can see success screen. Set registrationComplete first.
+      // isAuthenticated will be set when user navigates to login and signs in.
       set({
         session,
         user,
-        isAuthenticated: true,
+        isAuthenticated: false, // Keep false to show success screen first
         isLoading: false,
         registrationComplete: true,
         registeredEmail: email,
@@ -656,7 +691,9 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${ENV.WEB_URL}/auth/reset-password`,
+      });
 
       if (error) {
         const arabicError = translateAuthError(error);
@@ -723,6 +760,226 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
    */
   clearRegistrationState: () => {
     set({ registrationComplete: false, registeredEmail: null });
+  },
+
+  // =============================================================================
+  // PROFILE ACTIONS
+  // =============================================================================
+
+  /**
+   * Send password reset email to current user
+   */
+  sendPasswordResetEmail: async () => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const profile = get().profile;
+      if (!profile?.email) {
+        set({ isLoading: false, error: 'البريد الإلكتروني غير متوفر' });
+        return { success: false, error: 'البريد الإلكتروني غير متوفر' };
+      }
+
+      const session = get().session;
+      if (!session?.access_token) {
+        set({ isLoading: false, error: 'غير مسجل الدخول' });
+        return { success: false, error: 'غير مسجل الدخول' };
+      }
+
+      await graphqlRequest(
+        REQUEST_PASSWORD_RESET_MUTATION,
+        { input: { email: profile.email } },
+        false,
+        session.access_token
+      );
+
+      set({ isLoading: false });
+      return { success: true };
+    } catch (error: any) {
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
+    }
+  },
+
+  /**
+   * Change user email (requires password confirmation)
+   * After success, automatically re-authenticates with new email to refresh JWT token
+   */
+  changeEmail: async (newEmail: string, password: string) => {
+    try {
+      // NOTE: Don't set global isLoading here - it causes component unmount!
+      // The calling component should use its own local loading state.
+
+      const session = get().session;
+      if (!session?.access_token) {
+        return { success: false, error: 'غير مسجل الدخول' };
+      }
+
+      await graphqlRequest(
+        CHANGE_EMAIL_MUTATION,
+        { input: { newEmail, password } },
+        false,
+        session.access_token
+      );
+
+      // IMPORTANT: Re-authenticate with new email to get fresh JWT token
+      // This is needed because the JWT still contains the old email after change
+      // Without this, subsequent email changes would fail (backend uses jwt.email)
+      const { session: newSession, error: signInError } = await signInWithEmail(newEmail, password);
+
+      if (signInError || !newSession) {
+        console.warn('[ChangeEmail] Re-auth failed, user may need to re-login:', signInError);
+        // Email was changed successfully, but re-auth failed
+        // Update local state anyway - user might need to re-login manually
+        const currentProfile = get().profile;
+        if (currentProfile) {
+          set({ profile: { ...currentProfile, email: newEmail } });
+        }
+        return { success: true, needsRelogin: true };
+      }
+
+      // Update session and profile with new data
+      const currentProfile = get().profile;
+      set({
+        session: newSession,
+        user: newSession.user,
+        profile: currentProfile ? { ...currentProfile, email: newEmail } : null,
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      const arabicError = translateAuthError(error);
+      // Don't set global error - return it instead
+      return { success: false, error: arabicError };
+    }
+  },
+
+  /**
+   * Upload avatar image
+   * @param imageUri - Local URI of the image to upload
+   */
+  uploadAvatar: async (imageUri: string) => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const session = get().session;
+      if (!session?.access_token) {
+        set({ isLoading: false, error: 'غير مسجل الدخول' });
+        return { success: false, error: 'غير مسجل الدخول' };
+      }
+
+      // Step 1: Get upload URL from backend
+      const uploadResult = await graphqlRequest<{
+        createAvatarUploadUrl: { uploadUrl: string };
+      }>(CREATE_AVATAR_UPLOAD_URL_MUTATION, {}, false, session.access_token);
+
+      const uploadUrl = uploadResult?.createAvatarUploadUrl?.uploadUrl;
+      if (!uploadUrl) {
+        set({ isLoading: false, error: 'فشل في الحصول على رابط الرفع' });
+        return { success: false, error: 'فشل في الحصول على رابط الرفع' };
+      }
+
+      // Step 2: Upload image to Cloudflare
+      const formData = new FormData();
+      const filename = imageUri.split('/').pop() || 'avatar.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      formData.append('file', {
+        uri: imageUri,
+        name: filename,
+        type,
+      } as any);
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        set({ isLoading: false, error: 'فشل في رفع الصورة' });
+        return { success: false, error: 'فشل في رفع الصورة' };
+      }
+
+      const uploadData = await uploadResponse.json();
+      const imageId = uploadData?.result?.id;
+
+      if (!imageId) {
+        set({ isLoading: false, error: 'فشل في رفع الصورة' });
+        return { success: false, error: 'فشل في رفع الصورة' };
+      }
+
+      // Step 3: Update profile with new avatar ID
+      const updateResult = await graphqlRequest<{
+        updateMe: { avatar: string };
+      }>(UPDATE_ME_MUTATION, { input: { avatar: imageId } }, false, session.access_token);
+
+      // Update local state
+      const currentProfile = get().profile;
+      if (currentProfile && updateResult?.updateMe?.avatar) {
+        set({
+          profile: { ...currentProfile, avatar: updateResult.updateMe.avatar },
+          isLoading: false,
+        });
+      } else {
+        set({ isLoading: false });
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
+    }
+  },
+
+  /**
+   * Delete avatar
+   * Two-step process matching web frontend:
+   * 1. Delete from Cloudflare via deleteAvatar mutation
+   * 2. Update user avatar to null via updateMe mutation
+   */
+  deleteAvatar: async () => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const session = get().session;
+      if (!session?.access_token) {
+        set({ isLoading: false, error: 'غير مسجل الدخول' });
+        return { success: false, error: 'غير مسجل الدخول' };
+      }
+
+      // Step 1: Delete from Cloudflare
+      await graphqlRequest(DELETE_AVATAR_MUTATION, {}, false, session.access_token);
+
+      // Step 2: Update user avatar to null in database (matches web frontend)
+      await graphqlRequest(
+        UPDATE_ME_MUTATION,
+        { input: { avatar: null } },
+        false,
+        session.access_token
+      );
+
+      // Update local state
+      const currentProfile = get().profile;
+      if (currentProfile) {
+        set({
+          profile: { ...currentProfile, avatar: null },
+          isLoading: false,
+        });
+      } else {
+        set({ isLoading: false });
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
+    }
   },
 
   // =============================================================================

@@ -1,23 +1,18 @@
 /**
  * ReportModal Component
  * Modal for reporting a listing or user
- * Design matches web frontend ReportModal
+ * Uses BaseModal for consistent styling
  */
 
 import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
-  Modal,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   TextInput,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
-import { X, Check, Flag } from 'lucide-react-native';
-import { Text, Button } from '../slices';
+import { Check, Flag } from 'lucide-react-native';
+import { Text, Button, BaseModal } from '../slices';
 import { useTheme, Theme } from '../../theme';
 import { useReportsStore, REPORT_REASONS, ReportReason } from '../../stores/reportsStore';
 
@@ -87,197 +82,126 @@ export function ReportModal({
   };
 
   return (
-    <Modal
+    <BaseModal
       visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={handleClose}
+      onClose={handleClose}
+      title={`الإبلاغ عن ${getEntityLabel()}`}
+      titleIcon={<Flag size={20} color={theme.colors.error} />}
+      titleColor={theme.colors.error}
+      maxHeightPercent={90}
     >
-      <TouchableWithoutFeedback onPress={handleClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={styles.keyboardAvoid}
-            >
-              <View style={styles.container}>
-                {/* Header with Flag icon in error color */}
-                <View style={styles.header}>
-                  <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                    <X size={24} color={theme.colors.text} />
-                  </TouchableOpacity>
-                  <View style={styles.headerTitleContainer}>
-                    <Flag size={20} color={theme.colors.error} />
-                    <Text variant="h4" style={[styles.title, { color: theme.colors.error }]}>
-                      الإبلاغ عن {getEntityLabel()}
-                    </Text>
-                  </View>
-                  <View style={styles.placeholder} />
-                </View>
-
-                {success ? (
-                  /* Success State */
-                  <View style={styles.successContainer}>
-                    <View style={styles.successIcon}>
-                      <Check size={40} color={theme.colors.success} />
-                    </View>
-                    <Text variant="h4" style={styles.successTitle}>
-                      تم إرسال البلاغ بنجاح
-                    </Text>
-                    <Text variant="paragraph" color="secondary" style={styles.successText}>
-                      شكراً لك، سنقوم بمراجعة البلاغ في أقرب وقت
-                    </Text>
-                  </View>
-                ) : (
-                  /* Report Form */
-                  <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                    {/* Info Section */}
-                    <View style={styles.infoSection}>
-                      <View style={styles.infoRow}>
-                        <Text variant="small" color="secondary">نوع البلاغ:</Text>
-                        <Text variant="small" bold>{getEntityLabel()}</Text>
-                      </View>
-                      {sellerName && (
-                        <View style={styles.infoRow}>
-                          <Text variant="small" color="secondary">البائع:</Text>
-                          <Text variant="small" bold>{sellerName}</Text>
-                        </View>
-                      )}
-                    </View>
-
-                    {/* Reason Selection */}
-                    <Text variant="body" bold style={styles.label}>
-                      سبب البلاغ *
-                    </Text>
-                    <View style={styles.reasons}>
-                      {REPORT_REASONS.map((reason) => (
-                        <TouchableOpacity
-                          key={reason.value}
-                          style={[
-                            styles.reasonItem,
-                            selectedReason === reason.value && styles.reasonItemSelected,
-                          ]}
-                          onPress={() => setSelectedReason(reason.value)}
-                          activeOpacity={0.7}
-                        >
-                          <View
-                            style={[
-                              styles.radio,
-                              selectedReason === reason.value && styles.radioSelected,
-                            ]}
-                          >
-                            {selectedReason === reason.value && (
-                              <View style={styles.radioInner} />
-                            )}
-                          </View>
-                          <Text
-                            variant="body"
-                            style={[
-                              styles.reasonText,
-                              selectedReason === reason.value && styles.reasonTextSelected,
-                            ]}
-                          >
-                            {reason.label}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-
-                    {/* Details */}
-                    <Text variant="body" bold style={styles.label}>
-                      تفاصيل إضافية (اختياري)
-                    </Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="أضف تفاصيل إضافية حول البلاغ..."
-                      placeholderTextColor={theme.colors.textMuted}
-                      value={details}
-                      onChangeText={setDetails}
-                      multiline
-                      numberOfLines={4}
-                      textAlignVertical="top"
-                      textAlign="right"
-                    />
-
-                    {/* Action Buttons */}
-                    <View style={styles.actions}>
-                      <Button
-                        variant="outline"
-                        onPress={handleClose}
-                        style={styles.cancelButton}
-                      >
-                        إلغاء
-                      </Button>
-                      <Button
-                        variant="danger"
-                        onPress={handleSubmit}
-                        loading={isSubmitting}
-                        disabled={!selectedReason || isSubmitting}
-                        icon={<Flag size={18} color={theme.colors.textInverse} />}
-                        style={styles.submitButton}
-                      >
-                        إرسال البلاغ
-                      </Button>
-                    </View>
-                  </ScrollView>
-                )}
-              </View>
-            </KeyboardAvoidingView>
-          </TouchableWithoutFeedback>
+      {success ? (
+        /* Success State */
+        <View style={styles.successContainer}>
+          <View style={styles.successIcon}>
+            <Check size={40} color={theme.colors.success} />
+          </View>
+          <Text variant="h4" style={styles.successTitle}>
+            تم إرسال البلاغ بنجاح
+          </Text>
+          <Text variant="paragraph" color="secondary" style={styles.successText}>
+            شكراً لك، سنقوم بمراجعة البلاغ في أقرب وقت
+          </Text>
         </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+      ) : (
+        /* Report Form */
+        <View>
+          {/* Info Section */}
+          <View style={styles.infoSection}>
+            <View style={styles.infoRow}>
+              <Text variant="small" color="secondary">نوع البلاغ:</Text>
+              <Text variant="small" bold>{getEntityLabel()}</Text>
+            </View>
+            {sellerName && (
+              <View style={styles.infoRow}>
+                <Text variant="small" color="secondary">البائع:</Text>
+                <Text variant="small" bold>{sellerName}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Reason Selection */}
+          <Text variant="body" bold style={styles.label}>
+            سبب البلاغ *
+          </Text>
+          <View style={styles.reasons}>
+            {REPORT_REASONS.map((reason) => (
+              <TouchableOpacity
+                key={reason.value}
+                style={[
+                  styles.reasonItem,
+                  selectedReason === reason.value && styles.reasonItemSelected,
+                ]}
+                onPress={() => setSelectedReason(reason.value)}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.radio,
+                    selectedReason === reason.value && styles.radioSelected,
+                  ]}
+                >
+                  {selectedReason === reason.value && (
+                    <View style={styles.radioInner} />
+                  )}
+                </View>
+                <Text
+                  variant="body"
+                  style={[
+                    styles.reasonText,
+                    selectedReason === reason.value && styles.reasonTextSelected,
+                  ]}
+                >
+                  {reason.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Details */}
+          <Text variant="body" bold style={styles.label}>
+            تفاصيل إضافية (اختياري)
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="أضف تفاصيل إضافية حول البلاغ..."
+            placeholderTextColor={theme.colors.textMuted}
+            value={details}
+            onChangeText={setDetails}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+            textAlign="right"
+          />
+
+          {/* Action Buttons */}
+          <View style={styles.actions}>
+            <Button
+              variant="outline"
+              onPress={handleClose}
+              style={styles.cancelButton}
+            >
+              إلغاء
+            </Button>
+            <Button
+              variant="danger"
+              onPress={handleSubmit}
+              loading={isSubmitting}
+              disabled={!selectedReason || isSubmitting}
+              icon={<Flag size={18} color={theme.colors.textInverse} />}
+              style={styles.submitButton}
+            >
+              إرسال البلاغ
+            </Button>
+          </View>
+        </View>
+      )}
+    </BaseModal>
   );
 }
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    overlay: {
-      flex: 1,
-      backgroundColor: theme.colors.overlay,
-      justifyContent: 'flex-end',
-    },
-    keyboardAvoid: {
-      width: '100%',
-    },
-    container: {
-      backgroundColor: theme.colors.bg,
-      borderTopLeftRadius: theme.radius.xl,
-      borderTopRightRadius: theme.radius.xl,
-      maxHeight: '90%',
-    },
-
-    // Header
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    headerTitleContainer: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: theme.spacing.sm,
-    },
-    closeButton: {
-      padding: theme.spacing.xs,
-    },
-    title: {
-      textAlign: 'center',
-    },
-    placeholder: {
-      width: 32,
-    },
-
-    // Content
-    content: {
-      padding: theme.spacing.md,
-    },
-
     // Info Section
     infoSection: {
       backgroundColor: theme.colors.surface,
@@ -361,7 +285,6 @@ const createStyles = (theme: Theme) =>
     actions: {
       flexDirection: 'row-reverse',
       gap: theme.spacing.sm,
-      marginBottom: theme.spacing.xl,
     },
     cancelButton: {
       flex: 1,

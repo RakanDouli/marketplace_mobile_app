@@ -20,7 +20,7 @@ import { Text, Loading } from '../../src/components/slices';
 import { useChatStore, ChatThread } from '../../src/stores/chatStore';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
 import { useListingsStore, Listing } from '../../src/stores/listingsStore';
-import { getCloudflareImageUrl } from '../../src/services/cloudflare/images';
+import { getCloudflareImageUrl } from '../../src/utils/cloudflare-images';
 import { formatRelativeTime } from '../../src/utils';
 
 // Thread with fetched listing data (like web frontend)

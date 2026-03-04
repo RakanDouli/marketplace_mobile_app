@@ -12,9 +12,8 @@ import {
   Linking,
   Platform,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { MapPin, Navigation, ExternalLink } from 'lucide-react-native';
-import { Text } from '../slices';
+import { Text, Image } from '../slices';
 import { useTheme, Theme } from '../../theme';
 import { formatLocation as formatLocationUtil } from '../../utils';
 
@@ -186,10 +185,9 @@ export function LocationMap({ location, title }: LocationMapProps) {
         {hasCoordinates ? (
           <>
             <Image
-              source={{ uri: getStaticTileUrl()! }}
+              src={getStaticTileUrl()!}
               style={styles.map}
-              contentFit="cover"
-              placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+              resizeMode="cover"
             />
             {/* Map Pin Marker Overlay */}
             <View style={styles.markerContainer}>

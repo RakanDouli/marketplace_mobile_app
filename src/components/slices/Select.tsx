@@ -2,23 +2,21 @@
  * Select Component
  * Modal-based select with search and creatable support
  * Matches web frontend react-select functionality
- * Supports RTL
+ * Uses BaseModal for consistent styling
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
-  Modal,
   TouchableOpacity,
   FlatList,
   TextInput,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
-import { ChevronDown, Search, Plus, Check, X } from 'lucide-react-native';
+import { ChevronDown, Search, Plus, Check } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text } from './Text';
+import { BaseModal } from './BaseModal';
 
 export interface SelectOption {
   value: string;
@@ -115,6 +113,11 @@ export function Select({
     setSearchQuery('');
   }, [searchQuery, onCreateOption]);
 
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    setSearchQuery('');
+  }, []);
+
   const getBorderColor = () => {
     if (error) return theme.colors.error;
     if (success) return theme.colors.success;
@@ -193,85 +196,58 @@ export function Select({
         </Text>
       )}
 
-      {/* Modal */}
-      <Modal
+      {/* Modal using BaseModal */}
+      <BaseModal
         visible={isOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setIsOpen(false)}
+        onClose={handleClose}
+        title={label || 'اختر'}
+        bodyPadding="none"
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.modalOverlay}
-        >
-          <TouchableOpacity
-            style={styles.modalBackdrop}
-            activeOpacity={1}
-            onPress={() => setIsOpen(false)}
-          />
-
-          <View style={styles.modalContent}>
-            {/* Header */}
-            <View style={styles.modalHeader}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setIsOpen(false)}
-              >
-                <X size={24} color={theme.colors.text} />
-              </TouchableOpacity>
-              <Text variant="h4" style={styles.modalTitle}>
-                {label || 'اختر'}
-              </Text>
-              <View style={styles.closeButtonPlaceholder} />
-            </View>
-
-            {/* Search Input */}
-            {searchable && (
-              <View style={styles.searchContainer}>
-                <Search size={20} color={theme.colors.textMuted} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="بحث..."
-                  placeholderTextColor={theme.colors.textMuted}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  autoCorrect={false}
-                  textAlign={isRTL ? 'right' : 'left'}
-                />
-              </View>
-            )}
-
-            {/* Create New Option */}
-            {canCreateNew && (
-              <TouchableOpacity
-                style={styles.createOption}
-                onPress={handleCreateNew}
-              >
-                <Plus size={20} color={theme.colors.primary} />
-                <Text variant="body" style={{ color: theme.colors.primary }}>
-                  إضافة "{searchQuery}"
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Options List */}
-            <FlatList
-              data={filteredOptions}
-              keyExtractor={(item) => item.value}
-              renderItem={renderOption}
-              style={styles.optionsList}
-              keyboardShouldPersistTaps="handled"
-              ListEmptyComponent={
-                <View style={styles.emptyState}>
-                  <Text variant="body" color="muted">
-                    لا توجد نتائج
-                  </Text>
-                </View>
-              }
+        {/* Search Input */}
+        {searchable && (
+          <View style={styles.searchContainer}>
+            <Search size={20} color={theme.colors.textMuted} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="بحث..."
+              placeholderTextColor={theme.colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCorrect={false}
+              textAlign={isRTL ? 'right' : 'left'}
             />
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        )}
+
+        {/* Create New Option */}
+        {canCreateNew && (
+          <TouchableOpacity
+            style={styles.createOption}
+            onPress={handleCreateNew}
+          >
+            <Plus size={20} color={theme.colors.primary} />
+            <Text variant="body" style={{ color: theme.colors.primary }}>
+              إضافة "{searchQuery}"
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Options List */}
+        <FlatList
+          data={filteredOptions}
+          keyExtractor={(item) => item.value}
+          renderItem={renderOption}
+          style={styles.optionsList}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text variant="body" color="muted">
+                لا توجد نتائج
+              </Text>
+            </View>
+          }
+        />
+      </BaseModal>
     </View>
   );
 }
@@ -311,40 +287,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     helperText: {
       marginTop: theme.spacing.xs,
       textAlign: isRTL ? 'right' : 'left',
-    },
-    // Modal styles
-    modalOverlay: {
-      flex: 1,
-      justifyContent: 'flex-end',
-    },
-    modalBackdrop: {
-      flex: 1,
-      backgroundColor: theme.colors.overlay,
-    },
-    modalContent: {
-      backgroundColor: theme.colors.bg,
-      borderTopLeftRadius: theme.radius.xl,
-      borderTopRightRadius: theme.radius.xl,
-      maxHeight: '80%',
-      paddingBottom: theme.spacing.xl,
-    },
-    modalHeader: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: theme.spacing.lg,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    modalTitle: {
-      flex: 1,
-      textAlign: 'center',
-    },
-    closeButton: {
-      padding: theme.spacing.xs,
-    },
-    closeButtonPlaceholder: {
-      width: 32,
     },
     // Search
     searchContainer: {

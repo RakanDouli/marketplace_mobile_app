@@ -10,10 +10,10 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { useTheme, Theme } from '../../theme';
 import { Text } from './Text';
 import { Button } from './Button';
+import { Image } from './Image';
 
 export type PromoCardVariant = 'primary' | 'secondary' | 'accent' | 'neutral';
 export type ImagePosition = 'left' | 'right';
@@ -57,10 +57,10 @@ export function PromoCard({
   // When image is RIGHT, text aligns to START (left in LTR)
   const contentAlign = imagePosition === 'left' ? 'flex-end' : 'flex-start';
 
-  // Image component
+  // Image component - use transparent for CTA images (AVIF/PNG with transparency)
   const imageComponent = imageSrc && (
     <View style={styles.imageWrapper}>
-      <Image source={imageSrc} style={styles.image} contentFit="contain" />
+      <Image src={imageSrc} width="100%" height="100%" resizeMode="contain" transparent />
     </View>
   );
 

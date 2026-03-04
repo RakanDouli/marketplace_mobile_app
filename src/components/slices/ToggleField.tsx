@@ -49,8 +49,9 @@ export function ToggleField({
       <Switch
         value={value}
         onValueChange={onChange}
-        trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
-        thumbColor={value ? theme.colors.primary : theme.colors.surface}
+        trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+        thumbColor={theme.colors.surface}
+        ios_backgroundColor={theme.colors.border}
         disabled={disabled}
       />
     </View>

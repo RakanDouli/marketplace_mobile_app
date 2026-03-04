@@ -45,7 +45,7 @@ import { useMetadataStore } from '../../../../src/stores/metadataStore';
 import { useFiltersStore, type ActiveFilter } from '../../../../src/stores/filtersStore';
 import { formatPrice } from '../../../../src/utils/formatPrice';
 import { filterSpecsByViewMode } from '../../../../src/utils/filterSpecs';
-import { getListingImageUrl } from '../../../../src/services/cloudflare/images';
+import { getListingImageUrl } from '../../../../src/utils/cloudflare-images';
 import { convertToUSD, parsePrice, type Currency } from '../../../../src/utils/currency';
 
 // Filter chip type for display

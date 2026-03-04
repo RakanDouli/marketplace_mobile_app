@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { SvgXml } from 'react-native-svg';
@@ -34,10 +33,12 @@ import {
   FeatureCard,
   PromoCard,
   PromoBanner,
+  Image,
 } from '../../src/components/slices';
+import { ENV } from '../../src/constants/env';
 
-// CMS Assets
-const CMS_BASE_URL = 'https://staging.shambay.com';
+// CMS Assets - Use environment-based URL
+const CMS_BASE_URL = ENV.WEB_URL;
 const CMS_ASSETS = {
   home: {
     promoBanner: { car: `${CMS_BASE_URL}/images/cms/car.avif` },
@@ -163,12 +164,12 @@ export default function HomeTab() {
           onCategorySelect={handleCategorySelect}
         />
 
-        {/* Hero Section - Using expo-image for AVIF support on Android */}
+        {/* Hero Section - Using Image component with AVIF support */}
         <View style={styles.heroSection}>
-          <ExpoImage
-            source={{ uri: CMS_ASSETS.home.searchBar.background }}
+          <Image
+            src={CMS_ASSETS.home.searchBar.background}
             style={StyleSheet.absoluteFillObject}
-            contentFit="cover"
+            resizeMode="cover"
           />
           <View style={styles.heroOverlay} />
           <View style={styles.heroContent}>

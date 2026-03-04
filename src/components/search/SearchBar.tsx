@@ -2,6 +2,7 @@
  * SearchBar Component
  * Reusable search bar with category selector dropdown
  * Used in: Home page, Search page, Listings page
+ * Uses BaseModal for consistent styling
  */
 
 import React, { useMemo, useState } from 'react';
@@ -10,15 +11,13 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  Modal,
-  Pressable,
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, LayoutGrid, X } from 'lucide-react-native';
+import { Search, LayoutGrid } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import { useTheme, Theme } from '../../theme';
-import { Text } from '../slices/Text';
+import { Text, BaseModal } from '../slices';
 
 export interface Category {
   slug: string;
@@ -148,51 +147,39 @@ export function SearchBar({
         </View>
       </View>
 
-      {/* Category Dropdown Modal */}
-      <Modal
+      {/* Category Dropdown Modal using BaseModal */}
+      <BaseModal
         visible={showDropdown}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowDropdown(false)}
+        onClose={() => setShowDropdown(false)}
+        title="اختر الفئة"
+        maxHeightPercent={60}
+        bodyPadding="sm"
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowDropdown(false)}
-        >
-          <View style={styles.dropdownContainer}>
-            <View style={styles.dropdownHeader}>
-              <Text variant="h4">اختر الفئة</Text>
-              <TouchableOpacity onPress={() => setShowDropdown(false)}>
-                <X size={20} color={theme.colors.text} />
+        <ScrollView style={styles.dropdownScroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.dropdownOptions}>
+            {activeCategories.map((category) => (
+              <TouchableOpacity
+                key={category.slug}
+                style={[
+                  styles.dropdownOption,
+                  selectedCategory === category.slug &&
+                    styles.dropdownOptionSelected,
+                ]}
+                onPress={() => handleCategoryPress(category.slug)}
+              >
+                <View style={styles.dropdownOptionIcon}>
+                  {renderCategoryIcon(
+                    category.icon,
+                    20,
+                    theme.colors.primary
+                  )}
+                </View>
+                <Text variant="paragraph">{category.nameAr}</Text>
               </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.dropdownScroll}>
-              <View style={styles.dropdownOptions}>
-                {activeCategories.map((category) => (
-                  <TouchableOpacity
-                    key={category.slug}
-                    style={[
-                      styles.dropdownOption,
-                      selectedCategory === category.slug &&
-                        styles.dropdownOptionSelected,
-                    ]}
-                    onPress={() => handleCategoryPress(category.slug)}
-                  >
-                    <View style={styles.dropdownOptionIcon}>
-                      {renderCategoryIcon(
-                        category.icon,
-                        20,
-                        theme.colors.primary
-                      )}
-                    </View>
-                    <Text variant="paragraph">{category.nameAr}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
+            ))}
           </View>
-        </Pressable>
-      </Modal>
+        </ScrollView>
+      </BaseModal>
     </>
   );
 }
@@ -222,7 +209,6 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.text,
       paddingVertical: theme.spacing.xs,
       paddingHorizontal: theme.spacing.sm,
-      // textAlign applied dynamically
     },
     iconButton: {
       width: 40,
@@ -244,32 +230,12 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       alignItems: 'center',
     },
-    // Modal styles
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: theme.colors.overlay,
-      justifyContent: 'flex-end',
-    },
-    dropdownContainer: {
-      backgroundColor: theme.colors.bg,
-      borderTopLeftRadius: theme.radius.xl,
-      borderTopRightRadius: theme.radius.xl,
-      paddingBottom: theme.spacing.xl,
-      maxHeight: '60%',
-    },
-    dropdownHeader: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
+    // Dropdown content styles
     dropdownScroll: {
       maxHeight: 400,
     },
     dropdownOptions: {
-      padding: theme.spacing.sm,
+      gap: theme.spacing.xs,
     },
     dropdownOption: {
       flexDirection: theme.isRTL ? 'row-reverse' : 'row',

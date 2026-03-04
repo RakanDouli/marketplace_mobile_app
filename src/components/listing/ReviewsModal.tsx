@@ -1,23 +1,20 @@
 /**
  * ReviewsModal Component
  * Shows user reviews with rating distribution and tags
+ * Uses BaseModal for consistent styling
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
-  Modal,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  ScrollView,
   Image,
 } from 'react-native';
-import { X, Star, User, ThumbsUp, ThumbsDown } from 'lucide-react-native';
-import { Text, Loading } from '../slices';
+import { Star, User, ThumbsUp, ThumbsDown } from 'lucide-react-native';
+import { Text, Loading, BaseModal } from '../slices';
 import { useTheme, Theme } from '../../theme';
 import { useReviewsStore } from '../../stores/reviewsStore';
-import { getCloudflareImageUrl } from '../../services/cloudflare/images';
+import { getCloudflareImageUrl } from '../../utils/cloudflare-images';
 import { formatDate } from '../../utils';
 
 interface ReviewsModalProps {
@@ -34,7 +31,7 @@ export function ReviewsModal({
   userName,
 }: ReviewsModalProps) {
   const theme = useTheme();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const {
     reviews,
@@ -96,219 +93,181 @@ export function ReviewsModal({
   const averageRating = getAverageRating();
   const totalReviews = reviews.length;
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.container}>
-              {/* Header */}
-              <View style={styles.header}>
-                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                  <X size={24} color={theme.colors.text} />
-                </TouchableOpacity>
-                <Text variant="h4" style={styles.title}>
-                  تقييمات {userName || 'البائع'}
-                </Text>
-                <View style={styles.placeholder} />
-              </View>
+  // Content based on state
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <Loading type="svg" size="md" />
+        </View>
+      );
+    }
 
-              {isLoading ? (
-                <View style={styles.loadingContainer}>
-                  <Loading type="svg" size="md" />
-                </View>
-              ) : reviews.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <Star size={48} color={theme.colors.border} />
-                  <Text variant="h4" color="secondary" style={styles.emptyText}>
-                    لا توجد تقييمات بعد
+    if (reviews.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Star size={48} color={theme.colors.border} />
+          <Text variant="h4" color="secondary" style={styles.emptyText}>
+            لا توجد تقييمات بعد
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <>
+        {/* Rating Overview - Vertical Layout */}
+        <View style={styles.overview}>
+          {/* Average Rating & Stars - Top */}
+          <View style={styles.ratingTop}>
+            <Text variant="h1" style={styles.averageRating}>
+              {averageRating.toFixed(1)}
+            </Text>
+            <View style={styles.starsRow}>
+              {renderStars(Math.round(averageRating), 20)}
+            </View>
+            <Text variant="small" color="secondary">
+              {totalReviews} تقييم
+            </Text>
+          </View>
+
+          {/* Rating Distribution Bars - Below */}
+          <View style={styles.ratingBars}>
+            {[5, 4, 3, 2, 1].map((rating) =>
+              renderRatingBar(rating, distribution[rating] || 0, totalReviews)
+            )}
+          </View>
+        </View>
+
+        {/* Tag Summary */}
+        {(Object.keys(tagCounts.positive).length > 0 ||
+          Object.keys(tagCounts.negative).length > 0) && (
+          <View style={styles.tagSummary}>
+            {/* Positive Tags */}
+            {Object.keys(tagCounts.positive).length > 0 && (
+              <View style={styles.tagSection}>
+                <View style={styles.tagHeader}>
+                  <ThumbsUp size={14} color={theme.colors.success} />
+                  <Text variant="small" weight="bold" style={{ color: theme.colors.success }}>
+                    إيجابي
                   </Text>
                 </View>
-              ) : (
-                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                  {/* Rating Overview - Vertical Layout */}
-                  <View style={styles.overview}>
-                    {/* Average Rating & Stars - Top */}
-                    <View style={styles.ratingTop}>
-                      <Text variant="h1" style={styles.averageRating}>
-                        {averageRating.toFixed(1)}
-                      </Text>
-                      <View style={styles.starsRow}>
-                        {renderStars(Math.round(averageRating), 20)}
-                      </View>
-                      <Text variant="small" color="secondary">
-                        {totalReviews} تقييم
-                      </Text>
-                    </View>
-
-                    {/* Rating Distribution Bars - Below */}
-                    <View style={styles.ratingBars}>
-                      {[5, 4, 3, 2, 1].map((rating) =>
-                        renderRatingBar(rating, distribution[rating] || 0, totalReviews)
-                      )}
-                    </View>
-                  </View>
-
-                  {/* Tag Summary */}
-                  {(Object.keys(tagCounts.positive).length > 0 ||
-                    Object.keys(tagCounts.negative).length > 0) && (
-                    <View style={styles.tagSummary}>
-                      {/* Positive Tags */}
-                      {Object.keys(tagCounts.positive).length > 0 && (
-                        <View style={styles.tagSection}>
-                          <View style={styles.tagHeader}>
-                            <ThumbsUp size={14} color={theme.colors.success} />
-                            <Text variant="small" bold style={{ color: theme.colors.success }}>
-                              إيجابي
-                            </Text>
-                          </View>
-                          <View style={styles.tags}>
-                            {Object.entries(tagCounts.positive)
-                              .sort(([, a], [, b]) => b - a)
-                              .map(([tag, count]) => (
-                                <View key={tag} style={styles.tagPositive}>
-                                  <Text variant="xs" style={{ color: theme.colors.success }}>
-                                    {tag} ({count})
-                                  </Text>
-                                </View>
-                              ))}
-                          </View>
-                        </View>
-                      )}
-
-                      {/* Negative Tags */}
-                      {Object.keys(tagCounts.negative).length > 0 && (
-                        <View style={styles.tagSection}>
-                          <View style={styles.tagHeader}>
-                            <ThumbsDown size={14} color={theme.colors.error} />
-                            <Text variant="small" bold style={{ color: theme.colors.error }}>
-                              سلبي
-                            </Text>
-                          </View>
-                          <View style={styles.tags}>
-                            {Object.entries(tagCounts.negative)
-                              .sort(([, a], [, b]) => b - a)
-                              .map(([tag, count]) => (
-                                <View key={tag} style={styles.tagNegative}>
-                                  <Text variant="xs" style={{ color: theme.colors.error }}>
-                                    {tag} ({count})
-                                  </Text>
-                                </View>
-                              ))}
-                          </View>
-                        </View>
-                      )}
-                    </View>
-                  )}
-
-                  {/* Reviews List */}
-                  <View style={styles.reviewsList}>
-                    <Text variant="body" bold style={styles.reviewsTitle}>
-                      جميع التقييمات
-                    </Text>
-                    {reviews.map((review) => (
-                      <View key={review.id} style={styles.reviewItem}>
-                        {/* Reviewer */}
-                        <View style={styles.reviewerRow}>
-                          {review.reviewerAvatar ? (
-                            <Image
-                              source={{
-                                uri: getCloudflareImageUrl(review.reviewerAvatar, 'thumbnail'),
-                              }}
-                              style={styles.reviewerAvatar}
-                            />
-                          ) : (
-                            <View style={styles.reviewerAvatarPlaceholder}>
-                              <User size={16} color={theme.colors.textMuted} />
-                            </View>
-                          )}
-                          <View style={styles.reviewerInfo}>
-                            <Text variant="small" bold>
-                              {review.reviewerName || 'مستخدم'}
-                            </Text>
-                            <Text variant="xs" color="muted">
-                              {formatDate(review.createdAt)}
-                            </Text>
-                          </View>
-                          <View style={styles.reviewRating}>
-                            {renderStars(review.rating, 12)}
-                          </View>
-                        </View>
-
-                        {/* Tags */}
-                        {((review.positiveTags && review.positiveTags.length > 0) ||
-                          (review.negativeTags && review.negativeTags.length > 0)) && (
-                          <View style={styles.reviewTags}>
-                            {review.positiveTags?.map((tag) => (
-                              <View key={tag} style={styles.reviewTagPositive}>
-                                <ThumbsUp size={10} color={theme.colors.success} />
-                                <Text variant="xs" style={{ color: theme.colors.success }}>
-                                  {tag}
-                                </Text>
-                              </View>
-                            ))}
-                            {review.negativeTags?.map((tag) => (
-                              <View key={tag} style={styles.reviewTagNegative}>
-                                <ThumbsDown size={10} color={theme.colors.error} />
-                                <Text variant="xs" style={{ color: theme.colors.error }}>
-                                  {tag}
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
+                <View style={styles.tags}>
+                  {Object.entries(tagCounts.positive)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([tag, count]) => (
+                      <View key={tag} style={styles.tagPositive}>
+                        <Text variant="xs" style={{ color: theme.colors.success }}>
+                          {tag} ({count})
+                        </Text>
                       </View>
                     ))}
+                </View>
+              </View>
+            )}
+
+            {/* Negative Tags */}
+            {Object.keys(tagCounts.negative).length > 0 && (
+              <View style={styles.tagSection}>
+                <View style={styles.tagHeader}>
+                  <ThumbsDown size={14} color={theme.colors.error} />
+                  <Text variant="small" weight="bold" style={{ color: theme.colors.error }}>
+                    سلبي
+                  </Text>
+                </View>
+                <View style={styles.tags}>
+                  {Object.entries(tagCounts.negative)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([tag, count]) => (
+                      <View key={tag} style={styles.tagNegative}>
+                        <Text variant="xs" style={{ color: theme.colors.error }}>
+                          {tag} ({count})
+                        </Text>
+                      </View>
+                    ))}
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Reviews List */}
+        <View style={styles.reviewsList}>
+          <Text variant="body" weight="bold" style={styles.reviewsTitle}>
+            جميع التقييمات
+          </Text>
+          {reviews.map((review) => (
+            <View key={review.id} style={styles.reviewItem}>
+              {/* Reviewer */}
+              <View style={styles.reviewerRow}>
+                {review.reviewerAvatar ? (
+                  <Image
+                    source={{
+                      uri: getCloudflareImageUrl(review.reviewerAvatar, 'thumbnail'),
+                    }}
+                    style={styles.reviewerAvatar}
+                  />
+                ) : (
+                  <View style={styles.reviewerAvatarPlaceholder}>
+                    <User size={16} color={theme.colors.textMuted} />
                   </View>
-                </ScrollView>
+                )}
+                <View style={styles.reviewerInfo}>
+                  <Text variant="small" weight="bold">
+                    {review.reviewerName || 'مستخدم'}
+                  </Text>
+                  <Text variant="xs" color="muted">
+                    {formatDate(review.createdAt)}
+                  </Text>
+                </View>
+                <View style={styles.reviewRating}>
+                  {renderStars(review.rating, 12)}
+                </View>
+              </View>
+
+              {/* Tags */}
+              {((review.positiveTags && review.positiveTags.length > 0) ||
+                (review.negativeTags && review.negativeTags.length > 0)) && (
+                <View style={styles.reviewTags}>
+                  {review.positiveTags?.map((tag) => (
+                    <View key={tag} style={styles.reviewTagPositive}>
+                      <ThumbsUp size={10} color={theme.colors.success} />
+                      <Text variant="xs" style={{ color: theme.colors.success }}>
+                        {tag}
+                      </Text>
+                    </View>
+                  ))}
+                  {review.negativeTags?.map((tag) => (
+                    <View key={tag} style={styles.reviewTagNegative}>
+                      <ThumbsDown size={10} color={theme.colors.error} />
+                      <Text variant="xs" style={{ color: theme.colors.error }}>
+                        {tag}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
               )}
             </View>
-          </TouchableWithoutFeedback>
+          ))}
         </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+      </>
+    );
+  };
+
+  return (
+    <BaseModal
+      visible={visible}
+      onClose={onClose}
+      title={`تقييمات ${userName || 'البائع'}`}
+      maxHeightPercent={90}
+    >
+      {renderContent()}
+    </BaseModal>
   );
 }
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    overlay: {
-      flex: 1,
-      backgroundColor: theme.colors.overlay,
-      justifyContent: 'flex-end',
-    },
-    container: {
-      backgroundColor: theme.colors.bg,
-      borderTopLeftRadius: theme.radius.xl,
-      borderTopRightRadius: theme.radius.xl,
-      maxHeight: '90%',
-    },
-
-    // Header
-    header: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    closeButton: {
-      padding: theme.spacing.xs,
-    },
-    title: {
-      flex: 1,
-      textAlign: 'center',
-    },
-    placeholder: {
-      width: 32,
-    },
-
     // Loading
     loadingContainer: {
       padding: theme.spacing.xl * 2,
@@ -323,11 +282,6 @@ const createStyles = (theme: Theme) =>
     },
     emptyText: {
       textAlign: 'center',
-    },
-
-    // Content
-    content: {
-      padding: theme.spacing.md,
     },
 
     // Overview - Vertical Layout

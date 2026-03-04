@@ -18,7 +18,7 @@ import { Text } from '../slices/Text';
 import { ImageUploadGrid, ImageItem } from '../slices/ImageUploadGrid';
 import { useCreateListingStore } from '../../stores/createListingStore';
 import { useUserAuthStore } from '../../stores/userAuthStore';
-import { getCloudflareImageUrl } from '../../services/cloudflare/images';
+import { getCloudflareImageUrl } from '../../utils/cloudflare-images';
 import { CarInspection, fromBackendFormat, toBackendFormat, DamageReport } from './CarInspection';
 
 // Default limits (used if subscription not loaded)

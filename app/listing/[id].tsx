@@ -50,7 +50,7 @@ import { FavoriteButton } from '../../src/components/listing/FavoriteButton';
 import { ShareButton } from '../../src/components/listing/ShareButton';
 import { ContactSellerModal } from '../../src/components/ContactSellerModal';
 
-import { getCloudflareImageUrl, getResponsiveImageUrl } from '../../src/services/cloudflare/images';
+import { getCloudflareImageUrl, getResponsiveImageUrl } from '../../src/utils/cloudflare-images';
 import { ENV } from '../../src/constants/env';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

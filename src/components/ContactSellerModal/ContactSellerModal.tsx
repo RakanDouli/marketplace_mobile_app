@@ -1,24 +1,21 @@
 /**
  * Contact Seller Modal
  * Modal for sending first message to seller with quick templates
+ * Uses BaseModal for consistent styling
  */
 
 import React, { useState, useMemo } from 'react';
 import {
   View,
   StyleSheet,
-  Modal,
   TouchableOpacity,
   TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { X, Send } from 'lucide-react-native';
+import { Send } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme, Theme } from '../../theme';
-import { Text, Button } from '../slices';
+import { Text, Button, BaseModal } from '../slices';
 import { useChatStore } from '../../stores/chatStore';
 
 const QUICK_MESSAGES = [
@@ -43,7 +40,8 @@ export function ContactSellerModal({
 }: ContactSellerModalProps) {
   const theme = useTheme();
   const router = useRouter();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
 
   const { getOrCreateThread, sendMessage } = useChatStore();
 
@@ -89,174 +87,107 @@ export function ContactSellerModal({
     onClose();
   };
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={handleClose}
-    >
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  // Footer with action buttons
+  const footer = (
+    <View style={styles.actions}>
+      <Button
+        variant="outline"
+        onPress={handleClose}
+        disabled={isSubmitting}
+        style={styles.cancelButton}
       >
-        <TouchableOpacity
-          style={styles.backdrop}
-          activeOpacity={1}
-          onPress={handleClose}
-        />
+        إلغاء
+      </Button>
+      <Button
+        variant="primary"
+        onPress={handleSend}
+        disabled={isSubmitting || !message.trim()}
+        style={styles.sendButton}
+        icon={
+          isSubmitting ? (
+            <ActivityIndicator size="small" color={theme.colors.textInverse} />
+          ) : (
+            <Send size={18} color={theme.colors.textInverse} />
+          )
+        }
+      >
+        {isSubmitting ? 'جاري الإرسال...' : 'إرسال'}
+      </Button>
+    </View>
+  );
 
-        <View style={styles.modalContent}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <X size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-            <View style={styles.headerText}>
-              <Text variant="h4" center>تواصل مع صاحب الإعلان</Text>
-              <Text variant="small" color="secondary" numberOfLines={1} center>
-                {listingTitle}
-              </Text>
-            </View>
-            <View style={styles.placeholder} />
-          </View>
+  return (
+    <BaseModal
+      visible={visible}
+      onClose={handleClose}
+      title="تواصل مع صاحب الإعلان"
+      subtitle={listingTitle}
+      footer={footer}
+    >
+      {/* Quick Messages */}
+      <Text variant="body" color="secondary" style={styles.sectionLabel}>
+        اختر رسالة سريعة أو اكتب رسالتك:
+      </Text>
 
-          <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-            {/* Quick Messages */}
-            <Text variant="body" color="secondary" style={styles.sectionLabel}>
-              اختر رسالة سريعة أو اكتب رسالتك:
-            </Text>
-
-            <View style={styles.templates}>
-              {QUICK_MESSAGES.map((msg, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.templateButton,
-                    selectedTemplate === index && styles.templateButtonSelected,
-                  ]}
-                  onPress={() => handleTemplateSelect(index)}
-                  disabled={isSubmitting}
-                >
-                  <Text
-                    variant="body"
-                    style={[
-                      styles.templateText,
-                      selectedTemplate === index && styles.templateTextSelected,
-                    ]}
-                  >
-                    {msg}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Message Input */}
-            <Text variant="body" weight="medium" style={styles.inputLabel}>
-              رسالتك
-            </Text>
-            <TextInput
-              style={[styles.input, error && styles.inputError]}
-              value={message}
-              onChangeText={(text) => {
-                setMessage(text);
-                setSelectedTemplate(null);
-                setError(null);
-              }}
-              placeholder="اكتب رسالتك هنا..."
-              placeholderTextColor={theme.colors.textMuted}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              editable={!isSubmitting}
-            />
-
-            {error && (
-              <Text variant="small" style={styles.errorText}>
-                {error}
-              </Text>
-            )}
-          </ScrollView>
-
-          {/* Actions */}
-          <View style={styles.actions}>
-            <Button
-              variant="outline"
-              onPress={handleClose}
-              disabled={isSubmitting}
-              style={styles.cancelButton}
+      <View style={styles.templates}>
+        {QUICK_MESSAGES.map((msg, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.templateButton,
+              selectedTemplate === index && styles.templateButtonSelected,
+            ]}
+            onPress={() => handleTemplateSelect(index)}
+            disabled={isSubmitting}
+          >
+            <Text
+              variant="body"
+              style={[
+                styles.templateText,
+                selectedTemplate === index && styles.templateTextSelected,
+              ]}
             >
-              إلغاء
-            </Button>
-            <Button
-              variant="primary"
-              onPress={handleSend}
-              disabled={isSubmitting || !message.trim()}
-              style={styles.sendButton}
-              icon={
-                isSubmitting ? (
-                  <ActivityIndicator size="small" color={theme.colors.textInverse} />
-                ) : (
-                  <Send size={18} color={theme.colors.textInverse} />
-                )
-              }
-            >
-              {isSubmitting ? 'جاري الإرسال...' : 'إرسال'}
-            </Button>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+              {msg}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Message Input */}
+      <Text variant="body" weight="medium" style={styles.inputLabel}>
+        رسالتك
+      </Text>
+      <TextInput
+        style={[styles.input, error && styles.inputError]}
+        value={message}
+        onChangeText={(text) => {
+          setMessage(text);
+          setSelectedTemplate(null);
+          setError(null);
+        }}
+        placeholder="اكتب رسالتك هنا..."
+        placeholderTextColor={theme.colors.textMuted}
+        multiline
+        numberOfLines={4}
+        textAlignVertical="top"
+        editable={!isSubmitting}
+      />
+
+      {error && (
+        <Text variant="small" style={styles.errorText}>
+          {error}
+        </Text>
+      )}
+    </BaseModal>
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, isRTL: boolean) =>
   StyleSheet.create({
-    overlay: {
-      flex: 1,
-      justifyContent: 'flex-end',
-    },
-    backdrop: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: theme.colors.overlay,
-    },
-    modalContent: {
-      backgroundColor: theme.colors.bg,
-      borderTopLeftRadius: theme.radius.xl,
-      borderTopRightRadius: theme.radius.xl,
-      maxHeight: '80%',
-    },
-
-    // Header
-    header: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    closeButton: {
-      padding: theme.spacing.xs,
-      width: 40,
-    },
-    headerText: {
-      flex: 1,
-      alignItems: 'center',
-    },
-    placeholder: {
-      width: 40,
-    },
-
-    // Body
-    body: {
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-    },
+    // Section label
     sectionLabel: {
       marginBottom: theme.spacing.md,
-      textAlign: theme.isRTL ? 'right' : 'left',
+      textAlign: isRTL ? 'right' : 'left',
     },
 
     // Templates
@@ -278,7 +209,7 @@ const createStyles = (theme: Theme) =>
     },
     templateText: {
       color: theme.colors.text,
-      textAlign: theme.isRTL ? 'right' : 'left',
+      textAlign: isRTL ? 'right' : 'left',
     },
     templateTextSelected: {
       color: theme.colors.primary,
@@ -287,7 +218,7 @@ const createStyles = (theme: Theme) =>
     // Input
     inputLabel: {
       marginBottom: theme.spacing.sm,
-      textAlign: theme.isRTL ? 'right' : 'left',
+      textAlign: isRTL ? 'right' : 'left',
     },
     input: {
       minHeight: 120,
@@ -300,7 +231,7 @@ const createStyles = (theme: Theme) =>
       fontFamily: theme.fontFamily.body,
       fontSize: theme.fontSize.body,
       color: theme.colors.text,
-      textAlign: theme.isRTL ? 'right' : 'left',
+      textAlign: isRTL ? 'right' : 'left',
     },
     inputError: {
       borderColor: theme.colors.error,
@@ -308,16 +239,12 @@ const createStyles = (theme: Theme) =>
     errorText: {
       color: theme.colors.error,
       marginTop: theme.spacing.xs,
-      textAlign: theme.isRTL ? 'right' : 'left',
+      textAlign: isRTL ? 'right' : 'left',
     },
 
-    // Actions
+    // Actions (footer)
     actions: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-      borderTopWidth: 1,
-      borderTopColor: theme.colors.border,
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
     },
     cancelButton: {

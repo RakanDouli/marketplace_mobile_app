@@ -38,7 +38,7 @@ import {
 } from '../../lib/validation/listingValidation';
 import { useCategoriesStore } from '../categoriesStore';
 import { useUserAuthStore } from '../userAuthStore';
-import { getCloudflareImageUrl } from '../../services/cloudflare/images';
+import { getCloudflareImageUrl } from '../../utils/cloudflare-images';
 import { ENV } from '../../constants/env';
 import type {
   CreateListingStore,

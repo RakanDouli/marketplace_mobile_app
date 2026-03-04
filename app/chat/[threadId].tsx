@@ -49,7 +49,7 @@ import { useTheme, Theme } from '../../src/theme';
 import { Text, Loading, Dropdown, DropdownMenuItem, DropdownSeparator, ImagePreviewModal } from '../../src/components/slices';
 import { useChatStore, ChatMessage, ChatThread } from '../../src/stores/chatStore';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
-import { getCloudflareImageUrl } from '../../src/services/cloudflare/images';
+import { getCloudflareImageUrl } from '../../src/utils/cloudflare-images';
 import { formatRelativeTime } from '../../src/utils';
 import {
   BlockUserModal,

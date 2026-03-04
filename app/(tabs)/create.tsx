@@ -22,10 +22,11 @@ function renderCategoryIcon(iconSvg: string | undefined, size: number, color: st
   if (!iconSvg) return <LayoutGrid size={size} color={color} />;
 
   // Style the SVG with correct size and color
+  // Replace currentColor with the actual color (same pattern as CategoryCard)
   const styledSvg = iconSvg
     .replace(/<svg/, `<svg width="${size}" height="${size}"`)
-    .replace(/stroke="[^"]*"/g, `stroke="${color}"`)
-    .replace(/fill="[^"]*"/g, 'fill="none"');
+    .replace(/stroke="currentColor"/g, `stroke="${color}"`)
+    .replace(/fill="currentColor"/g, `fill="${color}"`);
 
   try {
     return <SvgXml xml={styledSvg} width={size} height={size} />;
@@ -119,7 +120,6 @@ export default function CreateListingScreen() {
             <ListItem
               key={category.id}
               label={category.nameAr || category.name}
-              subtitle={category.name}
               icon={renderCategoryIcon(category.icon, 24, theme.colors.primary)}
               onPress={() => handleCategorySelect(category)}
               showArrow

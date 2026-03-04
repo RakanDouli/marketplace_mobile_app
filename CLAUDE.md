@@ -1139,3 +1139,535 @@ onPress={() => {
 - 🟡 In Progress
 - 🔲 Pending
 - ❌ Blocked
+
+---
+
+## 🔐 AUTHENTICATION SYSTEM - COMPREHENSIVE PLAN
+
+### Current State Analysis (March 2026)
+
+#### Mobile App (Native React Native)
+| Feature | Status | Implementation |
+|---------|--------|----------------|
+| Login | ✅ Complete | Native (email/password + Google OAuth) |
+| Register | ✅ Complete | Native (email confirmation flow) |
+| Forgot Password | ✅ Complete | Native (sends reset email) |
+| Edit Profile | 🟡 Partial | UI built, save logic TODO |
+| Change Email | ❌ Missing | Not implemented |
+| Change Password | ❌ Missing | No screen after login |
+| OTP Login | ⚠️ Ready | Backend ready, no UI |
+
+#### Web Frontend (Reference)
+| Feature | Status | Implementation |
+|---------|--------|----------------|
+| Login | ✅ Complete | Modal-based |
+| Register | ✅ Complete | With email confirmation |
+| Forgot Password | ✅ Complete | Modal + reset page |
+| Reset Password | ✅ Complete | `/auth/reset-password` page |
+| Edit Profile | ✅ Complete | Full profile editing with modals |
+| Change Email | ✅ Complete | With password verification |
+| Change Password | ✅ Complete | Via email reset link |
+| Mobile WebView | ✅ Ready | `/mobile-auth` token injection |
+
+---
+
+### Architecture Decision: Hybrid Approach
+
+**Keep Native (Already Working Well):**
+- Login (email/password + Google OAuth)
+- Register (with email confirmation)
+- Forgot Password (sends reset email)
+
+**Use WebView (Complex Flows):**
+- Reset Password → User clicks email link → Goes to web page (already works)
+- Change Email → Open WebView to `/dashboard/profile`
+- Full Profile Edit → Open WebView to `/dashboard/profile`
+
+**Why This Approach?**
+1. Login/Register/Forgot Password are already native and working - no need to change
+2. Reset Password link from email already goes to web page - no mobile UI needed
+3. Change Email requires password verification + email confirmation - complex flow best handled by web
+4. Edit Profile on web has all modals ready - avatar upload, business info, preferences
+5. Reduces code duplication and maintenance burden
+
+---
+
+### Implementation Tasks
+
+#### Task 1: Complete Edit Profile Save (Native) - 1-2 hours
+
+**File:** `app/(tabs)/menu/edit-profile.tsx`
+
+**Current State:** UI built with name, avatar, phone fields. Save button does nothing.
+
+**Implementation:**
+```typescript
+// Add to userAuthStore.ts
+updateProfile: async (updates: UpdateProfileInput) => {
+  set({ isLoading: true, error: null });
+  try {
+    const result = await authGraphqlRequest(UPDATE_PROFILE_MUTATION, { input: updates });
+    set({ profile: result.updateProfile, isLoading: false });
+    return true;
+  } catch (error) {
+    set({ error: translateError(error), isLoading: false });
+    return false;
+  }
+},
+
+// GraphQL mutation
+const UPDATE_PROFILE_MUTATION = gql`
+  mutation UpdateProfile($input: UpdateProfileInput!) {
+    updateProfile(input: $input) {
+      id
+      name
+      phone
+      avatar
+      # ... other fields
+    }
+  }
+`;
+
+// Edit profile screen - add save handler
+const handleSave = async () => {
+  const success = await updateProfile({
+    name: formData.name,
+    phone: formData.phone,
+    // Add other fields as needed
+  });
+
+  if (success) {
+    Alert.alert('نجاح', 'تم حفظ التغييرات بنجاح');
+    router.back();
+  }
+};
+```
+
+**Fields to Support:**
+- Name (الاسم)
+- Phone (رقم الهاتف)
+- Avatar (الصورة الشخصية) - Use image picker + upload
+
+---
+
+#### Task 2: Create Authenticated WebView Component - 1 hour
+
+**File:** `src/components/AuthenticatedWebView/AuthenticatedWebView.tsx`
+
+**Purpose:** Reusable WebView that injects auth tokens for authenticated web pages.
+
+```typescript
+// src/components/AuthenticatedWebView/AuthenticatedWebView.tsx
+import React, { useState, useRef, useCallback } from 'react';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { WebView, WebViewNavigation } from 'react-native-webview';
+import { useRouter } from 'expo-router';
+import { useUserAuthStore } from '../../stores/userAuthStore';
+import { useTheme } from '../../theme';
+import { Text } from '../slices/Text';
+import { Button } from '../slices/Button';
+import { ENV } from '../../constants/env';
+
+interface AuthenticatedWebViewProps {
+  path: string; // e.g., '/dashboard/profile'
+  title?: string;
+  onClose?: () => void;
+  allowedHosts?: string[]; // Whitelist of hosts to allow navigation
+}
+
+export const AuthenticatedWebView: React.FC<AuthenticatedWebViewProps> = ({
+  path,
+  title,
+  onClose,
+  allowedHosts = ['shambay.com', 'staging.shambay.com', 'localhost'],
+}) => {
+  const theme = useTheme();
+  const router = useRouter();
+  const webViewRef = useRef<WebView>(null);
+  const { session } = useUserAuthStore();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Build URL with token injection
+  const buildUrl = useCallback(() => {
+    const baseUrl = ENV.WEB_URL || 'https://staging.shambay.com';
+    const accessToken = session?.access_token;
+    const refreshToken = session?.refresh_token;
+
+    if (!accessToken || !refreshToken) {
+      setError('لم يتم العثور على جلسة صالحة');
+      return null;
+    }
+
+    // Use mobile-auth endpoint for token injection
+    const encodedAccess = encodeURIComponent(accessToken);
+    const encodedRefresh = encodeURIComponent(refreshToken);
+    const encodedRedirect = encodeURIComponent(path);
+
+    return `${baseUrl}/mobile-auth?access_token=${encodedAccess}&refresh_token=${encodedRefresh}&redirect=${encodedRedirect}`;
+  }, [session, path]);
+
+  // Handle navigation state changes
+  const handleNavigationStateChange = (navState: WebViewNavigation) => {
+    const url = new URL(navState.url);
+
+    // Check if navigation is to allowed host
+    const isAllowed = allowedHosts.some(host => url.hostname.includes(host));
+    if (!isAllowed) {
+      webViewRef.current?.stopLoading();
+      return;
+    }
+
+    // Check for close signal (e.g., user navigates to success page)
+    if (navState.url.includes('/mobile-close') || navState.url.includes('?close=true')) {
+      onClose?.();
+      router.back();
+    }
+  };
+
+  const url = buildUrl();
+
+  if (error || !url) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.bg }]}>
+        <Text variant="h3" style={{ textAlign: 'center', marginBottom: theme.spacing.md }}>
+          {error || 'حدث خطأ'}
+        </Text>
+        <Button onPress={() => router.back()}>العودة</Button>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.colors.bg }]}>
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text variant="body" style={{ marginTop: theme.spacing.sm }}>
+            جاري التحميل...
+          </Text>
+        </View>
+      )}
+
+      <WebView
+        ref={webViewRef}
+        source={{ uri: url }}
+        style={styles.webview}
+        onLoadStart={() => setIsLoading(true)}
+        onLoadEnd={() => setIsLoading(false)}
+        onError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          setError(`فشل التحميل: ${nativeEvent.description}`);
+        }}
+        onNavigationStateChange={handleNavigationStateChange}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={true}
+        scalesPageToFit={true}
+        allowsBackForwardNavigationGestures={true}
+        // Security settings
+        originWhitelist={allowedHosts.map(h => `https://${h}/*`)}
+        mixedContentMode="compatibility"
+        // Arabic RTL support
+        textZoom={100}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  webview: {
+    flex: 1,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    zIndex: 1,
+  },
+});
+```
+
+---
+
+#### Task 3: Create WebView Screen Routes - 30 min
+
+**Files to Create:**
+
+```typescript
+// app/webview/profile.tsx
+import { AuthenticatedWebView } from '../../src/components/AuthenticatedWebView';
+import { Stack } from 'expo-router';
+
+export default function ProfileWebView() {
+  return (
+    <>
+      <Stack.Screen options={{ title: 'الحساب', headerShown: true }} />
+      <AuthenticatedWebView path="/dashboard/profile" title="إعدادات الحساب" />
+    </>
+  );
+}
+
+// app/webview/change-email.tsx
+import { AuthenticatedWebView } from '../../src/components/AuthenticatedWebView';
+import { Stack } from 'expo-router';
+
+export default function ChangeEmailWebView() {
+  return (
+    <>
+      <Stack.Screen options={{ title: 'تغيير البريد الإلكتروني', headerShown: true }} />
+      <AuthenticatedWebView path="/dashboard/profile?action=change-email" title="تغيير البريد" />
+    </>
+  );
+}
+
+// app/webview/subscriptions.tsx
+import { AuthenticatedWebView } from '../../src/components/AuthenticatedWebView';
+import { Stack } from 'expo-router';
+
+export default function SubscriptionsWebView() {
+  return (
+    <>
+      <Stack.Screen options={{ title: 'الاشتراكات', headerShown: true }} />
+      <AuthenticatedWebView path="/dashboard/subscriptions" title="الاشتراكات" />
+    </>
+  );
+}
+```
+
+---
+
+#### Task 4: Add Change Password Button - 30 min
+
+**Location:** `app/(tabs)/menu/edit-profile.tsx` or Menu screen
+
+**Implementation:**
+```typescript
+// Add to edit-profile.tsx or account settings
+
+const handleChangePassword = async () => {
+  Alert.alert(
+    'تغيير كلمة المرور',
+    'سيتم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
+    [
+      { text: 'إلغاء', style: 'cancel' },
+      {
+        text: 'إرسال',
+        onPress: async () => {
+          try {
+            await resetPassword(profile?.email);
+            Alert.alert('نجاح', 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني');
+          } catch (error) {
+            Alert.alert('خطأ', 'فشل إرسال رابط إعادة التعيين');
+          }
+        },
+      },
+    ]
+  );
+};
+
+// In render:
+<Button
+  variant="outline"
+  onPress={handleChangePassword}
+  style={{ marginTop: theme.spacing.md }}
+>
+  تغيير كلمة المرور
+</Button>
+```
+
+---
+
+#### Task 5: Update Menu/Profile Screen with New Options - 1 hour
+
+**Location:** `app/(tabs)/menu/index.tsx` or profile screen
+
+**Add Menu Items:**
+```typescript
+const menuItems = [
+  {
+    title: 'تعديل الملف الشخصي',
+    icon: User,
+    onPress: () => router.push('/(tabs)/menu/edit-profile'),
+  },
+  {
+    title: 'تغيير البريد الإلكتروني',
+    icon: Mail,
+    onPress: () => router.push('/webview/change-email'),
+  },
+  {
+    title: 'تغيير كلمة المرور',
+    icon: Lock,
+    onPress: handleChangePassword,
+  },
+  {
+    title: 'إعدادات الحساب المتقدمة',
+    icon: Settings,
+    onPress: () => router.push('/webview/profile'),
+    subtitle: 'معلومات العمل، إعدادات الخصوصية',
+  },
+  {
+    title: 'الاشتراكات',
+    icon: CreditCard,
+    onPress: () => router.push('/webview/subscriptions'),
+  },
+  // ... other menu items
+];
+```
+
+---
+
+### Web Frontend Updates Required
+
+#### Task 6: Add Mobile Close Handler - 30 min
+
+**Location:** `marketplace-frontend/components/dashboard/PersonalInfoPanel/`
+
+**Add close signal for mobile WebView:**
+```typescript
+// In success handlers of modals (ChangeEmailModal, EditProfileModal, etc.)
+
+const handleSuccess = () => {
+  // Check if opened from mobile app
+  const urlParams = new URLSearchParams(window.location.search);
+  const isMobileWebView = urlParams.get('mobile') === 'true';
+
+  if (isMobileWebView) {
+    // Signal mobile app to close WebView
+    window.location.href = '/mobile-close';
+  } else {
+    // Normal web behavior
+    closeModal();
+    refreshUserData();
+  }
+};
+```
+
+#### Task 7: Add Action Query Parameter Handler - 30 min
+
+**Location:** `marketplace-frontend/app/dashboard/profile/page.tsx`
+
+**Auto-open specific modal based on URL:**
+```typescript
+// In profile page useEffect
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get('action');
+
+  if (action === 'change-email') {
+    // Auto-open change email modal
+    setShowChangeEmailModal(true);
+  } else if (action === 'edit-profile') {
+    setShowEditProfileModal(true);
+  }
+}, []);
+```
+
+---
+
+### Testing Checklist
+
+#### Native Flows (Keep Working)
+- [ ] Login with email/password
+- [ ] Login with Google OAuth
+- [ ] Register new account
+- [ ] Forgot password (request reset email)
+- [ ] Dev credentials picker (dev mode)
+- [ ] Ban/suspension validation on login
+- [ ] Auto-logout on token expiration
+
+#### Hybrid Flows (New)
+- [ ] Edit profile save (native) - name, phone
+- [ ] Change password button sends reset email
+- [ ] Change email opens WebView → completes flow → closes
+- [ ] Full profile edit WebView → saves → closes
+- [ ] Subscriptions WebView works correctly
+- [ ] WebView token injection works
+- [ ] WebView handles offline gracefully
+
+#### Edge Cases
+- [ ] Session expired during WebView use
+- [ ] Network disconnection during WebView
+- [ ] Back button behavior in WebView
+- [ ] Deep link handling after WebView closes
+
+---
+
+### File Structure After Implementation
+
+```
+marketplace-mobile/
+├── app/
+│   ├── auth/
+│   │   ├── login.tsx              ✅ (existing)
+│   │   ├── register.tsx           ✅ (existing)
+│   │   └── forgot-password.tsx    ✅ (existing)
+│   ├── webview/                   🆕 (new folder)
+│   │   ├── profile.tsx            🆕 Full account settings
+│   │   ├── change-email.tsx       🆕 Change email flow
+│   │   └── subscriptions.tsx      🆕 Subscription management
+│   └── (tabs)/
+│       └── menu/
+│           ├── index.tsx          📝 (update with new options)
+│           └── edit-profile.tsx   📝 (complete save logic)
+└── src/
+    ├── components/
+    │   └── AuthenticatedWebView/  🆕 (new component)
+    │       └── AuthenticatedWebView.tsx
+    └── stores/
+        └── userAuthStore.ts       📝 (add updateProfile)
+```
+
+---
+
+### Estimated Time
+
+| Task | Time |
+|------|------|
+| 1. Complete Edit Profile Save | 1-2 hours |
+| 2. Create AuthenticatedWebView Component | 1 hour |
+| 3. Create WebView Screen Routes | 30 min |
+| 4. Add Change Password Button | 30 min |
+| 5. Update Menu with New Options | 1 hour |
+| 6. Web: Mobile Close Handler | 30 min |
+| 7. Web: Action Query Parameter | 30 min |
+| 8. Testing | 1-2 hours |
+| **Total** | **6-8 hours** |
+
+---
+
+### Dependencies
+
+**Mobile App:**
+```bash
+npx expo install react-native-webview
+```
+
+**Already Installed:**
+- expo-secure-store (for token storage)
+- @react-native-async-storage/async-storage
+
+---
+
+### Security Considerations
+
+1. **Token Injection:** Only inject tokens to whitelisted domains (shambay.com, staging.shambay.com)
+2. **WebView Isolation:** Disable JavaScript for untrusted content
+3. **Navigation Guard:** Block navigation to external sites
+4. **Token Refresh:** Handle token refresh in WebView gracefully
+5. **Secure Storage:** Tokens stored in SecureStore (not AsyncStorage)
+
+---
+
+### Future Enhancements (Post-MVP)
+
+1. **OTP Login:** Add native OTP entry screen (backend already supports)
+2. **Biometric Auth:** Use fingerprint/face ID for quick login
+3. **Social Login:** Add Apple Sign-In (required for iOS App Store)
+4. **Session Management:** Show active sessions, allow logout from other devices
+5. **2FA:** Two-factor authentication support

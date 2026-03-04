@@ -19,7 +19,7 @@ import { ListingCard } from '../../../src/components/listing';
 import { useWishlistStore, WishlistListing } from '../../../src/stores/wishlistStore';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
 import { useCurrencyStore } from '../../../src/stores/currencyStore';
-import { getListingImageUrl } from '../../../src/services/cloudflare/images';
+import { getListingImageUrl } from '../../../src/utils/cloudflare-images';
 import { formatPrice } from '../../../src/utils/formatPrice';
 
 export default function WishlistScreen() {

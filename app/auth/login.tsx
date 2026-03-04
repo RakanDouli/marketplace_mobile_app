@@ -1,6 +1,6 @@
 /**
  * Login Screen
- * User authentication with email/password and Google OAuth
+ * User authentication with Email and Password
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -14,11 +14,11 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { ChevronDown } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
 import { Text, Button, Input, Form } from '../../src/components/slices';
-import { LogoIcon } from '../../src/components/icons';
+import { LogoIcon, GoogleIcon } from '../../src/components/icons';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
 
 // Development credentials from backend seed
@@ -77,18 +77,28 @@ const validatePassword = (password: string): string | undefined => {
 export default function LoginScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { signIn, signInWithGoogle, isLoading, error, clearError } = useUserAuthStore();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const {
+    signIn,
+    signInWithGoogle,
+    isLoading,
+    error,
+    clearError,
+  } = useUserAuthStore();
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
 
   // Show dev credentials in development (not production)
   const showDevCredentials = __DEV__;
 
+  // Dev credentials state
   const [selectedOption, setSelectedOption] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
+
+  // Form state
   const [email, setEmail] = useState(showDevCredentials ? DEV_CREDENTIALS[0].email : '');
   const [password, setPassword] = useState(showDevCredentials ? DEV_CREDENTIALS[0].password : '');
 
-  // Update form when option changes
+  // Update form when dev option changes
   useEffect(() => {
     if (showDevCredentials) {
       const option = DEV_CREDENTIALS[selectedOption];
@@ -112,8 +122,8 @@ export default function LoginScreen() {
     }
   };
 
+  // Password login
   const handleLogin = async () => {
-    // Validate before submit
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
     if (emailError || passwordError) return;
@@ -128,11 +138,11 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     clearError();
     await signInWithGoogle();
-    // OAuth will redirect, handled by deep linking
   };
 
-  // Check if form is valid for enabling button
-  const isFormValid = !validateEmail(email) && !validatePassword(password);
+  // Form validation
+  const isEmailValid = !validateEmail(email);
+  const isFormValid = isEmailValid && !validatePassword(password);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -145,111 +155,114 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo */}
+          {/* Logo Header */}
           <View style={styles.logoContainer}>
+            <Text variant="h2" style={styles.logoTextAr}>شام باي</Text>
             <View style={styles.logoIcon}>
-              <LogoIcon width={32} height={32} color={theme.colors.textInverse} />
+              <LogoIcon width={28} height={28} color={theme.colors.textInverse} />
             </View>
-            <Text variant="h2">شام باي</Text>
+            <Text variant="h2" style={styles.logoTextEn}>Shambay</Text>
           </View>
 
-          <Text variant="h3" center style={styles.title}>تسجيل الدخول</Text>
-          <Text variant="paragraph" center color="secondary" style={styles.subtitle}>
-            مرحباً بعودتك! سجل دخولك للمتابعة
-          </Text>
-
-          {/* Dev Credentials Selector */}
-          {showDevCredentials && (
-            <View style={styles.devSelector}>
-              <Text variant="small" style={styles.devLabel}>
-                اختر حساب من قاعدة البيانات:
-              </Text>
-              <TouchableOpacity
-                style={styles.devPickerButton}
-                onPress={() => setShowPicker(true)}
-                disabled={isLoading}
-              >
-                <Text variant="body">{DEV_CREDENTIALS[selectedOption].name}</Text>
-                <ChevronDown size={20} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Google Sign In Button */}
-          <TouchableOpacity
-            style={styles.googleButton}
-            onPress={handleGoogleLogin}
-            disabled={isLoading}
-          >
-            <View style={styles.googleIconContainer}>
-              <Text style={styles.googleIconText}>G</Text>
-            </View>
-            <Text variant="body" style={styles.googleButtonText}>
-              تسجيل الدخول بجوجل
+          {/* Form Card */}
+          <View style={styles.card}>
+            <Text variant="h3" center style={styles.title}>تسجيل الدخول</Text>
+            <Text variant="paragraph" center color="secondary" style={styles.subtitle}>
+              مرحباً بعودتك! سجل دخولك للمتابعة
             </Text>
-          </TouchableOpacity>
 
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
-            <Text variant="small" color="muted" style={styles.dividerText}>أو</Text>
-            <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
-          </View>
-
-          {/* Form with validation */}
-          <Form error={error ?? undefined}>
-            <Input
-              label="البريد الإلكتروني"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="example@email.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              validate={validateEmail}
-              required
-              editable={!isLoading}
-            />
-
-            <Input
-              label="كلمة المرور"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              secureTextEntry
-              validate={validatePassword}
-              required
-              editable={!isLoading}
-            />
-
-            <Link href="/auth/forgot-password" asChild>
-              <TouchableOpacity style={styles.forgotPassword}>
-                <Text variant="small" style={{ color: theme.colors.primary }}>
-                  نسيت كلمة المرور؟
+            {/* Dev Credentials Selector */}
+            {showDevCredentials && (
+              <View style={styles.devSelector}>
+                <Text variant="small" style={styles.devLabel}>
+                  اختر حساب من قاعدة البيانات:
                 </Text>
-              </TouchableOpacity>
-            </Link>
+                <TouchableOpacity
+                  style={styles.devPickerButton}
+                  onPress={() => setShowPicker(true)}
+                  disabled={isLoading}
+                >
+                  <Text variant="body">{DEV_CREDENTIALS[selectedOption].name}</Text>
+                  <ChevronDown size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            )}
 
+            {/* Login Form */}
+            <Form error={error ?? undefined}>
+              <Input
+                label="البريد الإلكتروني"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="example@email.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                validate={validateEmail}
+                required
+                editable={!isLoading}
+              />
+
+              <Input
+                label="كلمة المرور"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                secureTextEntry
+                validate={validatePassword}
+                required
+                editable={!isLoading}
+              />
+
+              <View style={styles.forgotPassword}>
+                <TouchableOpacity
+                  onPress={() => router.push('/auth/forgot-password')}
+                >
+                  <Text variant="small" style={styles.forgotPasswordLink}>
+                    نسيت كلمة المرور؟
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Button
+                onPress={handleLogin}
+                loading={isLoading}
+                disabled={!isFormValid}
+                style={styles.button}
+              >
+                تسجيل الدخول
+              </Button>
+            </Form>
+
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text variant="small" color="muted" style={styles.dividerText}>أو</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Google Sign In Button */}
             <Button
-              onPress={handleLogin}
-              loading={isLoading}
-              disabled={!isFormValid}
-              style={styles.button}
+              variant="outline"
+              onPress={handleGoogleLogin}
+              disabled={isLoading}
+              icon={<GoogleIcon width={20} height={20} />}
+              style={styles.googleButton}
             >
-              تسجيل الدخول
+              تسجيل الدخول بجوجل
             </Button>
-          </Form>
 
-          {/* Register Link */}
-          <View style={styles.registerContainer}>
-            <Text variant="paragraph" color="secondary">ليس لديك حساب؟ </Text>
-            <Link href="/auth/register" asChild>
-              <TouchableOpacity>
-                <Text variant="paragraph" style={{ color: theme.colors.primary }}>
-                  سجل الآن
-                </Text>
-              </TouchableOpacity>
-            </Link>
+            {/* Register Link */}
+            <TouchableOpacity
+              style={styles.registerContainer}
+              onPress={() => router.push('/auth/register')}
+              activeOpacity={0.7}
+            >
+              <Text variant="paragraph" color="secondary">ليس لديك حساب؟ </Text>
+              <Text variant="paragraph" style={styles.registerLink}>
+                سجل الآن
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -279,7 +292,7 @@ export default function LoginScreen() {
               >
                 <Text
                   variant="body"
-                  style={selectedOption === index ? { color: theme.colors.primary } : undefined}
+                  style={selectedOption === index ? styles.selectedOptionText : undefined}
                 >
                   {option.name}
                 </Text>
@@ -295,11 +308,11 @@ export default function LoginScreen() {
   );
 }
 
-const createStyles = (theme: ReturnType<typeof useTheme>) =>
+const createStyles = (theme: ReturnType<typeof useTheme>, isRTL: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.bg,
+      backgroundColor: theme.colors.bgPrimary,
     },
     keyboardView: {
       flex: 1,
@@ -314,7 +327,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: theme.spacing.sm,
-      marginBottom: theme.spacing.xl,
+      marginBottom: theme.spacing.lg,
     },
     logoIcon: {
       width: 48,
@@ -323,6 +336,19 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       backgroundColor: theme.colors.primary,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    logoTextAr: {
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    logoTextEn: {
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    card: {
+      backgroundColor: theme.colors.bg,
+      borderRadius: theme.radius.xl,
+      padding: theme.spacing.lg,
     },
     title: {
       marginBottom: theme.spacing.xs,
@@ -355,31 +381,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     },
     // Google button
     googleButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.colors.surface,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderRadius: theme.radius.md,
-      padding: theme.spacing.md,
-      gap: theme.spacing.sm,
-    },
-    googleIconContainer: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      backgroundColor: '#4285F4',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    googleIconText: {
-      color: '#FFFFFF',
-      fontSize: 14,
-      fontWeight: '700',
-    },
-    googleButtonText: {
-      color: theme.colors.text,
+      marginBottom: theme.spacing.sm,
     },
     // Divider
     divider: {
@@ -390,13 +392,19 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     dividerLine: {
       flex: 1,
       height: 1,
+      backgroundColor: theme.colors.border,
     },
     dividerText: {
       marginHorizontal: theme.spacing.md,
     },
+    // Common
     forgotPassword: {
-      alignSelf: 'flex-end',
+      width: '100%',
+      alignItems: isRTL ? 'flex-start' : 'flex-end',
       marginBottom: theme.spacing.sm,
+    },
+    forgotPasswordLink: {
+      color: theme.colors.primary,
     },
     button: {
       marginTop: theme.spacing.sm,
@@ -405,6 +413,9 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       flexDirection: 'row',
       justifyContent: 'center',
       marginTop: theme.spacing.xl,
+    },
+    registerLink: {
+      color: theme.colors.primary,
     },
     // Modal
     modalOverlay: {
@@ -431,5 +442,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     },
     modalOptionSelected: {
       backgroundColor: theme.colors.primaryLight,
+    },
+    selectedOptionText: {
+      color: theme.colors.primary,
     },
   });

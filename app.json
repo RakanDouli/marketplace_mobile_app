@@ -45,7 +45,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "نحتاج إلى موقعك لإنشاء رابط خريطة Google لإعلانك"
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

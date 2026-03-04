@@ -82,6 +82,12 @@ export { Dropdown, DropdownMenuItem, DropdownSeparator } from './Dropdown';
 export type { DropdownProps, DropdownMenuItemProps } from './Dropdown';
 
 // Modal
+export { BaseModal } from './BaseModal';
+export type { BaseModalProps } from './BaseModal';
+
+export { BottomSheet } from './BottomSheet';
+export type { BottomSheetProps } from './BottomSheet';
+
 export { ImagePreviewModal } from './ImagePreviewModal';
 export type { ImagePreviewModalProps } from './ImagePreviewModal';
 

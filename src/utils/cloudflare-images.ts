@@ -1,201 +1,248 @@
 /**
- * Cloudflare Images Utilities
- *
- * Handles image URL generation for Cloudflare Images CDN.
- * All listing images are stored on Cloudflare and served via their CDN.
+ * Cloudflare Images utility functions for mobile app
+ * Matches web frontend: marketplace-frontend/utils/cloudflare-images.ts
  */
 
-import { ENV } from "../constants/env";
+import { ENV } from '../constants/env';
 
-// Image variants defined in Cloudflare dashboard
-type ImageVariant =
-  | "public"      // Original size
-  | "thumbnail"   // 150x150
-  | "card"        // 400x300
-  | "gallery"     // 800x600
-  | "detail"      // 1200x900
-  | "avatar"      // 128x128 circle
-  | "avatar_lg"   // 256x256 circle
-  | "chat";       // 64x64
+// Named variants configured in Cloudflare dashboard
+// These map to pre-configured dimensions in Cloudflare
+export type CloudflareVariant =
+  | 'public'      // 1366x768 - default
+  | 'card'        // 400x300 - grid view cards
+  | 'small'       // 300x200 - list view
+  | 'large'       // 800x600 - detail view
+  | 'thumbnail'   // 150x150 - tiny previews, avatars
+  | 'mobile'      // 360x270 - mobile optimized
+  | 'tablet'      // 768x576 - tablet optimized
+  | 'desktop'     // 1200x900 - desktop optimized
+  | 'blur';       // blur placeholder
+
+// UUID pattern for detecting Cloudflare image IDs
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Generate Cloudflare image URL from image key
- *
- * @param imageKey The unique image identifier (stored in database)
- * @param variant The image variant/size to use
- * @returns Full Cloudflare image URL
- *
- * Example:
- * getImageUrl("abc123", "card")
- * → "https://imagedelivery.net/yvE6_nYkmBMTwQORcLcTkA/abc123/card"
+ * Check if a string is a valid Cloudflare image ID (UUID format)
  */
-export function getImageUrl(
-  imageKey: string | null | undefined,
-  variant: ImageVariant = "public"
+export function isCloudflareImageId(imageId: string): boolean {
+  return UUID_PATTERN.test(imageId);
+}
+
+/**
+ * Generate Cloudflare Images URL with named variant
+ * Format: https://imagedelivery.net/{account_hash}/{image_id}/{variant}
+ */
+export function getCloudflareImageUrl(
+  imageId: string,
+  variant: CloudflareVariant = 'public'
 ): string {
-  if (!imageKey) {
-    return getPlaceholderUrl(variant);
+  if (!imageId) {
+    return '';
+  }
+
+  const domain = ENV.CLOUDFLARE_DOMAIN;
+  const hash = ENV.CLOUDFLARE_ACCOUNT_HASH;
+
+  if (!domain || !hash) {
+    return '';
   }
 
   // If already a full URL, return as-is
-  if (imageKey.startsWith("http")) {
-    return imageKey;
+  if (imageId.startsWith('http://') || imageId.startsWith('https://')) {
+    // If it's a Cloudflare URL, update the variant
+    if (imageId.includes('imagedelivery.net')) {
+      const parts = imageId.split('/');
+      parts[parts.length - 1] = variant;
+      return parts.join('/');
+    }
+    return imageId;
   }
 
-  return `https://${ENV.CLOUDFLARE_DOMAIN}/${ENV.CLOUDFLARE_ACCOUNT_HASH}/${imageKey}/${variant}`;
+  // Build URL with named variant
+  return `https://${domain}/${hash}/${imageId}/${variant}`;
 }
 
 /**
- * Generate placeholder image URL based on variant
+ * Get optimized listing image URL
+ * @param imageId - Cloudflare image ID or full URL
+ * @param size - Predefined size variant
  */
-export function getPlaceholderUrl(variant: ImageVariant = "public"): string {
-  // Using a simple placeholder service
-  const sizes: Record<ImageVariant, string> = {
-    public: "800x600",
-    thumbnail: "150x150",
-    card: "400x300",
-    gallery: "800x600",
-    detail: "1200x900",
-    avatar: "128x128",
-    avatar_lg: "256x256",
-    chat: "64x64",
-  };
-
-  const size = sizes[variant];
-  return `https://via.placeholder.com/${size}/e2e8f0/64748b?text=No+Image`;
+export function getListingImageUrl(
+  imageId: string,
+  size: 'thumbnail' | 'card' | 'small' | 'large' | 'mobile' | 'public' = 'card'
+): string {
+  return getCloudflareImageUrl(imageId, size);
 }
 
 /**
- * Optimize listing image for card display
- *
- * @param imageKey Image key or array of keys
- * @returns Optimized URL for card display
+ * Get optimized avatar image URL
+ * @param imageId - Cloudflare image ID
+ * Uses 'thumbnail' variant (150x150) which exists in Cloudflare
+ */
+export function getAvatarImageUrl(imageId: string): string {
+  return getCloudflareImageUrl(imageId, 'thumbnail');
+}
+
+/**
+ * Get responsive image URLs for different screen sizes
+ */
+export function getResponsiveImageUrls(imageId: string): {
+  mobile: string;
+  tablet: string;
+  desktop: string;
+} {
+  return {
+    mobile: getCloudflareImageUrl(imageId, 'mobile'),
+    tablet: getCloudflareImageUrl(imageId, 'tablet'),
+    desktop: getCloudflareImageUrl(imageId, 'desktop'),
+  };
+}
+
+/**
+ * Get optimal variant based on screen width
+ * Used for gallery images, preview modals, and detail pages
+ * @param screenWidth - Current screen width in pixels
+ * @param usage - What the image is used for
+ */
+export function getResponsiveVariant(
+  screenWidth: number,
+  usage: 'gallery' | 'preview' | 'card' | 'thumbnail' = 'gallery'
+): CloudflareVariant {
+  // Tablet threshold: 768px (standard tablet width)
+  const isTablet = screenWidth >= 768;
+
+  switch (usage) {
+    case 'gallery':
+      // Detail page gallery: tablet gets desktop quality, phone gets large
+      return isTablet ? 'desktop' : 'large';
+    case 'preview':
+      // Full screen preview: tablet gets public (full), phone gets desktop
+      return isTablet ? 'public' : 'desktop';
+    case 'card':
+      // Card grids: tablet gets card (400x300), phone gets mobile (360x270)
+      return isTablet ? 'card' : 'mobile';
+    case 'thumbnail':
+      // Small thumbnails: tablet gets small (300x200), phone gets thumbnail (150x150)
+      return isTablet ? 'small' : 'thumbnail';
+    default:
+      return 'large';
+  }
+}
+
+/**
+ * Get Cloudflare image URL with responsive variant
+ * Automatically selects best variant based on screen width
+ */
+export function getResponsiveImageUrl(
+  imageId: string,
+  screenWidth: number,
+  usage: 'gallery' | 'preview' | 'card' | 'thumbnail' = 'gallery'
+): string {
+  const variant = getResponsiveVariant(screenWidth, usage);
+  return getCloudflareImageUrl(imageId, variant);
+}
+
+// ============================================
+// Utility functions exported from utils/index.ts
+// ============================================
+
+/**
+ * Get image URL - handles various source types
+ * @param src - Cloudflare ID, full URL, or null
+ * @param variant - Cloudflare variant
+ */
+export function getImageUrl(
+  src: string | null | undefined,
+  variant: CloudflareVariant = 'card'
+): string {
+  if (!src) return '';
+  return getCloudflareImageUrl(src, variant);
+}
+
+/**
+ * Get placeholder URL for missing images
+ */
+export function getPlaceholderUrl(): string {
+  return ''; // Return empty - component will show placeholder icon
+}
+
+/**
+ * Optimize listing image with appropriate variant
  */
 export function optimizeListingImage(
-  imageKey: string | string[] | null | undefined
+  imageId: string,
+  viewMode: 'card' | 'small' | 'large' | 'thumbnail' | 'mobile' = 'card'
 ): string {
-  if (!imageKey) {
-    return getPlaceholderUrl("card");
-  }
-
-  // If array, use first image
-  const key = Array.isArray(imageKey) ? imageKey[0] : imageKey;
-
-  return getImageUrl(key, "card");
+  return getCloudflareImageUrl(imageId, viewMode);
 }
 
 /**
- * Get all listing images with specified variant
- *
- * @param imageKeys Array of image keys
- * @param variant Image variant to use
- * @returns Array of image URLs
+ * Get all listing images as optimized URLs
  */
 export function getListingImages(
-  imageKeys: string[] | null | undefined,
-  variant: ImageVariant = "gallery"
+  images: string[],
+  variant: CloudflareVariant = 'card'
 ): string[] {
-  if (!imageKeys || imageKeys.length === 0) {
-    return [getPlaceholderUrl(variant)];
-  }
-
-  return imageKeys.map((key) => getImageUrl(key, variant));
+  return images.map(img => getCloudflareImageUrl(img, variant));
 }
 
 /**
- * Get user avatar URL
- *
- * @param avatarKey User's avatar image key
- * @param size Avatar size variant
- * @returns Avatar URL or default avatar
+ * Get avatar URL with appropriate size
+ * Uses 'thumbnail' variant (150x150) which exists in Cloudflare
  */
 export function getAvatarUrl(
-  avatarKey: string | null | undefined,
-  size: "avatar" | "avatar_lg" = "avatar"
+  imageId: string | null | undefined
 ): string {
-  if (!avatarKey) {
-    // Return default avatar
-    return `https://ui-avatars.com/api/?background=3b82f6&color=fff&size=${
-      size === "avatar" ? 128 : 256
-    }&name=U`;
-  }
-
-  return getImageUrl(avatarKey, size);
+  if (!imageId) return '';
+  return getCloudflareImageUrl(imageId, 'thumbnail');
 }
 
 /**
- * Get user avatar URL with initials fallback
- *
- * @param avatarKey User's avatar image key
- * @param name User's name for initials
- * @param size Avatar size variant
- * @returns Avatar URL
+ * Get avatar with initials fallback
+ * Returns the avatar URL if available, otherwise returns initials
+ * Uses 'thumbnail' variant (150x150) which exists in Cloudflare
  */
 export function getAvatarWithInitials(
-  avatarKey: string | null | undefined,
-  name: string | null | undefined,
-  size: "avatar" | "avatar_lg" = "avatar"
-): string {
-  if (avatarKey) {
-    return getImageUrl(avatarKey, size);
-  }
-
-  // Generate initials avatar
+  imageId: string | null | undefined,
+  name: string
+): { url: string; initials: string } {
   const initials = name
-    ? name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .substring(0, 2)
-        .toUpperCase()
-    : "U";
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
-  return `https://ui-avatars.com/api/?background=3b82f6&color=fff&size=${
-    size === "avatar" ? 128 : 256
-  }&name=${encodeURIComponent(initials)}`;
+  return {
+    url: imageId ? getCloudflareImageUrl(imageId, 'thumbnail') : '',
+    initials,
+  };
 }
 
 /**
- * Create chat message thumbnail
- *
- * @param imageKey Image key
- * @returns Thumbnail URL for chat
+ * Create chat thumbnail URL (2x resolution for retina)
  */
-export function createChatThumbnail(
-  imageKey: string | null | undefined
-): string {
-  return getImageUrl(imageKey, "chat");
+export function createChatThumbnail(imageId: string): string {
+  return getCloudflareImageUrl(imageId, 'thumbnail');
 }
 
 /**
- * Validate image file for upload
- *
- * @param file File object or URI
- * @param maxSizeMB Maximum file size in MB
- * @returns Validation result
+ * Validate image file before upload
  */
-export function validateImageFile(
-  fileSize: number,
-  fileType: string,
-  maxSizeMB: number = 5
-): { valid: boolean; error?: string } {
-  const maxBytes = maxSizeMB * 1024 * 1024;
+export function validateImageFile(file: {
+  uri: string;
+  type?: string;
+  size?: number;
+}): { valid: boolean; error?: string } {
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-  // Check file size
-  if (fileSize > maxBytes) {
-    return {
-      valid: false,
-      error: `حجم الصورة يجب أن يكون أقل من ${maxSizeMB} ميجابايت`,
-    };
+  if (file.size && file.size > maxSize) {
+    return { valid: false, error: 'حجم الملف يجب أن يكون أقل من 5 ميجابايت' };
   }
 
-  // Check file type
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (!allowedTypes.includes(fileType.toLowerCase())) {
-    return {
-      valid: false,
-      error: "نوع الملف غير مدعوم. الأنواع المدعومة: JPG, PNG, WebP, GIF",
-    };
+  if (file.type && !allowedTypes.includes(file.type)) {
+    return { valid: false, error: 'نوع الملف غير مدعوم' };
   }
 
   return { valid: true };

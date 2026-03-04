@@ -10,11 +10,11 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { useTheme, Theme } from '../../theme';
 import { Container, ContainerProps } from './Container';
 import { Text } from './Text';
 import { Button } from './Button';
+import { Image } from './Image';
 
 export type BannerVariant = 'primary' | 'secondary' | 'accent';
 export type ImagePosition = 'left' | 'right';
@@ -62,7 +62,7 @@ export function PromoBanner({
         <View style={[styles.bannerMobile, { backgroundColor: bgColor }]}>
           {imageSrc && (
             <View style={styles.imageWrapperMobile}>
-              <Image source={imageSrc} style={styles.imageMobile} contentFit="contain" />
+              <Image src={imageSrc} width="100%" height="100%" resizeMode="contain" transparent />
             </View>
           )}
           <Text variant="h4" center>{title}</Text>
@@ -93,7 +93,7 @@ export function PromoBanner({
         {/* Image */}
         {imageSrc && (
           <View style={styles.imageWrapperTablet}>
-            <Image source={imageSrc} style={styles.imageTablet} contentFit="contain" />
+            <Image src={imageSrc} width="100%" height="100%" resizeMode="contain" transparent />
           </View>
         )}
 

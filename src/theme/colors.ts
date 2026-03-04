@@ -28,6 +28,7 @@ export const colors = {
     bg: '#ffffff',           // Pure white (web: --bg-light)
     surface: '#f8f8f8',      // Light gray (web: --bg-body-light)
     surfaceHover: '#f1f5f9', // Hover state
+    bgPrimary: '#e8f0fe',    // Light primary blue (auth screens background)
 
     // Borders
     border: '#e5e7eb',       // Light border (web: --border-light)
@@ -73,6 +74,7 @@ export const colors = {
     bg: '#0f172a',           // Dark (web: --bg-dark)
     surface: '#1e293b',      // Medium gray (web: --bg-body-dark)
     surfaceHover: '#334155',
+    bgPrimary: '#1e3a5f',    // Dark primary blue (auth screens background)
 
     // Borders
     border: '#374151',       // Dark border (web: --border-dark)

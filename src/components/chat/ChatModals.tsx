@@ -1,26 +1,22 @@
 /**
  * Chat Modals
  * Modals for chat actions: block user, delete thread, delete message
+ * Uses BaseModal for consistent styling
  */
 
 import React, { useMemo } from 'react';
-import {
-  View,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-} from 'react-native';
-import { X, Trash2, Ban, AlertTriangle } from 'lucide-react-native';
+import { View, StyleSheet } from 'react-native';
+import { Trash2, Ban, AlertTriangle } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
-import { Text, Button } from '../slices';
+import { Text, Button, BaseModal } from '../slices';
 
-interface BaseModalProps {
+interface ChatModalBaseProps {
   visible: boolean;
   onClose: () => void;
 }
 
 // Block User Modal
-interface BlockUserModalProps extends BaseModalProps {
+interface BlockUserModalProps extends ChatModalBaseProps {
   onConfirm: () => void;
   userName?: string;
   isLoading?: boolean;
@@ -34,61 +30,63 @@ export function BlockUserModal({
   isLoading,
 }: BlockUserModalProps) {
   const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
+
+  const footer = (
+    <View style={styles.actions}>
+      <Button
+        variant="outline"
+        onPress={onClose}
+        disabled={isLoading}
+        style={styles.actionButton}
+      >
+        إلغاء
+      </Button>
+      <Button
+        variant="danger"
+        onPress={onConfirm}
+        disabled={isLoading}
+        style={styles.actionButton}
+      >
+        {isLoading ? 'جاري الحظر...' : 'حظر المستخدم'}
+      </Button>
+    </View>
+  );
 
   return (
-    <Modal
+    <BaseModal
       visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={onClose}
+      onClose={onClose}
+      position="center"
+      showCloseButton={false}
+      footer={footer}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.iconContainer}>
-            <Ban size={40} color={theme.colors.error} />
-          </View>
-
-          <Text variant="h4" center style={styles.title}>
-            حظر المستخدم
-          </Text>
-
-          <Text variant="paragraph" color="secondary" center style={styles.description}>
-            {userName
-              ? `هل أنت متأكد من حظر "${userName}"؟`
-              : 'هل أنت متأكد من حظر هذا المستخدم؟'}
-          </Text>
-
-          <Text variant="small" color="muted" center style={styles.warning}>
-            لن تتمكن من تلقي رسائل من هذا المستخدم بعد الحظر.
-          </Text>
-
-          <View style={styles.actions}>
-            <Button
-              variant="outline"
-              onPress={onClose}
-              disabled={isLoading}
-              style={styles.actionButton}
-            >
-              إلغاء
-            </Button>
-            <Button
-              variant="primary"
-              onPress={onConfirm}
-              disabled={isLoading}
-              style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
-            >
-              {isLoading ? 'جاري الحظر...' : 'حظر المستخدم'}
-            </Button>
-          </View>
+      <View style={styles.content}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.colors.errorLight }]}>
+          <Ban size={40} color={theme.colors.error} />
         </View>
+
+        <Text variant="h4" center style={styles.title}>
+          حظر المستخدم
+        </Text>
+
+        <Text variant="paragraph" color="secondary" center style={styles.description}>
+          {userName
+            ? `هل أنت متأكد من حظر "${userName}"؟`
+            : 'هل أنت متأكد من حظر هذا المستخدم؟'}
+        </Text>
+
+        <Text variant="small" color="muted" center>
+          لن تتمكن من تلقي رسائل من هذا المستخدم بعد الحظر.
+        </Text>
       </View>
-    </Modal>
+    </BaseModal>
   );
 }
 
 // Delete Thread Modal
-interface DeleteThreadModalProps extends BaseModalProps {
+interface DeleteThreadModalProps extends ChatModalBaseProps {
   onConfirm: () => void;
   isLoading?: boolean;
 }
@@ -100,59 +98,61 @@ export function DeleteThreadModal({
   isLoading,
 }: DeleteThreadModalProps) {
   const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
+
+  const footer = (
+    <View style={styles.actions}>
+      <Button
+        variant="outline"
+        onPress={onClose}
+        disabled={isLoading}
+        style={styles.actionButton}
+      >
+        إلغاء
+      </Button>
+      <Button
+        variant="danger"
+        onPress={onConfirm}
+        disabled={isLoading}
+        style={styles.actionButton}
+      >
+        {isLoading ? 'جاري الحذف...' : 'حذف'}
+      </Button>
+    </View>
+  );
 
   return (
-    <Modal
+    <BaseModal
       visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={onClose}
+      onClose={onClose}
+      position="center"
+      showCloseButton={false}
+      footer={footer}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.iconContainer}>
-            <Trash2 size={40} color={theme.colors.error} />
-          </View>
-
-          <Text variant="h4" center style={styles.title}>
-            حذف المحادثة
-          </Text>
-
-          <Text variant="paragraph" color="secondary" center style={styles.description}>
-            هل أنت متأكد من حذف هذه المحادثة؟
-          </Text>
-
-          <Text variant="small" color="muted" center style={styles.warning}>
-            لن تتمكن من استرجاع الرسائل بعد الحذف. هذا الإجراء نهائي.
-          </Text>
-
-          <View style={styles.actions}>
-            <Button
-              variant="outline"
-              onPress={onClose}
-              disabled={isLoading}
-              style={styles.actionButton}
-            >
-              إلغاء
-            </Button>
-            <Button
-              variant="primary"
-              onPress={onConfirm}
-              disabled={isLoading}
-              style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
-            >
-              {isLoading ? 'جاري الحذف...' : 'حذف'}
-            </Button>
-          </View>
+      <View style={styles.content}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.colors.errorLight }]}>
+          <Trash2 size={40} color={theme.colors.error} />
         </View>
+
+        <Text variant="h4" center style={styles.title}>
+          حذف المحادثة
+        </Text>
+
+        <Text variant="paragraph" color="secondary" center style={styles.description}>
+          هل أنت متأكد من حذف هذه المحادثة؟
+        </Text>
+
+        <Text variant="small" color="muted" center>
+          لن تتمكن من استرجاع الرسائل بعد الحذف. هذا الإجراء نهائي.
+        </Text>
       </View>
-    </Modal>
+    </BaseModal>
   );
 }
 
 // Delete Message Modal
-interface DeleteMessageModalProps extends BaseModalProps {
+interface DeleteMessageModalProps extends ChatModalBaseProps {
   onConfirm: () => void;
   isLoading?: boolean;
 }
@@ -164,59 +164,61 @@ export function DeleteMessageModal({
   isLoading,
 }: DeleteMessageModalProps) {
   const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
+
+  const footer = (
+    <View style={styles.actions}>
+      <Button
+        variant="outline"
+        onPress={onClose}
+        disabled={isLoading}
+        style={styles.actionButton}
+      >
+        إلغاء
+      </Button>
+      <Button
+        variant="danger"
+        onPress={onConfirm}
+        disabled={isLoading}
+        style={styles.actionButton}
+      >
+        {isLoading ? 'جاري الحذف...' : 'حذف'}
+      </Button>
+    </View>
+  );
 
   return (
-    <Modal
+    <BaseModal
       visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={onClose}
+      onClose={onClose}
+      position="center"
+      showCloseButton={false}
+      footer={footer}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.iconContainer}>
-            <Trash2 size={40} color={theme.colors.error} />
-          </View>
-
-          <Text variant="h4" center style={styles.title}>
-            حذف الرسالة
-          </Text>
-
-          <Text variant="paragraph" color="secondary" center style={styles.description}>
-            هل أنت متأكد من حذف هذه الرسالة؟
-          </Text>
-
-          <Text variant="small" color="muted" center style={styles.warning}>
-            لن تتمكن من استرجاع الرسالة بعد الحذف.
-          </Text>
-
-          <View style={styles.actions}>
-            <Button
-              variant="outline"
-              onPress={onClose}
-              disabled={isLoading}
-              style={styles.actionButton}
-            >
-              إلغاء
-            </Button>
-            <Button
-              variant="primary"
-              onPress={onConfirm}
-              disabled={isLoading}
-              style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
-            >
-              {isLoading ? 'جاري الحذف...' : 'حذف'}
-            </Button>
-          </View>
+      <View style={styles.content}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.colors.errorLight }]}>
+          <Trash2 size={40} color={theme.colors.error} />
         </View>
+
+        <Text variant="h4" center style={styles.title}>
+          حذف الرسالة
+        </Text>
+
+        <Text variant="paragraph" color="secondary" center style={styles.description}>
+          هل أنت متأكد من حذف هذه الرسالة؟
+        </Text>
+
+        <Text variant="small" color="muted" center>
+          لن تتمكن من استرجاع الرسالة بعد الحذف.
+        </Text>
       </View>
-    </Modal>
+    </BaseModal>
   );
 }
 
 // Report User Modal
-interface ReportUserModalProps extends BaseModalProps {
+interface ReportUserModalProps extends ChatModalBaseProps {
   onConfirm: () => void;
   isLoading?: boolean;
 }
@@ -228,75 +230,71 @@ export function ReportUserModal({
   isLoading,
 }: ReportUserModalProps) {
   const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
+
+  const footer = (
+    <View style={styles.actions}>
+      <Button
+        variant="outline"
+        onPress={onClose}
+        disabled={isLoading}
+        style={styles.actionButton}
+      >
+        إلغاء
+      </Button>
+      <Button
+        variant="warning"
+        onPress={onConfirm}
+        disabled={isLoading}
+        style={styles.actionButton}
+      >
+        {isLoading ? 'جاري الإرسال...' : 'إبلاغ'}
+      </Button>
+    </View>
+  );
 
   return (
-    <Modal
+    <BaseModal
       visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={onClose}
+      onClose={onClose}
+      position="center"
+      showCloseButton={false}
+      footer={footer}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.iconContainer}>
-            <AlertTriangle size={40} color={theme.colors.warning} />
-          </View>
-
-          <Text variant="h4" center style={styles.title}>
-            الإبلاغ عن المستخدم
-          </Text>
-
-          <Text variant="paragraph" color="secondary" center style={styles.description}>
-            هل تريد الإبلاغ عن هذا المستخدم؟
-          </Text>
-
-          <Text variant="small" color="muted" center style={styles.warning}>
-            سيتم مراجعة البلاغ من قبل فريق الدعم.
-          </Text>
-
-          <View style={styles.actions}>
-            <Button
-              variant="outline"
-              onPress={onClose}
-              disabled={isLoading}
-              style={styles.actionButton}
-            >
-              إلغاء
-            </Button>
-            <Button
-              variant="primary"
-              onPress={onConfirm}
-              disabled={isLoading}
-              style={[styles.actionButton, { backgroundColor: theme.colors.warning }]}
-            >
-              {isLoading ? 'جاري الإرسال...' : 'إبلاغ'}
-            </Button>
-          </View>
+      <View style={styles.content}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.colors.warningLight }]}>
+          <AlertTriangle size={40} color={theme.colors.warning} />
         </View>
+
+        <Text variant="h4" center style={styles.title}>
+          الإبلاغ عن المستخدم
+        </Text>
+
+        <Text variant="paragraph" color="secondary" center style={styles.description}>
+          هل تريد الإبلاغ عن هذا المستخدم؟
+        </Text>
+
+        <Text variant="small" color="muted" center>
+          سيتم مراجعة البلاغ من قبل فريق الدعم.
+        </Text>
       </View>
-    </Modal>
+    </BaseModal>
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, isRTL: boolean) =>
   StyleSheet.create({
-    overlay: {
-      flex: 1,
-      backgroundColor: theme.colors.overlay,
-      justifyContent: 'center',
+    content: {
       alignItems: 'center',
-      padding: theme.spacing.lg,
-    },
-    modalContent: {
-      backgroundColor: theme.colors.bg,
-      borderRadius: theme.radius.xl,
-      padding: theme.spacing.xl,
-      width: '100%',
-      maxWidth: 340,
+      paddingVertical: theme.spacing.md,
     },
     iconContainer: {
-      alignSelf: 'center',
+      width: 80,
+      height: 80,
+      borderRadius: theme.radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
       marginBottom: theme.spacing.md,
     },
     title: {
@@ -305,11 +303,8 @@ const createStyles = (theme: Theme) =>
     description: {
       marginBottom: theme.spacing.xs,
     },
-    warning: {
-      marginBottom: theme.spacing.lg,
-    },
     actions: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
     },
     actionButton: {

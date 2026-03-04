@@ -1,26 +1,26 @@
 /**
  * Image Component
  * Handles Cloudflare images with loading skeleton and error states
+ * Uses expo-image for better format support (AVIF, WebP, etc.)
  * Matches web frontend: marketplace-frontend/components/slices/Image/
  */
 
 import React, { useState, useMemo } from 'react';
 import {
   View,
-  Image as RNImage,
   StyleSheet,
   Animated,
   ViewStyle,
-  ImageStyle,
   DimensionValue,
 } from 'react-native';
+import { Image as ExpoImage, ImageContentFit } from 'expo-image';
 import { ImageOff } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import {
   getCloudflareImageUrl,
   isCloudflareImageId,
   CloudflareVariant,
-} from '../../services/cloudflare/images';
+} from '../../utils/cloudflare-images';
 
 export interface ImageProps {
   /** Image source - can be Cloudflare ID, URL, or require() */
@@ -41,6 +41,8 @@ export interface ImageProps {
   resizeMode?: 'cover' | 'contain' | 'stretch' | 'center';
   /** Alt text for accessibility */
   alt?: string;
+  /** Show transparent background (no container bg color) - for PNGs/AVIFs with transparency */
+  transparent?: boolean;
 }
 
 export function Image({
@@ -53,6 +55,7 @@ export function Image({
   style,
   resizeMode = 'cover',
   alt,
+  transparent = false,
 }: ImageProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -102,20 +105,24 @@ export function Image({
     setHasError(true);
   };
 
+  // Map resizeMode to expo-image contentFit
+  const contentFitMap: Record<string, ImageContentFit> = {
+    cover: 'cover',
+    contain: 'contain',
+    stretch: 'fill',
+    center: 'none',
+  };
+  const contentFit = contentFitMap[resizeMode] || 'cover';
+
   // Build container style
   const containerStyle: ViewStyle = {
     ...styles.container,
+    ...(transparent && { backgroundColor: 'transparent' }),
     ...(aspectRatio && { aspectRatio }),
     ...(width && { width }),
     ...(height && { height }),
     ...(borderRadius !== undefined && { borderRadius }),
     ...style,
-  };
-
-  // Build image style
-  const imageStyle: ImageStyle = {
-    ...styles.image,
-    ...(borderRadius !== undefined && { borderRadius }),
   };
 
   // No source - show placeholder
@@ -147,14 +154,15 @@ export function Image({
 
       {/* Image */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
-        <RNImage
+        <ExpoImage
           source={typeof imageUrl === 'number' ? imageUrl : { uri: imageUrl }}
-          style={imageStyle}
-          resizeMode={resizeMode}
+          style={[styles.image, borderRadius !== undefined && { borderRadius }]}
+          contentFit={contentFit}
           onLoadStart={handleLoadStart}
           onLoadEnd={handleLoadEnd}
           onError={handleError}
           accessibilityLabel={alt}
+          transition={200}
         />
       </Animated.View>
     </View>

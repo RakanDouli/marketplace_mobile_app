@@ -5,12 +5,12 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { Car, ChevronLeft } from 'lucide-react-native';
 import { useTheme, Theme } from '../../src/theme';
-import { Text, ListItem } from '../../src/components/slices';
+import { Text, ListItem, Image } from '../../src/components/slices';
 import { useCreateListingStore } from '../../src/stores/createListingStore';
 import type { Brand } from '../../src/stores/createListingStore/types';
 
@@ -70,9 +70,11 @@ export default function BrandSelectionScreen() {
       return (
         <View style={styles.brandLogoContainer}>
           <Image
-            source={{ uri: brand.logoUrl }}
-            style={styles.brandLogo}
+            src={brand.logoUrl}
+            width={32}
+            height={32}
             resizeMode="contain"
+            transparent
           />
         </View>
       );

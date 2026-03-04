@@ -17,7 +17,7 @@ import {
 import { X, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Text } from './Text';
 import { useTheme, Theme } from '../../theme';
-import { getCloudflareImageUrl, getResponsiveImageUrl } from '../../services/cloudflare/images';
+import { getCloudflareImageUrl, getResponsiveImageUrl } from '../../utils/cloudflare-images';
 import {
   GestureHandlerRootView,
   PinchGestureHandler,

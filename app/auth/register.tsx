@@ -15,10 +15,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { CheckCircle } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
 import { Text, Button, Input, Form } from '../../src/components/slices';
-import { LogoIcon } from '../../src/components/icons';
+import { LogoIcon, GoogleIcon } from '../../src/components/icons';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
 
 // Validation functions
@@ -54,14 +53,11 @@ export default function RegisterScreen() {
     signUp,
     signInWithGoogle,
     isLoading,
-    isAuthenticated,
     error,
     clearError,
-    registrationComplete,
-    registeredEmail,
-    clearRegistrationState,
   } = useUserAuthStore();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
 
   // Form state
   const [name, setName] = useState('');
@@ -69,10 +65,6 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
-
-  // Local success state - this prevents AuthGuard redirect race condition
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successEmail, setSuccessEmail] = useState('');
 
   // Handle registration
   const handleRegister = async () => {
@@ -88,11 +80,9 @@ export default function RegisterScreen() {
     // Call signUp and check result
     const result = await signUp(email, password, name);
 
-    // If signup succeeded, show success screen using local state
-    // This prevents the AuthGuard redirect from hiding the success screen
+    // If signup succeeded, navigate to success page
     if (result.success) {
-      setSuccessEmail(email);
-      setShowSuccess(true);
+      router.replace(`/auth/signup-success?email=${encodeURIComponent(email)}`);
     }
   };
 
@@ -110,78 +100,6 @@ export default function RegisterScreen() {
     !validateConfirmPassword(password, confirmPassword) &&
     acceptTerms;
 
-  // Show success screen after registration (using local state to avoid AuthGuard race condition)
-  if (showSuccess) {
-    // Check if user was auto-logged in (no email confirmation needed) or needs to confirm email
-    const needsEmailConfirmation = !isAuthenticated;
-
-    return (
-      <SafeAreaView style={styles.container}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Logo */}
-          <View style={styles.logoContainer}>
-            <View style={styles.logoIcon}>
-              <LogoIcon width={32} height={32} color={theme.colors.textInverse} />
-            </View>
-            <Text variant="h2">شام باي</Text>
-          </View>
-
-          {/* Success Icon */}
-          <View style={styles.successContainer}>
-            <View style={[styles.successIcon, { backgroundColor: theme.colors.successLight }]}>
-              <CheckCircle size={48} color={theme.colors.success} />
-            </View>
-
-            <Text variant="h3" center style={styles.successTitle}>
-              تم إنشاء الحساب بنجاح!
-            </Text>
-
-            {needsEmailConfirmation ? (
-              <>
-                <Text variant="paragraph" center color="secondary" style={styles.successMessage}>
-                  تم إرسال رابط التأكيد إلى بريدك الإلكتروني
-                </Text>
-
-                <Text variant="body" center style={styles.emailText}>
-                  {successEmail}
-                </Text>
-
-                <Text variant="small" center color="muted" style={styles.successHint}>
-                  يرجى التحقق من بريدك الإلكتروني والضغط على رابط التأكيد لتفعيل حسابك
-                </Text>
-              </>
-            ) : (
-              <Text variant="paragraph" center color="secondary" style={styles.successMessage}>
-                تم تسجيل دخولك تلقائياً. يمكنك البدء باستخدام التطبيق الآن!
-              </Text>
-            )}
-          </View>
-
-          {/* Action Button */}
-          <Button
-            variant="primary"
-            onPress={() => {
-              // Clear states and navigate
-              clearRegistrationState();
-              setShowSuccess(false);
-              if (isAuthenticated) {
-                router.replace('/(tabs)');
-              } else {
-                router.replace('/auth/login');
-              }
-            }}
-            style={styles.button}
-          >
-            {isAuthenticated ? 'ابدأ الآن' : 'تسجيل الدخول'}
-          </Button>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -193,142 +111,142 @@ export default function RegisterScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo */}
+          {/* Logo Header */}
           <View style={styles.logoContainer}>
+            <Text variant="h2" style={styles.logoTextAr}>شام باي</Text>
             <View style={styles.logoIcon}>
-              <LogoIcon width={32} height={32} color={theme.colors.textInverse} />
+              <LogoIcon width={28} height={28} color={theme.colors.textInverse} />
             </View>
-            <Text variant="h2">شام باي</Text>
+            <Text variant="h2" style={styles.logoTextEn}>Shambay</Text>
           </View>
 
-          <Text variant="h3" center style={styles.title}>إنشاء حساب</Text>
-          <Text variant="paragraph" center color="secondary" style={styles.subtitle}>
-            أنشئ حسابك للبدء في البيع والشراء
-          </Text>
-
-          {/* Google Sign Up Button */}
-          <TouchableOpacity
-            style={styles.googleButton}
-            onPress={handleGoogleSignUp}
-            disabled={isLoading}
-          >
-            <View style={styles.googleIconContainer}>
-              <Text style={styles.googleIconText}>G</Text>
-            </View>
-            <Text variant="body" style={styles.googleButtonText}>
-              التسجيل بجوجل
+          {/* Form Card */}
+          <View style={styles.card}>
+            <Text variant="h3" center style={styles.title}>إنشاء حساب</Text>
+            <Text variant="paragraph" center color="secondary" style={styles.subtitle}>
+              أنشئ حسابك للبدء في البيع والشراء
             </Text>
-          </TouchableOpacity>
 
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
-            <Text variant="small" color="muted" style={styles.dividerText}>أو</Text>
-            <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
-          </View>
+            <Form error={error ?? undefined}>
+              <Input
+                label="الاسم الكامل"
+                value={name}
+                onChangeText={setName}
+                placeholder="اسمك الكامل"
+                autoCapitalize="words"
+                validate={validateName}
+                required
+                editable={!isLoading}
+              />
 
-          <Form error={error ?? undefined}>
-            <Input
-              label="الاسم الكامل"
-              value={name}
-              onChangeText={setName}
-              placeholder="اسمك الكامل"
-              autoCapitalize="words"
-              validate={validateName}
-              required
-              editable={!isLoading}
-            />
+              <Input
+                label="البريد الإلكتروني"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="example@email.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                validate={validateEmail}
+                required
+                editable={!isLoading}
+              />
 
-            <Input
-              label="البريد الإلكتروني"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="example@email.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              validate={validateEmail}
-              required
-              editable={!isLoading}
-            />
+              <Input
+                label="كلمة المرور"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                secureTextEntry
+                validate={validatePassword}
+                required
+                editable={!isLoading}
+              />
 
-            <Input
-              label="كلمة المرور"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              secureTextEntry
-              validate={validatePassword}
-              required
-              editable={!isLoading}
-            />
+              <Input
+                label="تأكيد كلمة المرور"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="••••••••"
+                secureTextEntry
+                validate={(value) => validateConfirmPassword(password, value)}
+                required
+                editable={!isLoading}
+              />
 
-            <Input
-              label="تأكيد كلمة المرور"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="••••••••"
-              secureTextEntry
-              validate={(value) => validateConfirmPassword(password, value)}
-              required
-              editable={!isLoading}
-            />
-
-            {/* Terms checkbox */}
-            <TouchableOpacity
-              style={styles.termsContainer}
-              onPress={() => setAcceptTerms(!acceptTerms)}
-              disabled={isLoading}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  acceptTerms && styles.checkboxChecked,
-                  { borderColor: theme.colors.border },
-                ]}
+              {/* Terms checkbox */}
+              <TouchableOpacity
+                style={styles.termsContainer}
+                onPress={() => setAcceptTerms(!acceptTerms)}
+                disabled={isLoading}
               >
-                {acceptTerms && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <Text variant="small" style={styles.termsText}>
-                أوافق على{' '}
-                <Text variant="small" style={{ color: theme.colors.primary }}>
-                  الشروط والأحكام
+                <View
+                  style={[
+                    styles.checkbox,
+                    acceptTerms && styles.checkboxChecked,
+                  ]}
+                >
+                  {acceptTerms && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text variant="small" style={styles.termsText}>
+                  أوافق على{' '}
+                  <Text variant="small" style={styles.termsLink}>
+                    الشروط والأحكام
+                  </Text>
                 </Text>
+              </TouchableOpacity>
+
+              <Button
+                onPress={handleRegister}
+                loading={isLoading}
+                disabled={!isFormValid}
+                style={styles.button}
+              >
+                إنشاء الحساب
+              </Button>
+            </Form>
+
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text variant="small" color="muted" style={styles.dividerText}>أو</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Google Sign Up Button */}
+            <Button
+              variant="outline"
+              onPress={handleGoogleSignUp}
+              disabled={isLoading}
+              icon={<GoogleIcon width={20} height={20} />}
+              style={styles.googleButton}
+            >
+              التسجيل بجوجل
+            </Button>
+
+            {/* Login Link */}
+            <TouchableOpacity
+              style={styles.loginContainer}
+              onPress={() => router.push('/auth/login')}
+              activeOpacity={0.7}
+            >
+              <Text variant="paragraph" color="secondary">لديك حساب بالفعل؟ </Text>
+              <Text variant="paragraph" style={styles.loginLink}>
+                سجل دخولك
               </Text>
             </TouchableOpacity>
-
-            <Button
-              onPress={handleRegister}
-              loading={isLoading}
-              disabled={!isFormValid}
-              style={styles.button}
-            >
-              إنشاء الحساب
-            </Button>
-          </Form>
-
-          {/* Login Link */}
-          <TouchableOpacity
-            style={styles.loginContainer}
-            onPress={() => router.push('/auth/login')}
-            activeOpacity={0.7}
-          >
-            <Text variant="paragraph" color="secondary">لديك حساب بالفعل؟ </Text>
-            <Text variant="paragraph" style={{ color: theme.colors.primary }}>
-              سجل دخولك
-            </Text>
-          </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const createStyles = (theme: ReturnType<typeof useTheme>) =>
+const createStyles = (theme: ReturnType<typeof useTheme>, isRTL: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.bg,
+      backgroundColor: theme.colors.bgPrimary,
     },
     keyboardView: {
       flex: 1,
@@ -343,7 +261,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: theme.spacing.sm,
-      marginBottom: theme.spacing.xl,
+      marginBottom: theme.spacing.lg,
     },
     logoIcon: {
       width: 48,
@@ -353,6 +271,19 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       justifyContent: 'center',
       alignItems: 'center',
     },
+    logoTextAr: {
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    logoTextEn: {
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    card: {
+      backgroundColor: theme.colors.bg,
+      borderRadius: theme.radius.xl,
+      padding: theme.spacing.lg,
+    },
     title: {
       marginBottom: theme.spacing.xs,
     },
@@ -361,31 +292,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     },
     // Google button
     googleButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.colors.surface,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderRadius: theme.radius.md,
-      padding: theme.spacing.md,
-      gap: theme.spacing.sm,
-    },
-    googleIconContainer: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      backgroundColor: '#4285F4',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    googleIconText: {
-      color: '#FFFFFF',
-      fontSize: 14,
-      fontWeight: '700',
-    },
-    googleButtonText: {
-      color: theme.colors.text,
+      marginBottom: theme.spacing.sm,
     },
     // Divider
     divider: {
@@ -396,13 +303,14 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     dividerLine: {
       flex: 1,
       height: 1,
+      backgroundColor: theme.colors.border,
     },
     dividerText: {
       marginHorizontal: theme.spacing.md,
     },
     // Terms
     termsContainer: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
       marginBottom: theme.spacing.md,
@@ -412,6 +320,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       height: 20,
       borderRadius: theme.radius.sm,
       borderWidth: 2,
+      borderColor: theme.colors.border,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -426,32 +335,10 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     },
     termsText: {
       flex: 1,
+      textAlign: isRTL ? 'right' : 'left',
     },
-    // Success screen
-    successContainer: {
-      alignItems: 'center',
-      marginBottom: theme.spacing.xl,
-    },
-    successIcon: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: theme.spacing.lg,
-    },
-    successTitle: {
-      marginBottom: theme.spacing.sm,
-    },
-    successMessage: {
-      marginBottom: theme.spacing.xs,
-    },
-    emailText: {
-      fontWeight: '600',
-      marginBottom: theme.spacing.md,
-    },
-    successHint: {
-      paddingHorizontal: theme.spacing.lg,
+    termsLink: {
+      color: theme.colors.primary,
     },
     // Common
     button: {
@@ -461,5 +348,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       flexDirection: 'row',
       justifyContent: 'center',
       marginTop: theme.spacing.xl,
+    },
+    loginLink: {
+      color: theme.colors.primary,
     },
   });

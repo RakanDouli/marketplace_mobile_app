@@ -2,26 +2,24 @@
  * SelectWithAdd Component
  * Select dropdown with "Other" toggle for custom text entry
  * Used for Brand/Model/Variant selection where user can add custom value
- * Supports RTL, logos/icons, loading states
+ * Uses BaseModal for consistent styling
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
-  Modal,
   TouchableOpacity,
   FlatList,
   TextInput,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   Switch,
   Image,
 } from 'react-native';
-import { ChevronDown, Search, Check, X, Plus, Car } from 'lucide-react-native';
+import { ChevronDown, Search, Check, Plus, Car } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text } from './Text';
 import { Loading } from './Loading';
+import { BaseModal } from './BaseModal';
 
 export interface SelectWithAddOption {
   value: string;
@@ -141,6 +139,11 @@ export function SelectWithAdd({
     setIsOpen(false);
     setSearchQuery('');
   }, [onChange]);
+
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    setSearchQuery('');
+  }, []);
 
   const handleOtherToggle = (enabled: boolean) => {
     onOtherToggle?.(enabled);
@@ -321,79 +324,52 @@ export function SelectWithAdd({
         </Text>
       )}
 
-      {/* Modal */}
-      <Modal
+      {/* Modal using BaseModal */}
+      <BaseModal
         visible={isOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setIsOpen(false)}
+        onClose={handleClose}
+        title={label || 'اختر'}
+        bodyPadding="none"
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.modalOverlay}
-        >
-          <TouchableOpacity
-            style={styles.modalBackdrop}
-            activeOpacity={1}
-            onPress={() => setIsOpen(false)}
-          />
-
-          <View style={styles.modalContent}>
-            {/* Header */}
-            <View style={styles.modalHeader}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setIsOpen(false)}
-              >
-                <X size={24} color={theme.colors.text} />
-              </TouchableOpacity>
-              <Text variant="h4" style={styles.modalTitle}>
-                {label || 'اختر'}
-              </Text>
-              <View style={styles.closeButtonPlaceholder} />
-            </View>
-
-            {/* Search Input */}
-            {searchable && (
-              <View style={styles.searchContainer}>
-                <Search size={20} color={theme.colors.textMuted} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="بحث..."
-                  placeholderTextColor={theme.colors.textMuted}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  autoCorrect={false}
-                  textAlign={isRTL ? 'right' : 'left'}
-                />
-              </View>
-            )}
-
-            {/* Loading State */}
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <Loading type="svg" size="sm" />
-              </View>
-            ) : (
-              /* Options List */
-              <FlatList
-                data={filteredOptions}
-                keyExtractor={(item) => item.value}
-                renderItem={renderOption}
-                style={styles.optionsList}
-                keyboardShouldPersistTaps="handled"
-                ListEmptyComponent={
-                  <View style={styles.emptyState}>
-                    <Text variant="body" color="muted">
-                      لا توجد نتائج
-                    </Text>
-                  </View>
-                }
-              />
-            )}
+        {/* Search Input */}
+        {searchable && (
+          <View style={styles.searchContainer}>
+            <Search size={20} color={theme.colors.textMuted} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="بحث..."
+              placeholderTextColor={theme.colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCorrect={false}
+              textAlign={isRTL ? 'right' : 'left'}
+            />
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        )}
+
+        {/* Loading State */}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Loading type="svg" size="sm" />
+          </View>
+        ) : (
+          /* Options List */
+          <FlatList
+            data={filteredOptions}
+            keyExtractor={(item) => item.value}
+            renderItem={renderOption}
+            style={styles.optionsList}
+            keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <Text variant="body" color="muted">
+                  لا توجد نتائج
+                </Text>
+              </View>
+            }
+          />
+        )}
+      </BaseModal>
     </View>
   );
 }
@@ -466,40 +442,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     inputDisabled: {
       opacity: 0.5,
-    },
-    // Modal styles
-    modalOverlay: {
-      flex: 1,
-      justifyContent: 'flex-end',
-    },
-    modalBackdrop: {
-      flex: 1,
-      backgroundColor: theme.colors.overlay,
-    },
-    modalContent: {
-      backgroundColor: theme.colors.bg,
-      borderTopLeftRadius: theme.radius.xl,
-      borderTopRightRadius: theme.radius.xl,
-      maxHeight: '80%',
-      paddingBottom: theme.spacing.xl,
-    },
-    modalHeader: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: theme.spacing.lg,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    modalTitle: {
-      flex: 1,
-      textAlign: 'center',
-    },
-    closeButton: {
-      padding: theme.spacing.xs,
-    },
-    closeButtonPlaceholder: {
-      width: 32,
     },
     // Search
     searchContainer: {

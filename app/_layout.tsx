@@ -78,16 +78,15 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     if (isLoading) return; // Wait for auth to initialize
 
     const inAuthGroup = segments[0] === 'auth';
-    const isOnRegisterPage = segments[1] === 'register';
+    const onSignupSuccess = (segments as string[])[1] === 'signup-success';
 
-    // Don't redirect if registration just completed - let user see success screen
-    if (registrationComplete) {
+    // Don't redirect if on signup-success page
+    if (onSignupSuccess) {
       return;
     }
 
-    // Don't redirect away from register page - user might be seeing success screen
-    // The register page handles its own navigation after showing success
-    if (isOnRegisterPage) {
+    // Don't redirect if registration just completed - let user see success screen
+    if (registrationComplete) {
       return;
     }
 

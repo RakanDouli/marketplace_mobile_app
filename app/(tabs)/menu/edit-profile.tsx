@@ -10,7 +10,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Platform,
   KeyboardAvoidingView,
   ActivityIndicator,
@@ -27,9 +26,9 @@ import {
   ToggleField,
   ChipSelector,
   BottomSheet,
+  Image as SlicesImage,
 } from '../../../src/components/slices';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
-import { getAvatarUrl } from '../../../src/utils/cloudflare-images';
 import { supabase } from '../../../src/services/supabase';
 import { ENV } from '../../../src/constants/env';
 
@@ -105,8 +104,8 @@ export default function EditProfileScreen() {
   const isBusiness = accountType === 'business';
   const hasCustomBranding = userPackage?.userSubscription?.customBranding ?? false;
 
-  // Avatar URL
-  const avatarUrl = profile?.avatar ? getAvatarUrl(profile.avatar, 'avatar_lg') : null;
+  // Avatar image (raw value from profile - either Cloudflare ID or full URL)
+  const avatarImage = profile?.avatar || null;
 
   // Track if component is mounted (for safe async state updates)
   const isMountedRef = useRef(true);
@@ -179,19 +178,10 @@ export default function EditProfileScreen() {
   };
 
   /**
-   * Handle avatar upload
-   * Uses same pattern as chat page for iOS compatibility
+   * Handle avatar upload - exact same pattern as chat page
    */
   const handleAvatarUpload = async () => {
     try {
-      // Request permission first
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        showError('يجب السماح بالوصول إلى الصور لتغيير الصورة الشخصية');
-        return;
-      }
-
-      // Pick image - using array syntax for iOS compatibility (same as chat page)
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
@@ -380,8 +370,15 @@ export default function EditProfileScreen() {
               >
                 {isUploadingAvatar || isDeletingAvatar ? (
                   <ActivityIndicator size="large" color={theme.colors.primary} />
-                ) : avatarUrl ? (
-                  <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+                ) : avatarImage ? (
+                  <SlicesImage
+                    src={avatarImage}
+                    variant="card"
+                    width={120}
+                    height={120}
+                    borderRadius={60}
+                    resizeMode="cover"
+                  />
                 ) : (
                   <User size={48} color={theme.colors.primary} />
                 )}
@@ -686,9 +683,14 @@ export default function EditProfileScreen() {
         title="الصورة الشخصية"
       >
         {/* Avatar Preview */}
-        {avatarUrl ? (
-          <Image
-            source={{ uri: avatarUrl }}
+        {avatarImage ? (
+          <SlicesImage
+            src={avatarImage}
+            variant="large"
+            width={150}
+            height={150}
+            borderRadius={75}
+            resizeMode="cover"
             style={styles.avatarModalPreview}
           />
         ) : (
@@ -701,24 +703,27 @@ export default function EditProfileScreen() {
         <View style={styles.avatarModalButtons}>
           <Button
             variant="primary"
-            onPress={() => {
+            onPress={async () => {
+              // Call image picker FIRST (while modal is still open)
+              // Then close modal after picker completes
+              await handleAvatarUpload();
               setShowAvatarModal(false);
-              handleAvatarUpload();
             }}
             fullWidth
             iconStart={<Camera size={20} color="#FFFFFF" />}
             loading={isUploadingAvatar}
             disabled={isUploadingAvatar || isDeletingAvatar}
           >
-            {avatarUrl ? 'تغيير الصورة' : 'إضافة صورة'}
+            {avatarImage ? 'تغيير الصورة' : 'إضافة صورة'}
           </Button>
 
-          {avatarUrl && (
+          {avatarImage && (
             <Button
               variant="danger"
-              onPress={() => {
+              onPress={async () => {
+                // Delete first, then close modal after completion
+                await handleAvatarDelete();
                 setShowAvatarModal(false);
-                handleAvatarDelete();
               }}
               fullWidth
               iconStart={<Trash2 size={20} color="#FFFFFF" />}
@@ -800,7 +805,7 @@ const createStyles = (theme: Theme) =>
       width: 150,
       height: 150,
       borderRadius: 75,
-      alignSelf: 'center',
+      alignSelf: 'center' as const,
       marginBottom: theme.spacing.lg,
     },
     avatarModalPlaceholder: {
