@@ -193,7 +193,6 @@ export default function ImagesStep() {
             setImageError('فشل رفع الصورة');
           }
         } catch (error: any) {
-          console.error('Image upload error:', error);
           setImageError(error.message || 'فشل رفع الصورة');
 
           // Remove failed upload from pending
@@ -233,7 +232,6 @@ export default function ImagesStep() {
           setVideoError('فشل رفع الفيديو');
         }
       } catch (error: any) {
-        console.error('Video upload error:', error);
         setVideoError(error.message || 'فشل رفع الفيديو');
       } finally {
         setUploadingVideo(false);

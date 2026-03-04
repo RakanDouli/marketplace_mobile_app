@@ -240,7 +240,6 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
       }
 
       } catch (err: any) {
-      console.error('[EditListingModal] Load error:', err);
       addNotification({
         type: 'error',
         title: 'خطأ',
@@ -297,7 +296,6 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
         }
       }
     } catch (err: any) {
-      console.error('[EditListingModal] Load attributes error:', err);
     } finally {
       setIsLoadingAttributes(false);
     }
@@ -337,7 +335,6 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
       );
       setModels(data.models || []);
     } catch (err) {
-      console.error('Error loading models:', err);
     }
   };
 
@@ -350,7 +347,6 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
       );
       setVariants(data.variants || []);
     } catch (err) {
-      console.error('Error loading variants:', err);
     }
   };
 
@@ -395,7 +391,6 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
             img.uri = getCloudflareImageUrl(cloudflareKey, 'card');
           }
         } catch (err) {
-          console.error('Image upload error:', err);
         }
       }
 
@@ -597,7 +592,6 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
           if (attr.type === 'selector' && attr.options && attr.options.length > 0) {
             const validOptionKeys = new Set(attr.options.map(o => o.key));
             if (!validOptionKeys.has(value)) {
-              console.log(`[EditListingModal] Skipping invalid option for ${attr.key}: "${value}"`);
               continue; // Skip invalid option values
             }
           }
@@ -605,10 +599,8 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
           cleanSpecs[attr.key] = value;
         }
 
-        console.log('[EditListingModal] Specs modified - sending cleanSpecs:', JSON.stringify(cleanSpecs, null, 2));
         updateInput.specs = cleanSpecs;
       } else {
-        console.log('[EditListingModal] Specs not modified - skipping specs update');
       }
 
       await updateMyListing(listing.id, updateInput);

@@ -64,10 +64,8 @@ export function ShareButton({
 
       if (result.action === Share.sharedAction) {
         // Shared successfully
-        console.log('[Share] Shared successfully');
       }
     } catch (error) {
-      console.error('[Share] Error sharing:', error);
     }
   };
 

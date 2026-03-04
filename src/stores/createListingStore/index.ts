@@ -188,7 +188,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       set({ attributes });
       get().generateSteps();
     } catch (error: any) {
-      console.error('Failed to fetch attributes:', error);
       set({ error: error.message || 'فشل تحميل الخصائص' });
     } finally {
       set({ isLoadingAttributes: false });
@@ -208,7 +207,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       );
       set({ brands: data.brands || [], isLoadingBrands: false });
     } catch (error: any) {
-      console.error('Failed to fetch brands:', error);
       set({ brands: [], isLoadingBrands: false });
     }
   },
@@ -224,7 +222,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       );
       set({ models: data.models || [], isLoadingModels: false });
     } catch (error: any) {
-      console.error('Failed to fetch models:', error);
       set({ models: [], isLoadingModels: false });
     }
   },
@@ -239,7 +236,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       );
       set({ variants: data.variants || [], isLoadingVariants: false });
     } catch (error: any) {
-      console.error('Failed to fetch variants:', error);
       set({ variants: [], isLoadingVariants: false });
     }
   },
@@ -260,7 +256,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
         isLoadingVariants: false,
       });
     } catch (error: any) {
-      console.error('Failed to fetch models/variants:', error);
       set({ models: [], variants: [], isLoadingModels: false, isLoadingVariants: false });
     }
   },
@@ -279,7 +274,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       );
       return data.getModelSuggestion || null;
     } catch (error: any) {
-      console.error('Failed to fetch model suggestion:', error);
       return null;
     }
   },
@@ -329,7 +323,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
         set({ suggestionSpecs: null });
       }
     } catch (error) {
-      console.error('Error fetching suggestions:', error);
       set({ suggestionSpecs: null });
     } finally {
       set({ isAutoFilling: false });
@@ -670,7 +663,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
 
       return newDraftId;
     } catch (error: any) {
-      console.error('Error creating draft:', error);
       set({ error: error.message || 'فشل إنشاء المسودة', isCreatingDraft: false });
       return null;
     }
@@ -695,7 +687,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
         try {
           parsedSpecs = typeof draft.specs === 'string' ? JSON.parse(draft.specs) : draft.specs;
         } catch (e) {
-          console.error('Error parsing specs:', e);
         }
       }
 
@@ -738,7 +729,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       // Fetch attributes for this category
       await get().fetchAttributes(draft.categoryId);
     } catch (error: any) {
-      console.error('Error loading draft:', error);
       set({ error: error.message || 'فشل تحميل المسودة' });
     }
   },
@@ -753,7 +743,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       );
       set({ myDrafts: data.myListings || [], isLoadingDrafts: false });
     } catch (error: any) {
-      console.error('Error fetching drafts:', error);
       set({ myDrafts: [], isLoadingDrafts: false });
     }
   },
@@ -786,7 +775,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
 
       set({ isDraftSaving: false, lastSavedAt: new Date() });
     } catch (error: any) {
-      console.error('Error saving draft:', error);
       set({ isDraftSaving: false });
     }
   },
@@ -800,7 +788,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       get().reset();
       return true;
     } catch (error: any) {
-      console.error('Error deleting draft:', error);
       set({ error: error.message || 'فشل حذف المسودة' });
       return false;
     }
@@ -889,7 +876,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
 
       return actualAssetId;
     } catch (error: any) {
-      console.error('Error uploading image:', error);
       set({ error: error.message || 'فشل رفع الصورة' });
       return null;
     }
@@ -914,7 +900,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
           imageKey,
         });
       } catch (error: any) {
-        console.error('Error removing image from draft:', error);
         // Don't set error - local state is already updated
       }
     }
@@ -971,14 +956,12 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       onProgress?.(60);
 
       // Log response status for debugging
-      console.log('[Video Upload] Response status:', uploadResponse.status, uploadResponse.statusText);
 
       if (!uploadResponse.ok) {
         // Try to get error message from response
         let errorMessage = 'فشل رفع الفيديو';
         try {
           const responseText = await uploadResponse.text();
-          console.log('[Video Upload] Error response:', responseText);
           try {
             const errorData = JSON.parse(responseText);
             errorMessage = errorData.message || errorData.error || errorMessage;
@@ -987,7 +970,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
             errorMessage = `فشل رفع الفيديو (${uploadResponse.status}: ${responseText.slice(0, 100)})`;
           }
         } catch (e) {
-          console.log('[Video Upload] Could not read error response:', e);
         }
         throw new Error(errorMessage);
       }
@@ -1021,7 +1003,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
 
       return videoUrl;
     } catch (error: any) {
-      console.error('Error uploading video:', error);
       set({ error: error.message || 'فشل رفع الفيديو' });
       return null;
     }
@@ -1043,7 +1024,6 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
       try {
         await graphqlRequest(REMOVE_VIDEO_FROM_DRAFT, { draftId });
       } catch (error: any) {
-        console.error('Error removing video from draft:', error);
         // Don't set error - local state is already updated
       }
     }

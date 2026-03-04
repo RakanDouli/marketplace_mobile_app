@@ -54,7 +54,6 @@ export const useReportsStore = create<ReportsState>((set) => ({
       set({ isSubmitting: false });
       return true;
     } catch (error: any) {
-      console.error('[reportsStore] Error submitting report:', error);
       set({
         error: error?.message || 'فشل إرسال البلاغ',
         isSubmitting: false,

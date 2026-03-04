@@ -177,7 +177,6 @@ export function ImageUploadGrid({
         }
       }
     } catch (error: any) {
-      console.error('Error picking media:', error);
       onError?.('حدث خطأ أثناء اختيار الملف');
     } finally {
       setIsPickerLoading(false);

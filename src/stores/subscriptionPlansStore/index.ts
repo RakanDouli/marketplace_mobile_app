@@ -56,7 +56,6 @@ export const useSubscriptionPlansStore = create<SubscriptionPlansState>((set, ge
         isInitialized: true,
       });
     } catch (error: any) {
-      console.error('Failed to fetch subscription plans:', error);
       set({
         error: error.message || 'فشل في جلب خطط الاشتراك',
         isLoading: false,

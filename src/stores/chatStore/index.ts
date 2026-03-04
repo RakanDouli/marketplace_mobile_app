@@ -83,7 +83,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       );
       set({ threads: data.myThreads, isLoading: false });
     } catch (error) {
-      console.error('[chatStore] Error fetching threads:', error);
       set({ error: 'فشل في تحميل المحادثات', isLoading: false });
     }
   },
@@ -110,7 +109,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       return thread.id;
     } catch (error) {
-      console.error('[chatStore] Error creating thread:', error);
       set({ error: 'فشل في إنشاء المحادثة', isLoading: false });
       throw error;
     }
@@ -132,7 +130,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         isLoading: false,
       }));
     } catch (error) {
-      console.error('[chatStore] Error fetching messages:', error);
       set({ error: 'فشل في تحميل الرسائل', isLoading: false });
     }
   },
@@ -159,7 +156,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         ),
       }));
     } catch (error) {
-      console.error('[chatStore] Error sending message:', error);
       set({ error: 'فشل في إرسال الرسالة' });
       throw error;
     }
@@ -182,7 +178,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // Refresh unread count
       get().fetchUnreadCount();
     } catch (error) {
-      console.error('[chatStore] Error marking thread as read:', error);
     }
   },
 
@@ -195,7 +190,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ unreadCount: data.myUnreadCount });
     } catch (error) {
       // Silently ignore auth errors
-      console.debug('[chatStore] Error fetching unread count:', error);
     }
   },
 
@@ -215,7 +209,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return { messages: newMessages };
       });
     } catch (error) {
-      console.error('[chatStore] Error deleting message:', error);
       set({ error: 'فشل في حذف الرسالة' });
       throw error;
     }
@@ -239,7 +232,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         };
       });
     } catch (error) {
-      console.error('[chatStore] Error deleting thread:', error);
       set({ error: 'فشل في حذف المحادثة' });
       throw error;
     }
@@ -265,7 +257,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return { messages: newMessages };
       });
     } catch (error) {
-      console.error('[chatStore] Error editing message:', error);
       set({ error: 'فشل في تعديل الرسالة' });
       throw error;
     }
@@ -288,7 +279,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // Refresh threads
       get().fetchMyThreads();
     } catch (error) {
-      console.error('[chatStore] Error blocking user:', error);
       set({ error: 'فشل في حظر المستخدم' });
       throw error;
     }
@@ -317,7 +307,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // Refresh threads
       get().fetchMyThreads();
     } catch (error) {
-      console.error('[chatStore] Error unblocking user:', error);
       set({ error: 'فشل في إلغاء حظر المستخدم' });
       throw error;
     }
@@ -336,7 +325,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         blockedUsers: data.myBlockedUsers,
       });
     } catch (error) {
-      console.error('[chatStore] Error fetching blocked users:', error);
       set({ error: 'فشل في تحميل قائمة المحظورين' });
     }
   },
@@ -353,7 +341,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       return data.createImageUploadUrl;
     } catch (error) {
-      console.error('[chatStore] Error creating image upload URL:', error);
       set({ error: 'فشل في إنشاء رابط رفع الصورة' });
       throw error;
     }

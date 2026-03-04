@@ -26,7 +26,6 @@ export async function trackListingView(listingId: string): Promise<boolean> {
     return result.trackListingView;
   } catch (error) {
     // Silently fail - view tracking shouldn't break the app
-    console.warn('[trackListingView] Failed to track view:', error);
     return false;
   }
 }

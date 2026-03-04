@@ -183,7 +183,6 @@ export const useUserListingsStore = create<UserListingsStore>((set, get) => ({
         isRefreshing: false,
       });
     } catch (error: any) {
-      console.error('[UserListings] Load error:', error);
       set({
         error: error.message || 'فشل في تحميل الإعلانات',
         isLoading: false,
@@ -222,7 +221,6 @@ export const useUserListingsStore = create<UserListingsStore>((set, get) => ({
 
       return data.myListingById;
     } catch (error: any) {
-      console.error('[UserListings] Load by ID error:', error);
       set({
         error: error.message || 'فشل في تحميل الإعلان',
         isLoading: false,
@@ -246,7 +244,6 @@ export const useUserListingsStore = create<UserListingsStore>((set, get) => ({
 
       set({ isLoading: false });
     } catch (error: any) {
-      console.error('[UserListings] Update error:', error);
       set({
         error: error.message || 'فشل في تحديث الإعلان',
         isLoading: false,
@@ -275,7 +272,6 @@ export const useUserListingsStore = create<UserListingsStore>((set, get) => ({
         isLoading: false,
       }));
     } catch (error: any) {
-      console.error('[UserListings] Delete error:', error);
       set({
         error: error.message || 'فشل في حذف الإعلان',
         isLoading: false,

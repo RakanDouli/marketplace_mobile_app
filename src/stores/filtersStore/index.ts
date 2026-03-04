@@ -305,7 +305,6 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
         error: null,
       });
     } catch (error: any) {
-      console.error('Failed to fetch filter data:', error);
       set({
         isLoading: false,
         error: error.message || 'Failed to load filters',
@@ -438,7 +437,6 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
         error: null,
       });
     } catch (error: any) {
-      console.error('Failed to update cascading filters:', error);
       set({
         isLoadingCounts: false,
         error: error.message || 'Failed to update filters',

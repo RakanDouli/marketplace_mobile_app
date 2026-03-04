@@ -30,7 +30,6 @@ export function useTranslation(): UseTranslationReturn {
 
       if (!translation) {
         // Fallback to Arabic, then to key itself
-        console.warn(`Translation missing for key: ${key}`);
         return translations.ar[key] || key;
       }
 

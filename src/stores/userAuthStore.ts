@@ -121,22 +121,13 @@ let warningNotificationShown = false;
  * Only shows once per session to prevent duplicates
  */
 const showWarningNotificationIfNeeded = (profile: UserProfile): void => {
-  console.log('[Auth] Checking warning notification:', {
-    warningCount: profile.warningCount,
-    warningAcknowledged: profile.warningAcknowledged,
-    currentWarningMessage: profile.currentWarningMessage,
-    alreadyShown: warningNotificationShown,
-  });
-
   // Prevent duplicate notifications
   if (warningNotificationShown) {
-    console.log('[Auth] Warning notification already shown this session, skipping');
     return;
   }
 
   // Check if user has warnings and hasn't acknowledged them
   if (profile.warningCount && profile.warningCount > 0 && !profile.warningAcknowledged) {
-    console.log('[Auth] User has unacknowledged warnings, will show notification');
 
     // Mark as shown to prevent duplicates
     warningNotificationShown = true;
@@ -179,10 +170,8 @@ const showWarningNotificationIfNeeded = (profile: UserProfile): void => {
           },
         },
       });
-      console.log('[Auth] Warning notification added with action button');
     }, 500);
   } else {
-    console.log('[Auth] No warning notification needed');
   }
 };
 
@@ -360,13 +349,11 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
 
         // Fetch full profile and subscription from GraphQL
         try {
-          console.log('[Auth] Initialize: Fetching user profile...');
           const data = await graphqlRequest<{
             me: { user: UserProfile };
             myPackage: UserPackage | null;
           }>(ME_QUERY, {}, false);
 
-          console.log('[Auth] Initialize: User status:', data?.me?.user?.status);
 
           if (data?.me?.user) {
             // Validate user status (banned/suspended check)
@@ -386,7 +373,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             showWarningNotificationIfNeeded(data.me.user);
           } else {
             // No profile found - sign out and clear state
-            console.warn('[Auth] Initialize: No user profile found, signing out');
             await supabaseSignOut();
             set({
               session: null,
@@ -396,7 +382,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             });
           }
         } catch (profileError: any) {
-          console.error('[Auth] Initialize: Profile fetch error:', profileError?.message);
 
           // If validation throws (banned/suspended), sign out
           if (profileError?.message?.includes('حسابك')) {
@@ -409,7 +394,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             });
           } else {
             // Other errors - sign out to be safe
-            console.warn('[Auth] Initialize: Failed to fetch profile, signing out');
             await supabaseSignOut();
             set({
               session: null,
@@ -430,26 +414,22 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
 
       // Listen for auth state changes
       onAuthStateChange(async (event, session) => {
-        console.log('[Auth] State changed:', event, 'Session:', session ? 'exists' : 'null');
 
         // IMPORTANT: Don't interfere with registration flow
         // If registrationComplete is true, the user just signed up and is viewing success screen
         const currentState = get();
         if (currentState.registrationComplete) {
-          console.log('[Auth] onAuthStateChange: Skipping - registration in progress');
           return;
         }
 
         if (event === 'SIGNED_IN' && session) {
           // Fetch profile and validate status for OAuth logins (Google, etc.)
           try {
-            console.log('[Auth] onAuthStateChange: Fetching user profile...');
             const data = await graphqlRequest<{
               me: { user: UserProfile };
               myPackage: UserPackage | null;
             }>(ME_QUERY, {}, false);
 
-            console.log('[Auth] onAuthStateChange: User status:', data?.me?.user?.status);
 
             if (data?.me?.user) {
               // Validate user status (banned/suspended check)
@@ -467,7 +447,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
               showWarningNotificationIfNeeded(data.me.user);
             } else {
               // No profile found - sign out
-              console.warn('[Auth] onAuthStateChange: No user profile, signing out');
               await supabaseSignOut();
               set({
                 session: null,
@@ -476,7 +455,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
               });
             }
           } catch (profileError: any) {
-            console.error('[Auth] onAuthStateChange error:', profileError?.message);
 
             if (profileError?.message?.includes('حسابك')) {
               set({
@@ -487,7 +465,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
               });
             } else {
               // Other errors - sign out to be safe
-              console.warn('[Auth] onAuthStateChange: Failed to fetch profile, signing out');
               await supabaseSignOut();
               set({
                 session: null,
@@ -500,7 +477,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
           // Don't reset registration state on sign out during registration flow
           const stateBeforeSignout = get();
           if (stateBeforeSignout.registrationComplete) {
-            console.log('[Auth] onAuthStateChange SIGNED_OUT: Preserving registration state');
             return;
           }
           set({
@@ -515,7 +491,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         }
       });
     } catch (error: any) {
-      console.error('[Auth] Initialize error:', error);
       set({
         error: error.message || 'فشل في تحميل بيانات المستخدم',
         isLoading: false,
@@ -543,22 +518,18 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       // IMPORTANT: Pass the token directly from sign-in response to avoid timing issues
       const token = session?.access_token;
       if (!token) {
-        console.error('[Auth] No access token in session');
         set({ isLoading: false, error: 'فشل في تحميل بيانات المستخدم' });
         return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
       }
 
       try {
-        console.log('[Auth] Fetching user profile from GraphQL with token...');
         const data = await graphqlRequest<{
           me: { user: UserProfile };
           myPackage: UserPackage | null;
         }>(ME_QUERY, {}, false, token);
 
-        console.log('[Auth] GraphQL response:', JSON.stringify(data?.me?.user?.status));
 
         if (data?.me?.user) {
-          console.log('[Auth] User status from backend:', data.me.user.status);
 
           // Validate user status (banned/suspended check)
           await validateUserStatus(data.me.user, supabaseSignOut);
@@ -576,7 +547,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
           // Show warning notification if user has warnings
           showWarningNotificationIfNeeded(data.me.user);
         } else {
-          console.warn('[Auth] No user profile found in response, blocking login');
           // Don't allow login without profile - this prevents bypassing status check
           await supabaseSignOut();
           set({
@@ -589,7 +559,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
           return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
         }
       } catch (profileError: any) {
-        console.error('[Auth] Profile fetch error:', profileError?.message);
 
         // If validation throws (banned/suspended), handle the error
         if (profileError?.message?.includes('حسابك')) {
@@ -603,7 +572,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
           return { success: false, error: profileError.message };
         }
         // Other profile errors - DON'T allow login, sign out
-        console.warn('[Auth] Failed to fetch profile, blocking login:', profileError);
         await supabaseSignOut();
         set({
           session: null,
@@ -658,7 +626,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             set({ profile: profileData.me });
           }
         } catch (profileError) {
-          console.error('Failed to fetch profile after Google sign-in:', profileError);
         }
 
         return { success: true };
@@ -732,7 +699,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
           });
         }
       } catch (profileError) {
-        console.warn('[Auth] Failed to fetch profile:', profileError);
         // Continue without profile - fallback to Supabase user
       }
 
@@ -762,7 +728,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         isLoading: false,
       });
     } catch (error: any) {
-      console.error('[Auth] Sign out error:', error);
       // Still clear state even if sign out fails
       // Reset warning notification flag so it shows on next login
       warningNotificationShown = false;
@@ -921,7 +886,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       const { session: newSession, error: signInError } = await signInWithEmail(newEmail, password);
 
       if (signInError || !newSession) {
-        console.warn('[ChangeEmail] Re-auth failed, user may need to re-login:', signInError);
         // Email was changed successfully, but re-auth failed
         // Update local state anyway - user might need to re-login manually
         const currentProfile = get().profile;
@@ -1270,7 +1234,6 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       );
 
       if (response.errors) {
-        console.error('[Auth] Acknowledge warning error:', response.errors);
         return { success: false, error: 'فشل في تأكيد الإطلاع على التحذير' };
       }
 
@@ -1285,10 +1248,8 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         });
       }
 
-      console.log('[Auth] Warning acknowledged successfully');
       return { success: true };
     } catch (error: any) {
-      console.error('[Auth] Acknowledge warning error:', error);
       return { success: false, error: error.message || 'حدث خطأ' };
     }
   },

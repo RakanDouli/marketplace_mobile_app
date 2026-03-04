@@ -98,7 +98,6 @@ export const useListingOwnerStore = create<ListingOwnerState>((set, get) => ({
         lastFetchedAt: Date.now(),
       });
     } catch (error) {
-      console.error('[listingOwnerStore] Error fetching owner:', error);
       set({
         error: 'فشل تحميل معلومات البائع',
         isLoading: false,

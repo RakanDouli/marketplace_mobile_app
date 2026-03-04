@@ -64,7 +64,6 @@ export function FavoriteButton({
       await toggleWishlist(listingId);
     } catch (error: any) {
       // Log error but don't throw - prevents Android RTL issues
-      console.warn('[FavoriteButton] Failed to toggle wishlist:', error?.message || error);
     } finally {
       setIsLoading(false);
     }

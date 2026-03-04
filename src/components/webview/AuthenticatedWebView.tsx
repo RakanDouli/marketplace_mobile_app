@@ -68,10 +68,8 @@ export const AuthenticatedWebView: React.FC<AuthenticatedWebViewProps> = ({
           // Get the full session from Supabase
           const session = await getSession();
 
-          console.log('[AuthenticatedWebView] session:', session ? 'exists' : 'null');
 
           if (!session) {
-            console.log('[AuthenticatedWebView] No session found - user not logged in');
             setLoadError('يرجى تسجيل الدخول أولاً');
             setIsLoading(false);
             return;
@@ -154,15 +152,12 @@ export const AuthenticatedWebView: React.FC<AuthenticatedWebViewProps> = ({
           `;
 
           setInjectedJS(jsCode);
-          console.log('[AuthenticatedWebView] Session injection prepared for key:', storageKey);
         }
 
         // Build the target URL
         const url = `${ENV.WEB_URL}${path}`;
         setWebViewUrl(url);
-        console.log('[AuthenticatedWebView] URL:', url);
       } catch (error) {
-        console.error('[AuthenticatedWebView] Error building URL:', error);
         setLoadError('حدث خطأ في تحميل الصفحة');
         setIsLoading(false);
       }
@@ -193,7 +188,6 @@ export const AuthenticatedWebView: React.FC<AuthenticatedWebViewProps> = ({
   // Handle error
   const handleError = useCallback((syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent;
-    console.error('[AuthenticatedWebView] WebView error:', nativeEvent);
     setLoadError('فشل في تحميل الصفحة');
     setIsLoading(false);
     onError?.(nativeEvent.description || 'Unknown error');
@@ -204,12 +198,9 @@ export const AuthenticatedWebView: React.FC<AuthenticatedWebViewProps> = ({
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === 'log') {
-        console.log('[WebView]', data.message);
       } else if (data.type === 'error') {
-        console.error('[WebView Error]', data.message);
       }
     } catch (e) {
-      console.log('[WebView Raw]', event.nativeEvent.data);
     }
   }, []);
 

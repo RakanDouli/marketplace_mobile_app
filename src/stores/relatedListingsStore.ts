@@ -82,7 +82,6 @@ export const useRelatedListingsStore = create<RelatedListingsState>((set, get) =
         isLoadingBrand: false,
       });
     } catch (error) {
-      console.error('[relatedListingsStore] Error fetching by brand:', error);
       set({ isLoadingBrand: false });
     }
   },
@@ -101,7 +100,6 @@ export const useRelatedListingsStore = create<RelatedListingsState>((set, get) =
         isLoadingPrice: false,
       });
     } catch (error) {
-      console.error('[relatedListingsStore] Error fetching by price:', error);
       set({ isLoadingPrice: false });
     }
   },

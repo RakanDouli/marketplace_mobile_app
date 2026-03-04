@@ -54,10 +54,8 @@ const loadFonts = async (): Promise<boolean> => {
       'Rubik-SemiBold': require('@expo-google-fonts/rubik/600SemiBold/Rubik_600SemiBold.ttf'),
       'Rubik-Bold': require('@expo-google-fonts/rubik/700Bold/Rubik_700Bold.ttf'),
     });
-    console.log('Custom fonts loaded successfully.');
     return true;
   } catch (error) {
-    console.log('Error loading fonts:', error);
     return false;
   }
 };
@@ -220,7 +218,6 @@ export default function RootLayout() {
           useCurrencyStore.getState().fetchExchangeRates(),
         ]);
       } catch (error) {
-        console.error('Error during app initialization:', error);
       } finally {
         setAppIsReady(true);
       }

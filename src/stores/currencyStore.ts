@@ -91,7 +91,6 @@ export const useCurrencyStore = create<CurrencyState>((set, get) => ({
       await AsyncStorage.setItem(CURRENCY_STORAGE_KEY, currency);
       set({ preferredCurrency: currency });
     } catch (error) {
-      console.error('Failed to save preferred currency:', error);
     }
   },
 
@@ -104,7 +103,6 @@ export const useCurrencyStore = create<CurrencyState>((set, get) => ({
         set({ isLoading: false });
       }
     } catch (error) {
-      console.error('Failed to load preferred currency:', error);
       set({ isLoading: false });
     }
   },
@@ -145,7 +143,6 @@ export const useCurrencyStore = create<CurrencyState>((set, get) => ({
       // Otherwise keep fallback rates
     } catch (error) {
       // Silently fail - rates will remain at fallback values
-      console.log('[CurrencyStore] Failed to fetch exchange rates, using fallbacks');
     }
   },
 

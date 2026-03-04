@@ -205,7 +205,7 @@ export default function FiltersScreen() {
       });
       setIsUpdatingCounts(true);
       updateFiltersWithCascading(categorySlug, listingType, filtersMap)
-        .catch(err => console.warn('Failed to update cascading filters:', err))
+        .catch(() => {})
         .finally(() => setIsUpdatingCounts(false));
     }
   }, [appliedFilters, categorySlug, listingType, isInitialized]);

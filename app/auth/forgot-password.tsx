@@ -38,7 +38,6 @@ export default function ForgotPasswordScreen() {
       await resetPassword(email);
       setSent(true);
     } catch (e) {
-      console.error('Reset failed:', e);
     }
   };
 

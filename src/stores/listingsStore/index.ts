@@ -179,7 +179,6 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
         });
       }
     } catch (error: any) {
-      console.error('Failed to fetch listings:', error);
       set({
         isLoading: false,
         error: error.message || 'Failed to load listings',
@@ -209,7 +208,6 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       const featuredListings = (data.listingsSearch || []).map(parseListingResponse);
       set({ featuredListings });
     } catch (error: any) {
-      console.error('Failed to fetch featured listings:', error);
     }
   },
 
@@ -237,7 +235,6 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     } catch (error: any) {
       // Only log actual fetch errors, not "not found"
       if (!error?.message?.toLowerCase().includes('not found')) {
-        console.error('[ListingsStore] Failed to fetch listing:', error?.message || error);
       }
       set({
         isLoading: false,

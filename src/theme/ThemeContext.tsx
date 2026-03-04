@@ -134,7 +134,6 @@ export const useTheme = (): Theme => {
   const context = useContext(ThemeContext);
   if (!context) {
     // Return default theme instead of throwing - prevents crashes during initialization
-    console.warn('useTheme called outside ThemeProvider, using default theme');
     return defaultTheme;
   }
   return context.theme;

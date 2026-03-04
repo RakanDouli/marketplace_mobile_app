@@ -67,7 +67,6 @@ export const supabase: SupabaseClient = createClient(
 export const getSession = async (): Promise<Session | null> => {
   const { data: { session }, error } = await supabase.auth.getSession();
   if (error) {
-    console.error('Error getting session:', error);
     return null;
   }
   return session;
@@ -79,7 +78,6 @@ export const getSession = async (): Promise<Session | null> => {
 export const getUser = async (): Promise<User | null> => {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) {
-    console.error('Error getting user:', error);
     return null;
   }
   return user;
@@ -300,7 +298,6 @@ export const signInWithGoogle = async (): Promise<{
       error: new Error('فشل تسجيل الدخول بجوجل'),
     };
   } catch (error: any) {
-    console.error('Google OAuth error:', error);
     return {
       session: null,
       user: null,

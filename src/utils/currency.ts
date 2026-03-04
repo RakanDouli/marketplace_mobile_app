@@ -48,7 +48,6 @@ export async function convertToUSD(
     );
     return Math.round(data.convertCurrency);
   } catch (error) {
-    console.error('Failed to convert currency:', error);
     // Fallback: use approximate rates if API fails
     // Note: Syria redenominated currency in 2024 (removed 2 zeros)
     const fallbackRates: Record<string, number> = {

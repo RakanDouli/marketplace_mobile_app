@@ -227,7 +227,6 @@ export default function ChatScreen() {
         setPendingImages((prev) => [...prev, ...newImages].slice(0, MAX_IMAGES));
       }
     } catch (error) {
-      console.error('Image picker error:', error);
       Alert.alert('خطأ', 'فشل في فتح معرض الصور. يرجى المحاولة مرة أخرى.');
     }
   };
@@ -273,7 +272,6 @@ export default function ChatScreen() {
 
         if (!uploadResponse.ok) {
           const errorText = await uploadResponse.text();
-          console.error('Upload response error:', errorText);
           throw new Error('Upload failed');
         }
 
@@ -291,7 +289,6 @@ export default function ChatScreen() {
 
         uploadedKeys.push(actualAssetId);
       } catch (error) {
-        console.error('Error uploading image:', error);
         throw error;
       }
     }
@@ -319,7 +316,6 @@ export default function ChatScreen() {
 
       await sendMessage(threadId, text || undefined, imageKeys.length > 0 ? imageKeys : undefined);
     } catch (error) {
-      console.error('Failed to send message:', error);
       setInputText(text);
       Alert.alert('خطأ', 'فشل في إرسال الرسالة');
     } finally {
@@ -337,7 +333,6 @@ export default function ChatScreen() {
     try {
       await sendMessage(threadId, '⭐ طلب تقييم - يرجى تقييم تجربتك معي');
     } catch (error) {
-      console.error('Failed to send review request:', error);
       Alert.alert('خطأ', 'فشل في إرسال طلب التقييم');
     } finally {
       setIsSending(false);
@@ -354,7 +349,6 @@ export default function ChatScreen() {
       setEditingMessage(null);
       setEditText('');
     } catch (error) {
-      console.error('Failed to edit message:', error);
       Alert.alert('خطأ', 'فشل في تعديل الرسالة');
     } finally {
       setIsActionLoading(false);
@@ -372,7 +366,6 @@ export default function ChatScreen() {
       setSelectedMessage(null);
       setMessageMenuOpen(null);
     } catch (error) {
-      console.error('Failed to delete message:', error);
       Alert.alert('خطأ', 'فشل في حذف الرسالة');
     } finally {
       setIsActionLoading(false);
@@ -389,7 +382,6 @@ export default function ChatScreen() {
       setShowDeleteThreadModal(false);
       router.back();
     } catch (error) {
-      console.error('Failed to delete thread:', error);
       Alert.alert('خطأ', 'فشل في حذف المحادثة');
     } finally {
       setIsActionLoading(false);
@@ -406,7 +398,6 @@ export default function ChatScreen() {
       setShowBlockModal(false);
       router.back();
     } catch (error) {
-      console.error('Failed to block user:', error);
       Alert.alert('خطأ', 'فشل في حظر المستخدم');
     } finally {
       setIsActionLoading(false);

@@ -191,7 +191,6 @@ export const useMetadataStore = create<MetadataState>((set, get) => ({
         accountBadges: data.getAccountBadges || [],
       });
     } catch (error) {
-      console.error("Failed to fetch user metadata:", error);
     }
   },
 
@@ -212,7 +211,6 @@ export const useMetadataStore = create<MetadataState>((set, get) => ({
         listingTypes: data.getListingTypes || [],
       });
     } catch (error) {
-      console.error("Failed to fetch listing metadata:", error);
     }
   },
 
@@ -231,7 +229,6 @@ export const useMetadataStore = create<MetadataState>((set, get) => ({
         subscriptionAccountTypes: data.getSubscriptionAccountTypes || [],
       });
     } catch (error) {
-      console.error("Failed to fetch subscription metadata:", error);
     }
   },
 
@@ -256,7 +253,6 @@ export const useMetadataStore = create<MetadataState>((set, get) => ({
         adFormats: data.getAdFormats || [],
       });
     } catch (error) {
-      console.error("Failed to fetch ad metadata:", error);
     }
   },
 
@@ -271,7 +267,6 @@ export const useMetadataStore = create<MetadataState>((set, get) => ({
         provinces: data.getProvinces || [],
       });
     } catch (error) {
-      console.error("Failed to fetch location metadata:", error);
     }
   },
 

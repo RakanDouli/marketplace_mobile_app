@@ -136,7 +136,6 @@ export const useReviewsStore = create<ReviewsState>((set, get) => ({
         lastFetchedUserId: userId,
       });
     } catch (error) {
-      console.error('[reviewsStore] Error fetching reviews:', error);
       set({
         error: 'فشل تحميل التقييمات',
         isLoading: false,
@@ -156,7 +155,6 @@ export const useReviewsStore = create<ReviewsState>((set, get) => ({
       set({ isSubmitting: false });
       return result.createReview;
     } catch (error: any) {
-      console.error('[reviewsStore] Error creating review:', error);
       const errorMessage = error.message || 'فشل في إنشاء التقييم';
       set({ isSubmitting: false, error: errorMessage });
       throw new Error(errorMessage);
@@ -171,7 +169,6 @@ export const useReviewsStore = create<ReviewsState>((set, get) => ({
       );
       return result.canReviewUser || false;
     } catch (error) {
-      console.error('[reviewsStore] Error checking review permission:', error);
       return false;
     }
   },

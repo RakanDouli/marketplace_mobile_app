@@ -41,7 +41,6 @@ export const useListingAnalyticsStore = create<ListingAnalyticsStore>((set) => (
     // Check access at store level
     const { userPackage } = useUserAuthStore.getState();
     if (!userPackage?.userSubscription?.analyticsAccess) {
-      console.warn('[listingAnalyticsStore] No analytics access - skipping fetch');
       set({ error: 'ليس لديك صلاحية الوصول إلى الإحصائيات' });
       return;
     }
@@ -58,7 +57,6 @@ export const useListingAnalyticsStore = create<ListingAnalyticsStore>((set) => (
         isLoading: false,
       });
     } catch (err) {
-      console.error('[listingAnalyticsStore] Error fetching listing analytics:', err);
       set({
         error: err instanceof Error ? err.message : 'فشل في تحميل الإحصائيات',
         isLoading: false,
@@ -71,7 +69,6 @@ export const useListingAnalyticsStore = create<ListingAnalyticsStore>((set) => (
     // Check access at store level
     const { userPackage } = useUserAuthStore.getState();
     if (!userPackage?.userSubscription?.analyticsAccess) {
-      console.warn('[listingAnalyticsStore] No analytics access - skipping fetch');
       set({ error: 'ليس لديك صلاحية الوصول إلى الإحصائيات' });
       return;
     }
@@ -88,7 +85,6 @@ export const useListingAnalyticsStore = create<ListingAnalyticsStore>((set) => (
         isLoading: false,
       });
     } catch (err) {
-      console.error('[listingAnalyticsStore] Error fetching analytics summary:', err);
       set({
         error: err instanceof Error ? err.message : 'فشل في تحميل ملخص الإحصائيات',
         isLoading: false,

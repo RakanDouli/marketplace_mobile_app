@@ -51,12 +51,10 @@ export default function LocationReviewStep() {
   // Get current location and generate Google Maps link
   const handleGetLocationLink = useCallback(async () => {
     setIsGettingLocation(true);
-    console.log('[Location] Starting location request...');
 
     try {
       // Check if location services are enabled
       const servicesEnabled = await Location.hasServicesEnabledAsync();
-      console.log('[Location] Services enabled:', servicesEnabled);
 
       if (!servicesEnabled) {
         Alert.alert(
@@ -70,7 +68,6 @@ export default function LocationReviewStep() {
 
       // Request permission
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log('[Location] Permission status:', status);
 
       if (status !== 'granted') {
         Alert.alert(
@@ -82,7 +79,6 @@ export default function LocationReviewStep() {
         return;
       }
 
-      console.log('[Location] Getting current position...');
 
       // Get current location - use Balanced for faster response
       const location = await Location.getCurrentPositionAsync({
@@ -91,13 +87,11 @@ export default function LocationReviewStep() {
         distanceInterval: 0,
       });
 
-      console.log('[Location] Got location:', location.coords);
 
       const { latitude, longitude } = location.coords;
 
       // Validate coordinates
       if (!latitude || !longitude || latitude === 0 || longitude === 0) {
-        console.log('[Location] Invalid coordinates:', { latitude, longitude });
         Alert.alert(
           'خطأ',
           'لم يتم الحصول على إحداثيات صحيحة. حاول مرة أخرى.',
@@ -109,7 +103,6 @@ export default function LocationReviewStep() {
 
       // Generate Google Maps link
       const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-      console.log('[Location] Generated link:', mapsLink);
 
       // Set the link
       setLocationField('link', mapsLink);
@@ -122,9 +115,6 @@ export default function LocationReviewStep() {
       );
 
     } catch (error: any) {
-      console.error('[Location] Error:', error);
-      console.error('[Location] Error code:', error?.code);
-      console.error('[Location] Error message:', error?.message);
 
       let errorMessage = 'فشل الحصول على الموقع.';
 

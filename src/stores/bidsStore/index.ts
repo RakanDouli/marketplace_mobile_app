@@ -153,7 +153,6 @@ export const useBidsStore = create<BidsStore>((set, get) => ({
         highestBid: response.highestBid || null,
       });
     } catch (err) {
-      console.error('Error fetching highest bid:', err);
     }
   },
 

@@ -93,7 +93,6 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
         isInitialized: true,
       });
     } catch (error: any) {
-      console.error('[Wishlist] Error loading wishlist:', error);
       set({
         error: error.message || 'فشل تحميل المفضلة',
         isLoading: false,
@@ -121,7 +120,6 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
         newWishlistIds.delete(listingId);
         return { wishlistIds: newWishlistIds };
       });
-      console.error('[Wishlist] Error adding to wishlist:', error);
       set({ error: error.message || 'فشل إضافة الإعلان إلى المفضلة' });
       throw error;
     }
@@ -150,7 +148,6 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
       set((state) => ({
         wishlistIds: new Set([...state.wishlistIds, listingId]),
       }));
-      console.error('[Wishlist] Error removing from wishlist:', error);
       set({ error: error.message || 'فشل إزالة الإعلان من المفضلة' });
       throw error;
     }

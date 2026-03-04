@@ -56,7 +56,6 @@ export const useAdPackagesStore = create<AdPackagesState>((set, get) => ({
         isInitialized: true,
       });
     } catch (error: any) {
-      console.error('Failed to fetch ad packages:', error);
       set({
         error: error.message || 'فشل في جلب حزم الإعلانات',
         isLoading: false,

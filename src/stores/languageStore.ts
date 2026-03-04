@@ -97,7 +97,6 @@ export const useLanguageStore = create<LanguageState>((set, get) => ({
         requiresRestart: directionChanged,
       });
     } catch (error) {
-      console.error('Failed to save language:', error);
     }
   },
 
@@ -122,7 +121,6 @@ export const useLanguageStore = create<LanguageState>((set, get) => ({
         });
       }
     } catch (error) {
-      console.error('Failed to load language:', error);
       set({ isLoading: false, isInitialized: true });
     }
   },

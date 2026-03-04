@@ -84,7 +84,6 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
         isInitialized: true,
       });
     } catch (error: any) {
-      console.error('Failed to fetch categories:', error);
       set({
         isLoading: false,
         error: error.message || 'Failed to load categories',
