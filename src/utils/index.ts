@@ -3,6 +3,7 @@
  */
 
 // Price formatting
+// Note: Exchange rates and preferred currency are managed by currencyStore
 export {
   formatPrice,
   formatPriceRange,
@@ -11,9 +12,6 @@ export {
   formatNumberWithCommas,
   parseFormattedNumber,
   convertPrice,
-  setExchangeRates,
-  setPreferredCurrency,
-  getPreferredCurrency,
 } from "./formatPrice";
 export type { Currency } from "./formatPrice";
 

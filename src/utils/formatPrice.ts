@@ -3,54 +3,28 @@
  *
  * All prices are stored in USD in the database.
  * This utility converts and formats prices for display.
+ *
+ * IMPORTANT: This utility uses the currencyStore for exchange rates.
+ * Do NOT use hardcoded rates here - always get rates from the store.
  */
 
 import { CURRENCY_SYMBOLS } from "../constants/metadata-labels";
+import { useCurrencyStore } from "../stores/currencyStore";
 
 export type Currency = "USD" | "SYP" | "EUR";
 
-// Default exchange rates (will be fetched from backend)
-const DEFAULT_RATES: Record<Currency, number> = {
-  USD: 1,
-  SYP: 13000, // 1 USD = 13,000 SYP (approximate)
-  EUR: 0.92, // 1 USD = 0.92 EUR (approximate)
-};
-
-// Global state for rates and preferred currency
-let exchangeRates: Record<Currency, number> = { ...DEFAULT_RATES };
-let preferredCurrency: Currency = "USD";
-
-/**
- * Set exchange rates (called when fetched from backend)
- */
-export function setExchangeRates(rates: Record<Currency, number>): void {
-  exchangeRates = { ...DEFAULT_RATES, ...rates };
-}
-
-/**
- * Set preferred currency for display
- */
-export function setPreferredCurrency(currency: Currency): void {
-  preferredCurrency = currency;
-}
-
-/**
- * Get current preferred currency
- */
-export function getPreferredCurrency(): Currency {
-  return preferredCurrency;
-}
-
 /**
  * Convert price from USD to target currency
+ * Uses rates from currencyStore for consistency
  */
 export function convertPrice(
   priceUSD: number,
-  toCurrency: Currency = preferredCurrency
+  toCurrency: Currency
 ): number {
   if (toCurrency === "USD") return priceUSD;
 
-  const rate = exchangeRates[toCurrency] || 1;
+  // Get rate from the store (single source of truth)
+  const rate = useCurrencyStore.getState().getRate("USD", toCurrency);
   return Math.round(priceUSD * rate);
 }
 
@@ -58,7 +32,7 @@ export function convertPrice(
  * Format price with currency symbol and thousands separators
  *
  * @param price Price in USD (as stored in database)
- * @param currency Target currency for display (default: preferredCurrency)
+ * @param currency Target currency for display (default: preferredCurrency from store)
  * @returns Formatted price string with currency symbol
  *
  * Examples:
@@ -70,12 +44,14 @@ export function formatPrice(
   price: number | null | undefined,
   currency?: Currency
 ): string {
+  // Get preferred currency from store if not provided
+  const targetCurrency = currency || useCurrencyStore.getState().preferredCurrency;
+
   // Handle null/undefined/NaN
   if (price === null || price === undefined || isNaN(price)) {
-    return formatPriceValue(0, currency || preferredCurrency);
+    return formatPriceValue(0, targetCurrency);
   }
 
-  const targetCurrency = currency || preferredCurrency;
   const convertedPrice = convertPrice(price, targetCurrency);
 
   return formatPriceValue(convertedPrice, targetCurrency);

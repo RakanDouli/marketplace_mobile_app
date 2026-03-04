@@ -41,7 +41,7 @@ export function PriceInput({
   const isRTL = theme.isRTL;
   const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
 
-  const { preferredCurrency, getRate } = useCurrencyStore();
+  const { preferredCurrency, getRate, setPreferredCurrency } = useCurrencyStore();
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(preferredCurrency);
   const [displayValue, setDisplayValue] = useState<string>('');
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
@@ -108,6 +108,9 @@ export function PriceInput({
   const handleCurrencySelect = (currency: Currency) => {
     setSelectedCurrency(currency);
     setShowCurrencyPicker(false);
+
+    // Update global preferred currency so entire page updates
+    setPreferredCurrency(currency);
 
     // Recalculate display value for new currency
     if (value > 0) {
