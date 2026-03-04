@@ -61,18 +61,6 @@ export default function MenuStackLayout() {
         }}
       />
       <Stack.Screen
-        name="advertise"
-        options={{
-          title: 'أعلن معنا',
-        }}
-      />
-      <Stack.Screen
-        name="contact"
-        options={{
-          title: 'تواصل معنا',
-        }}
-      />
-      <Stack.Screen
         name="settings"
         options={{
           title: 'الإعدادات',
@@ -88,18 +76,6 @@ export default function MenuStackLayout() {
         name="help"
         options={{
           title: 'المساعدة',
-        }}
-      />
-      <Stack.Screen
-        name="privacy"
-        options={{
-          title: 'سياسة الخصوصية',
-        }}
-      />
-      <Stack.Screen
-        name="terms"
-        options={{
-          title: 'الشروط والأحكام',
         }}
       />
       <Stack.Screen
