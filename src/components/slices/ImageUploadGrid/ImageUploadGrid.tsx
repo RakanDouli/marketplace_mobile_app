@@ -236,10 +236,10 @@ export function ImageUploadGrid({
           </View>
         )}
 
-        {/* Main image badge */}
+        {/* Main image badge - centered with outline style */}
         {isMain && !item.isUploading && (
-          <View style={[styles.mainBadge, { backgroundColor: theme.colors.primary }]}>
-            <Text variant="small" style={{ color: theme.colors.textInverse }}>رئيسية</Text>
+          <View style={[styles.mainBadge, { backgroundColor: theme.colors.bg, borderColor: theme.colors.primary }]}>
+            <Text variant="small" style={{ color: theme.colors.primary }}>رئيسية</Text>
           </View>
         )}
 
@@ -436,11 +436,15 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     mainBadge: {
       position: 'absolute',
-      bottom: theme.spacing.xs,
-      left: theme.spacing.xs,
+      bottom: theme.spacing.sm,
+      left: 0,
+      right: 0,
+      marginHorizontal: theme.spacing.xs,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
       borderRadius: theme.radius.sm,
+      borderWidth: 1,
+      alignItems: 'center',
     },
     removeButton: {
       position: 'absolute',
