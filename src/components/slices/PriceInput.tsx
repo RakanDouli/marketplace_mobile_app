@@ -67,9 +67,19 @@ export function PriceInput({
   }, [value, selectedCurrency, getRate]);
 
   const handlePriceChange = (text: string) => {
-    // Convert Arabic numerals (٠١٢٣٤٥٦٧٨٩) to English (0123456789)
-    const arabicNumerals = '٠١٢٣٤٥٦٧٨٩';
-    const withEnglishNumerals = text.replace(/[٠-٩]/g, (d) => String(arabicNumerals.indexOf(d)));
+    // Convert Arabic-Indic numerals (٠١٢٣٤٥٦٧٨٩) to Western (0123456789)
+    // Also handle Persian/Urdu numerals (۰۱۲۳۴۵۶۷۸۹)
+    const arabicIndicMap: Record<string, string> = {
+      '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+      '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
+      '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
+      '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+    };
+
+    let withEnglishNumerals = '';
+    for (const char of text) {
+      withEnglishNumerals += arabicIndicMap[char] || char;
+    }
 
     // Remove commas and non-numeric characters
     const cleanValue = withEnglishNumerals.replace(/[^0-9]/g, '');
