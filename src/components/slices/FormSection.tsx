@@ -179,7 +179,6 @@ export function FormSection({
       variant="form"
       contentPadding={contentPadding}
       style={getBorderStyle()}
-      useChevron
     >
       {children}
     </Collapsible>

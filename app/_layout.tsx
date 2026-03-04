@@ -12,6 +12,7 @@ import * as Font from 'expo-font';
 
 import { ThemeProvider, useTheme } from '../src/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { NotificationToast } from '../src/components/slices';
 import { useUserAuthStore } from '../src/stores/userAuthStore';
 import { useCategoriesStore } from '../src/stores/categoriesStore';
 import { useListingsStore } from '../src/stores/listingsStore';
@@ -180,6 +181,8 @@ function RootContent() {
           />
         </Stack>
       </AuthGuard>
+      {/* Global notification toast - positioned after Stack so it appears on top */}
+      <NotificationToast />
     </View>
   );
 }

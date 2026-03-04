@@ -9,7 +9,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   TextInput,
   StyleSheet,
 } from 'react-native';
@@ -124,8 +124,9 @@ export function Select({
     return theme.colors.border;
   };
 
-  const renderOption = ({ item }: { item: SelectOption }) => (
+  const renderOption = (item: SelectOption) => (
     <TouchableOpacity
+      key={item.value}
       style={[
         styles.option,
         item.value === value && styles.optionSelected,
@@ -233,20 +234,21 @@ export function Select({
         )}
 
         {/* Options List */}
-        <FlatList
-          data={filteredOptions}
-          keyExtractor={(item) => item.value}
-          renderItem={renderOption}
+        <ScrollView
           style={styles.optionsList}
           keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={
+          showsVerticalScrollIndicator={true}
+        >
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map(renderOption)
+          ) : (
             <View style={styles.emptyState}>
               <Text variant="body" color="muted">
                 لا توجد نتائج
               </Text>
             </View>
-          }
-        />
+          )}
+        </ScrollView>
       </BaseModal>
     </View>
   );

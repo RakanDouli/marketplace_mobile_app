@@ -110,3 +110,10 @@ export const DELETE_AVATAR_MUTATION = `
     deleteAvatar
   }
 `;
+
+// Acknowledge warning mutation (user confirms they saw the warning)
+export const ACKNOWLEDGE_WARNING_MUTATION = `
+  mutation AcknowledgeWarning {
+    acknowledgeWarning
+  }
+`;

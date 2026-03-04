@@ -104,13 +104,15 @@ export function CatalogSelector({
     }
   };
 
-  // Convert items to SelectWithAdd options
-  const options: SelectWithAddOption[] = items.map(item => ({
-    value: item.id,
-    label: item.nameAr || item.name,
-    labelSecondary: item.nameAr && item.name ? item.name : undefined,
-    logoUrl: item.logoUrl,
-  }));
+  // Convert items to SelectWithAdd options (filter out items without IDs)
+  const options: SelectWithAddOption[] = items
+    .filter(item => item.id)
+    .map(item => ({
+      value: item.id,
+      label: item.nameAr || item.name,
+      labelSecondary: item.nameAr && item.name ? item.name : undefined,
+      logoUrl: item.logoUrl,
+    }));
 
   return (
     <SelectWithAdd

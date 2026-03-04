@@ -263,7 +263,7 @@ export default function ImagesStep() {
           <Text variant="h3" style={styles.sectionTitle}>صور الإعلان</Text>
         </View>
         <Text variant="paragraph" color="secondary" style={styles.sectionSubtitle}>
-          أضف صوراً واضحة لمنتجك (الصورة الأولى ستكون الرئيسية)
+          أضف صوراً واضحة لمنتجك (الصورة الأولى ستكون الرئيسية) - {formData.images.length}/{maxImages} صور
         </Text>
 
         <ImageUploadGrid

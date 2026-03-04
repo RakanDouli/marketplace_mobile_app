@@ -356,7 +356,7 @@ export function SelectWithAdd({
           /* Options List */
           <FlatList
             data={filteredOptions}
-            keyExtractor={(item) => item.value}
+            keyExtractor={(item, index) => item.value || `option-${index}`}
             renderItem={renderOption}
             style={styles.optionsList}
             keyboardShouldPersistTaps="handled"

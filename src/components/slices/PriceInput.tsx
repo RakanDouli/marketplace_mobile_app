@@ -20,7 +20,8 @@ interface PriceInputProps {
   value: number; // USD value
   onChange: (usdValue: number) => void;
   placeholder?: string;
-  error?: boolean;
+  /** Error message string or boolean */
+  error?: string | boolean;
   label?: string;
   required?: boolean;
 }
@@ -31,10 +32,11 @@ export function PriceInput({
   value,
   onChange,
   placeholder = 'أدخل السعر',
-  error = false,
+  error,
   label,
   required = false,
 }: PriceInputProps) {
+  const hasError = !!error;
   const theme = useTheme();
   const isRTL = theme.isRTL;
   const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
@@ -142,7 +144,7 @@ export function PriceInput({
             styles.input,
             {
               backgroundColor: theme.colors.bg,
-              borderColor: error ? theme.colors.error : theme.colors.border,
+              borderColor: hasError ? theme.colors.error : theme.colors.border,
               color: theme.colors.text,
             },
           ]}
@@ -196,6 +198,13 @@ export function PriceInput({
           {conversionPreview}
         </Text>
       )}
+
+      {/* Error Message */}
+      {typeof error === 'string' && error && (
+        <Text variant="small" color="error" style={styles.errorText}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 }
@@ -240,6 +249,9 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       paddingVertical: theme.spacing.md,
     },
     preview: {
+      marginTop: theme.spacing.xs,
+    },
+    errorText: {
       marginTop: theme.spacing.xs,
     },
   });

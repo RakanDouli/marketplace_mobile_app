@@ -165,7 +165,7 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.sm,
     },
     trigger: {
-      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       paddingVertical: theme.spacing.md,
       paddingHorizontal: theme.spacing.md,

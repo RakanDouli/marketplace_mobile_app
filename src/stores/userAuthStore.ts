@@ -27,7 +27,10 @@ import {
   CHANGE_EMAIL_MUTATION,
   CREATE_AVATAR_UPLOAD_URL_MUTATION,
   DELETE_AVATAR_MUTATION,
+  ACKNOWLEDGE_WARNING_MUTATION,
 } from './userAuthStore/userAuthStore.gql';
+import { useNotificationStore } from './notificationStore';
+import { translateWarningMessage } from '../constants/metadata-labels';
 
 // =============================================================================
 // ERROR TRANSLATION
@@ -108,6 +111,80 @@ const translateAuthError = (error: any): string => {
 // =============================================================================
 // USER STATUS VALIDATION
 // =============================================================================
+
+// Flag to prevent duplicate warning notifications
+let warningNotificationShown = false;
+
+/**
+ * Show warning notification if user has unacknowledged warnings
+ * Called after successful login to alert user about their warning status
+ * Only shows once per session to prevent duplicates
+ */
+const showWarningNotificationIfNeeded = (profile: UserProfile): void => {
+  console.log('[Auth] Checking warning notification:', {
+    warningCount: profile.warningCount,
+    warningAcknowledged: profile.warningAcknowledged,
+    currentWarningMessage: profile.currentWarningMessage,
+    alreadyShown: warningNotificationShown,
+  });
+
+  // Prevent duplicate notifications
+  if (warningNotificationShown) {
+    console.log('[Auth] Warning notification already shown this session, skipping');
+    return;
+  }
+
+  // Check if user has warnings and hasn't acknowledged them
+  if (profile.warningCount && profile.warningCount > 0 && !profile.warningAcknowledged) {
+    console.log('[Auth] User has unacknowledged warnings, will show notification');
+
+    // Mark as shown to prevent duplicates
+    warningNotificationShown = true;
+
+    // Determine warning message based on warning count
+    let title: string;
+    let message: string;
+
+    // Translate the warning message from English to Arabic
+    const translatedWarningMessage = translateWarningMessage(profile.currentWarningMessage);
+
+    if (profile.warningCount === 1) {
+      title = 'تحذير أول';
+      message = translatedWarningMessage || 'لديك تحذير على حسابك. المخالفة القادمة ستؤدي إلى إيقاف الحساب لمدة 7 أيام.';
+    } else if (profile.warningCount === 2) {
+      title = 'تحذير ثاني - حسابك موقوف';
+      message = translatedWarningMessage || 'حسابك موقوف مؤقتاً. المخالفة القادمة ستؤدي إلى حظر دائم.';
+    } else {
+      title = `تحذير (${profile.warningCount})`;
+      message = translatedWarningMessage || 'لديك تحذيرات على حسابك.';
+    }
+
+    // Add small delay to ensure notification UI is ready after login navigation
+    setTimeout(() => {
+      const { addNotification, removeNotification } = useNotificationStore.getState();
+      const notificationId = addNotification({
+        type: 'warning',
+        title,
+        message,
+        duration: 0, // No auto-close - user must use action button
+        hideCloseButton: true, // Hide X button - user must confirm
+        action: {
+          label: 'تم الإطلاع',
+          onPress: async () => {
+            // Call acknowledgeWarning mutation
+            const { acknowledgeWarning } = useUserAuthStore.getState();
+            await acknowledgeWarning();
+            // Remove the notification
+            removeNotification(notificationId);
+          },
+        },
+      });
+      console.log('[Auth] Warning notification added with action button');
+    }, 500);
+  } else {
+    console.log('[Auth] No warning notification needed');
+  }
+};
 
 /**
  * Validate user status (banned/suspended) and throw appropriate error
@@ -241,6 +318,9 @@ interface UserAuthState {
   verifyOtp: (code: string) => Promise<{ success: boolean; error?: string }>;
   resendOtp: () => Promise<{ success: boolean; error?: string }>;
   clearOtpState: () => void;
+
+  // Warning Actions
+  acknowledgeWarning: () => Promise<{ success: boolean; error?: string }>;
 }
 
 // =============================================================================
@@ -301,6 +381,9 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
               profile: data.me.user,
               userPackage: data.myPackage || null,
             });
+
+            // Show warning notification if user has warnings (on app reopen)
+            showWarningNotificationIfNeeded(data.me.user);
           } else {
             // No profile found - sign out and clear state
             console.warn('[Auth] Initialize: No user profile found, signing out');
@@ -379,6 +462,9 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
                 profile: data.me.user,
                 userPackage: data.myPackage || null,
               });
+
+              // Show warning notification if user has warnings (OAuth login)
+              showWarningNotificationIfNeeded(data.me.user);
             } else {
               // No profile found - sign out
               console.warn('[Auth] onAuthStateChange: No user profile, signing out');
@@ -486,6 +572,9 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             profile: data.me.user,
             userPackage: data.myPackage || null,
           });
+
+          // Show warning notification if user has warnings
+          showWarningNotificationIfNeeded(data.me.user);
         } else {
           console.warn('[Auth] No user profile found in response, blocking login');
           // Don't allow login without profile - this prevents bypassing status check
@@ -662,6 +751,8 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
     try {
       set({ isLoading: true });
       await supabaseSignOut();
+      // Reset warning notification flag so it shows on next login
+      warningNotificationShown = false;
       set({
         session: null,
         user: null,
@@ -673,6 +764,8 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
     } catch (error: any) {
       console.error('[Auth] Sign out error:', error);
       // Still clear state even if sign out fails
+      // Reset warning notification flag so it shows on next login
+      warningNotificationShown = false;
       set({
         session: null,
         user: null,
@@ -1068,6 +1161,9 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
             otpEmail: null,
             otpSent: false,
           });
+
+          // Show warning notification if user has warnings (OTP login)
+          showWarningNotificationIfNeeded(data.me.user);
         } else {
           // No profile - sign out
           await supabaseSignOut();
@@ -1154,6 +1250,47 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
    */
   clearOtpState: () => {
     set({ otpEmail: null, otpSent: false, error: null });
+  },
+
+  /**
+   * Acknowledge warning (user confirms they saw the warning)
+   * This updates warningAcknowledged = true in the backend
+   */
+  acknowledgeWarning: async () => {
+    try {
+      const { session } = get();
+      if (!session?.access_token) {
+        return { success: false, error: 'غير مسجل الدخول' };
+      }
+
+      const response = await graphqlRequest(
+        ACKNOWLEDGE_WARNING_MUTATION,
+        {},
+        session.access_token
+      );
+
+      if (response.errors) {
+        console.error('[Auth] Acknowledge warning error:', response.errors);
+        return { success: false, error: 'فشل في تأكيد الإطلاع على التحذير' };
+      }
+
+      // Update local profile state
+      const currentProfile = get().profile;
+      if (currentProfile) {
+        set({
+          profile: {
+            ...currentProfile,
+            warningAcknowledged: true,
+          },
+        });
+      }
+
+      console.log('[Auth] Warning acknowledged successfully');
+      return { success: true };
+    } catch (error: any) {
+      console.error('[Auth] Acknowledge warning error:', error);
+      return { success: false, error: error.message || 'حدث خطأ' };
+    }
   },
 }));
 

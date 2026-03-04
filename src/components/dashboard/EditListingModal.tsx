@@ -34,6 +34,7 @@ import { Select } from '../slices/Select';
 import { FormSection, FormSectionStatus } from '../slices/FormSection';
 import { ImageUploadGrid, ImageItem } from '../slices/ImageUploadGrid';
 import { useUserListingsStore, UserListing } from '../../stores/userListingsStore';
+import { useNotificationStore } from '../../stores/notificationStore';
 import { graphqlRequest, cachedGraphqlRequest } from '../../services/graphql/client';
 import {
   CREATE_IMAGE_UPLOAD_URL_MUTATION,
@@ -135,6 +136,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
   const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
 
   const { updateMyListing, loadMyListingById, isLoading } = useUserListingsStore();
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   // ==========================================================================
   // FORM STATE
@@ -153,6 +155,8 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 
   // Section 3: Specs
   const [specs, setSpecs] = useState<Record<string, any>>({});
+  const [originalSpecs, setOriginalSpecs] = useState<Record<string, any>>({}); // Track original specs
+  const [specsModified, setSpecsModified] = useState(false); // Track if user modified specs
   const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [models, setModels] = useState<Model[]>([]);
@@ -171,7 +175,9 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 
   // Local state
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // Field-level errors (for inline validation)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // ==========================================================================
   // COMPUTED VALUES
@@ -214,7 +220,10 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 
       // Set specs
       const listingSpecs = fullListing.specs || {};
-      setSpecs(typeof listingSpecs === 'string' ? JSON.parse(listingSpecs) : listingSpecs);
+      const parsedSpecs = typeof listingSpecs === 'string' ? JSON.parse(listingSpecs) : listingSpecs;
+      setSpecs(parsedSpecs);
+      setOriginalSpecs(parsedSpecs); // Save original for comparison
+      setSpecsModified(false);
 
       // Set location
       setProvince(fullListing.location?.province || '');
@@ -230,10 +239,13 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
         await loadAttributesAndCatalog(fullListing.category.id, listingSpecs);
       }
 
-      setError(null);
-    } catch (err: any) {
+      } catch (err: any) {
       console.error('[EditListingModal] Load error:', err);
-      setError('فشل في تحميل بيانات الإعلان');
+      addNotification({
+        type: 'error',
+        title: 'خطأ',
+        message: 'فشل في تحميل بيانات الإعلان',
+      });
     }
   };
 
@@ -297,6 +309,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 
   const handleSpecChange = (key: string, value: any) => {
     setSpecs(prev => ({ ...prev, [key]: value }));
+    setSpecsModified(true); // Mark as modified
 
     // Cascade loading for brand → model → variant
     if (key === 'brandId' && value && listing.category?.id) {
@@ -497,22 +510,32 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
   // ==========================================================================
 
   const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
     if (!title.trim() || title.length < 10) {
-      setError('العنوان يجب أن يكون 10 أحرف على الأقل');
-      return false;
+      errors.title = 'العنوان يجب أن يكون 10 أحرف على الأقل';
     }
     if (priceMinor <= 0) {
-      setError('السعر يجب أن يكون أكبر من صفر');
-      return false;
+      errors.price = 'السعر يجب أن يكون أكبر من صفر';
     }
     if (images.filter(i => i.isUploaded || i.cloudflareKey).length === 0) {
-      setError('يجب إضافة صورة واحدة على الأقل');
-      return false;
+      errors.images = 'يجب إضافة صورة واحدة على الأقل';
     }
     if (!province) {
-      setError('يجب اختيار المحافظة');
+      errors.province = 'يجب اختيار المحافظة';
+    }
+
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      addNotification({
+        type: 'error',
+        title: 'خطأ في النموذج',
+        message: 'يرجى تصحيح الأخطاء أدناه',
+      });
       return false;
     }
+
     return true;
   };
 
@@ -520,7 +543,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
     if (!validateForm()) return;
 
     setIsSaving(true);
-    setError(null);
+    setFieldErrors({});
 
     try {
       // Determine new status
@@ -538,7 +561,8 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
         .filter(img => img.cloudflareKey || img.isUploaded)
         .map(img => img.cloudflareKey || img.id);
 
-      await updateMyListing(listing.id, {
+      // Build update input - only include specs if user modified them
+      const updateInput: any = {
         title: title.trim(),
         description: description.trim(),
         priceMinor,
@@ -546,19 +570,65 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
         biddingStartPrice: allowBidding ? biddingStartPrice : null,
         status: newStatus,
         imageKeys,
-        specs,
         location: {
           province,
           city,
           area,
           link: locationLink,
         },
+      };
+
+      // Only send specs if user actually modified them
+      if (specsModified) {
+        // Clean specs - only include keys that match actual attributes with storageType='specs'
+        // AND validate that selector values match valid option keys
+        const specsAttributes = attributes.filter(attr => attr.storageType === 'specs');
+        const cleanSpecs: Record<string, any> = {};
+
+        for (const attr of specsAttributes) {
+          const value = specs[attr.key];
+
+          // Skip empty values
+          if (value === undefined || value === null || value === '') {
+            continue;
+          }
+
+          // For selector types, validate that the value is a valid option key
+          if (attr.type === 'selector' && attr.options && attr.options.length > 0) {
+            const validOptionKeys = new Set(attr.options.map(o => o.key));
+            if (!validOptionKeys.has(value)) {
+              console.log(`[EditListingModal] Skipping invalid option for ${attr.key}: "${value}"`);
+              continue; // Skip invalid option values
+            }
+          }
+
+          cleanSpecs[attr.key] = value;
+        }
+
+        console.log('[EditListingModal] Specs modified - sending cleanSpecs:', JSON.stringify(cleanSpecs, null, 2));
+        updateInput.specs = cleanSpecs;
+      } else {
+        console.log('[EditListingModal] Specs not modified - skipping specs update');
+      }
+
+      await updateMyListing(listing.id, updateInput);
+
+      // Show success notification
+      addNotification({
+        type: 'success',
+        title: 'تم الحفظ',
+        message: 'تم حفظ التغييرات بنجاح',
       });
 
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'حدث خطأ أثناء حفظ التغييرات');
+      // Show error notification
+      addNotification({
+        type: 'error',
+        title: 'خطأ',
+        message: err.message || 'حدث خطأ أثناء حفظ التغييرات',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -745,86 +815,101 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
             </Text>
           </View>
 
-          {/* Error Message */}
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text variant="small" color="error">{error}</Text>
-            </View>
-          )}
-
           {/* Section 1: Basic Info */}
-          <FormSection
-            number={1}
-            title="المعلومات الأساسية"
-            status={getSectionStatus(basicValidation.isValid, basicValidation.filledCount, basicValidation.totalCount, true)}
-            filledCount={basicValidation.filledCount}
-            totalCount={basicValidation.totalCount}
-            hasRequiredFields
-            defaultExpanded
-          >
-            <Input
-              label="عنوان الإعلان"
-              placeholder="أدخل عنوان الإعلان"
-              value={title}
-              onChangeText={setTitle}
-              maxLength={100}
-              showCounter
-              required
-            />
-
-            <Input
-              label="الوصف"
-              placeholder="أدخل وصف تفصيلي للإعلان"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={5}
-              maxLength={2000}
-              showCounter
-            />
-
-            <PriceInput
-              label="السعر"
-              value={priceMinor}
-              onChange={setPriceMinor}
-              required
-            />
-
-            <ToggleField
-              label="السماح بالمزايدة"
-              value={allowBidding}
-              onChange={setAllowBidding}
-              description="تمكين المزايدة يسمح للمشترين بتقديم عروض أسعار"
-            />
-
-            {allowBidding && (
-              <PriceInput
-                label="سعر بداية المزايدة"
-                value={biddingStartPrice}
-                onChange={setBiddingStartPrice}
+            <FormSection
+              number={1}
+              title="المعلومات الأساسية"
+              status={getSectionStatus(basicValidation.isValid, basicValidation.filledCount, basicValidation.totalCount, true)}
+              filledCount={basicValidation.filledCount}
+              totalCount={basicValidation.totalCount}
+              hasRequiredFields
+              defaultExpanded
+            >
+              <Input
+                label="عنوان الإعلان"
+                placeholder="أدخل عنوان الإعلان"
+                value={title}
+                onChangeText={(text) => {
+                  setTitle(text);
+                  if (fieldErrors.title) {
+                    setFieldErrors(prev => ({ ...prev, title: '' }));
+                  }
+                }}
+                maxLength={100}
+                showCounter
+                required
+                error={fieldErrors.title}
               />
-            )}
-          </FormSection>
 
-          {/* Section 2: Images */}
-          <FormSection
-            number={2}
-            title="الصور"
-            status={getSectionStatus(imagesValidation.isValid, imagesValidation.filledCount, imagesValidation.totalCount, true)}
-            filledCount={imagesValidation.filledCount}
-            totalCount={imagesValidation.totalCount}
-            hasRequiredFields
-          >
-            <ImageUploadGrid
-              images={images}
-              onChange={handleImageChange}
-              maxImages={10}
-              disabled={isUploadingImage}
-              label="صور المنتج"
-              emptyStateTitle="أضف صور المنتج"
-              emptyStateSubtitle="الصورة الأولى ستكون الصورة الرئيسية"
-            />
-          </FormSection>
+              <Input
+                label="الوصف"
+                placeholder="أدخل وصف تفصيلي للإعلان"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={5}
+                maxLength={2000}
+                showCounter
+              />
+
+              <PriceInput
+                label="السعر"
+                value={priceMinor}
+                onChange={(val) => {
+                  setPriceMinor(val);
+                  if (fieldErrors.price) {
+                    setFieldErrors(prev => ({ ...prev, price: '' }));
+                  }
+                }}
+                required
+                error={fieldErrors.price}
+              />
+
+              <ToggleField
+                label="السماح بالمزايدة"
+                value={allowBidding}
+                onChange={setAllowBidding}
+                description="تمكين المزايدة يسمح للمشترين بتقديم عروض أسعار"
+              />
+
+              {allowBidding && (
+                <PriceInput
+                  label="سعر بداية المزايدة"
+                  value={biddingStartPrice}
+                  onChange={setBiddingStartPrice}
+                />
+              )}
+            </FormSection>
+
+            {/* Section 2: Images */}
+            <FormSection
+              number={2}
+              title="الصور"
+              status={getSectionStatus(imagesValidation.isValid, imagesValidation.filledCount, imagesValidation.totalCount, true)}
+              filledCount={imagesValidation.filledCount}
+              totalCount={imagesValidation.totalCount}
+              hasRequiredFields
+            >
+              <ImageUploadGrid
+                images={images}
+                onChange={(newImages) => {
+                  handleImageChange(newImages);
+                  if (fieldErrors.images) {
+                    setFieldErrors(prev => ({ ...prev, images: '' }));
+                  }
+                }}
+                maxImages={10}
+                disabled={isUploadingImage}
+                label="صور المنتج"
+                emptyStateTitle="أضف صور المنتج"
+                emptyStateSubtitle="الصورة الأولى ستكون الصورة الرئيسية"
+              />
+              {fieldErrors.images && (
+                <Text variant="small" color="error" style={{ marginTop: theme.spacing.sm }}>
+                  {fieldErrors.images}
+                </Text>
+              )}
+            </FormSection>
 
           {/* Section 3: Specs */}
           {attributes.length > 0 && (
@@ -847,69 +932,71 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
             </FormSection>
           )}
 
-          {/* Section 4: Location */}
-          <FormSection
-            number={attributes.length > 0 ? 4 : 3}
-            title="الموقع"
-            status={getSectionStatus(locationValidation.isValid, locationValidation.filledCount, locationValidation.totalCount, true)}
-            filledCount={locationValidation.filledCount}
-            totalCount={locationValidation.totalCount}
-            hasRequiredFields
-          >
-            <Select
-              label="المحافظة"
-              value={province}
-              onChange={setProvince}
-              options={[
-                { value: '', label: 'اختر المحافظة' },
-                ...PROVINCES,
-              ]}
-              required
-            />
-
-            <Input
-              label="المدينة"
-              placeholder="أدخل اسم المدينة"
-              value={city}
-              onChangeText={setCity}
-            />
-
-            <Input
-              label="المنطقة"
-              placeholder="أدخل اسم المنطقة"
-              value={area}
-              onChangeText={setArea}
-            />
-
-            <View style={styles.locationLinkRow}>
-              <View style={{ flex: 1 }}>
-                <Input
-                  label="رابط الموقع"
-                  placeholder="رابط Google Maps"
-                  value={locationLink}
-                  onChangeText={setLocationLink}
-                />
-              </View>
-              <Button
-                variant="outline"
-                size="sm"
-                onPress={handleGetLocation}
-                loading={isGettingLocation}
-                icon={<Navigation size={16} color={theme.colors.primary} />}
-                style={styles.locationButton}
-              >
-                موقعي
-              </Button>
-            </View>
-          </FormSection>
-
-          {/* Section 5: Status (only for ACTIVE/HIDDEN) */}
-          {(listing.status === 'ACTIVE' || listing.status === 'HIDDEN') && (
+            {/* Section 4: Location */}
             <FormSection
-              number={attributes.length > 0 ? 5 : 4}
-              title="إدارة الحالة"
-              status={isHidden ? 'incomplete' : 'complete'}
+              number={attributes.length > 0 ? 4 : 3}
+              title="الموقع"
+              status={getSectionStatus(locationValidation.isValid, locationValidation.filledCount, locationValidation.totalCount, true)}
+              filledCount={locationValidation.filledCount}
+              totalCount={locationValidation.totalCount}
+              hasRequiredFields
             >
+              <Select
+                label="المحافظة"
+                value={province}
+                onChange={(val) => {
+                  setProvince(val);
+                  if (fieldErrors.province) {
+                    setFieldErrors(prev => ({ ...prev, province: '' }));
+                  }
+                }}
+                options={[
+                  { value: '', label: 'اختر المحافظة' },
+                  ...PROVINCES,
+                ]}
+                required
+                error={fieldErrors.province}
+              />
+
+              <Input
+                label="المدينة"
+                placeholder="أدخل اسم المدينة"
+                value={city}
+                onChangeText={setCity}
+              />
+
+              <Input
+                label="المنطقة"
+                placeholder="أدخل اسم المنطقة"
+                value={area}
+                onChangeText={setArea}
+              />
+
+              <View style={styles.locationLinkRow}>
+                <View style={{ flex: 1 }}>
+                  <Input
+                    label="رابط الموقع"
+                    placeholder="رابط Google Maps"
+                    value={locationLink}
+                    onChangeText={setLocationLink}
+                  />
+                </View>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onPress={handleGetLocation}
+                  loading={isGettingLocation}
+                  icon={<Navigation size={16} color={theme.colors.primary} />}
+                  style={styles.locationButton}
+                >
+                  موقعي
+                </Button>
+              </View>
+            </FormSection>
+
+          {/* Status Toggle (only for ACTIVE/HIDDEN) - NOT in a collapse */}
+          {(listing.status === 'ACTIVE' || listing.status === 'HIDDEN') && (
+            <View style={styles.statusSection}>
               <ToggleField
                 label="إيقاف الإعلان مؤقتاً"
                 value={isHidden}
@@ -919,7 +1006,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
                   : 'الإعلان ظاهر ويمكن للآخرين رؤيته'
                 }
               />
-            </FormSection>
+            </View>
           )}
         </ScrollView>
 
@@ -1010,12 +1097,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginBottom: theme.spacing.md,
       gap: theme.spacing.xs,
     },
-    errorContainer: {
-      backgroundColor: '#fef2f2',
-      borderRadius: theme.radius.md,
-      padding: theme.spacing.md,
-      marginBottom: theme.spacing.md,
-    },
     locationLinkRow: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'flex-end',
@@ -1023,6 +1104,14 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     locationButton: {
       marginBottom: theme.spacing.md,
+    },
+    statusSection: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.lg,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
     },
     footer: {
       flexDirection: isRTL ? 'row-reverse' : 'row',

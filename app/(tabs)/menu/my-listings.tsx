@@ -165,8 +165,8 @@ export default function MyListingsScreen() {
       return;
     }
 
-    // All checks passed, proceed to create listing
-    router.push('/create/wizard');
+    // All checks passed, navigate to create tab (category selection - same as bottom nav)
+    router.push('/(tabs)/create');
   };
 
   // Handle listing press - navigate to detail

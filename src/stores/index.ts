@@ -70,6 +70,12 @@ export {
   type ArchivalReason,
 } from "./userListingsStore";
 
+export {
+  useNotificationStore,
+  useNotifications,
+  useAddNotification,
+  useRemoveNotification,
+} from "./notificationStore";
+
 // TODO: Add more stores as they are created
 // export { useChatStore } from "./chatStore";
-// export { useNotificationStore } from "./notificationStore";

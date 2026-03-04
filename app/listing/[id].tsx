@@ -15,7 +15,6 @@ import {
   FlatList,
   Image,
 } from 'react-native';
-import { useVideoPlayer, VideoView } from 'expo-video';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import {
   MapPin,
@@ -56,38 +55,6 @@ import { ENV } from '../../src/constants/env';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_HEIGHT = 300;
 
-// Separate component for video playback using expo-video
-// Must be a separate component because useVideoPlayer is a hook
-interface VideoItemProps {
-  url: string;
-  style: any;
-  badgeStyle: any;
-  badgeTextStyle: any;
-}
-
-const VideoItem: React.FC<VideoItemProps> = ({ url, style, badgeStyle, badgeTextStyle }) => {
-  const player = useVideoPlayer(url, (player) => {
-    player.loop = false;
-  });
-
-  return (
-    <View style={style}>
-      <VideoView
-        player={player}
-        style={style}
-        nativeControls={true}
-        contentFit="contain"
-        allowsFullscreen={true}
-      />
-      {/* Video indicator badge */}
-      <View style={badgeStyle}>
-        <Play size={16} color="#FFFFFF" fill="#FFFFFF" />
-        <Text variant="xs" style={badgeTextStyle}>فيديو</Text>
-      </View>
-    </View>
-  );
-};
-
 export default function ListingDetailScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -96,7 +63,7 @@ export default function ListingDetailScreen() {
 
   // State
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [showMediaPreview, setShowMediaPreview] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -222,23 +189,12 @@ export default function ListingDetailScreen() {
     );
   }, [currentListing?.id, currentListing?.userId, shareMetadata, styles]);
 
-  // Build media items array: images first, video at the end (same as web frontend)
+  // Build media items array: VIDEO FIRST (if exists), then images
   // IMPORTANT: Must be defined before early returns to follow React hooks rules
   const mediaItems = useMemo(() => {
     const items: { type: 'image' | 'video'; url: string; id: string }[] = [];
 
-    // Add images first - use responsive variant based on screen width
-    if (currentListing?.imageKeys) {
-      currentListing.imageKeys.forEach((key, index) => {
-        items.push({
-          type: 'image',
-          url: getResponsiveImageUrl(key, SCREEN_WIDTH, 'gallery'),
-          id: key,
-        });
-      });
-    }
-
-    // Add video at the end if exists
+    // Add video FIRST if exists (video takes priority)
     // NOTE: Video URLs can be either:
     // 1. Full R2 URLs (https://pub-xxx.r2.dev/videos/xxx.mp4) - use as-is
     // 2. Cloudflare image IDs (legacy) - transform with getCloudflareImageUrl
@@ -250,6 +206,17 @@ export default function ListingDetailScreen() {
         type: 'video',
         url: videoUrl,
         id: 'video',
+      });
+    }
+
+    // Add images after video - use responsive variant based on screen width
+    if (currentListing?.imageKeys) {
+      currentListing.imageKeys.forEach((key) => {
+        items.push({
+          type: 'image',
+          url: getResponsiveImageUrl(key, SCREEN_WIDTH, 'gallery'),
+          id: key,
+        });
       });
     }
 
@@ -377,18 +344,39 @@ export default function ListingDetailScreen() {
                   const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
                   setActiveImageIndex(index);
                 }}
-                renderItem={({ item }) => (
+                renderItem={({ item, index }) => (
                   item.type === 'video' ? (
-                    <VideoItem
-                      url={item.url}
+                    // Video thumbnail - press to open unified media preview
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={() => {
+                        setActiveImageIndex(index);
+                        setShowMediaPreview(true);
+                      }}
                       style={styles.galleryVideo}
-                      badgeStyle={styles.videoBadge}
-                      badgeTextStyle={styles.videoBadgeText}
-                    />
+                    >
+                      {/* Dark background with play button */}
+                      <View style={styles.videoThumbnail}>
+                        <View style={styles.playButtonCircle}>
+                          <Play size={48} color="#FFFFFF" fill="#FFFFFF" />
+                        </View>
+                        <Text variant="body" style={styles.videoThumbnailText}>
+                          اضغط لتشغيل الفيديو
+                        </Text>
+                      </View>
+                      {/* Video badge */}
+                      <View style={styles.videoBadge}>
+                        <Play size={16} color="#FFFFFF" fill="#FFFFFF" />
+                        <Text variant="xs" style={styles.videoBadgeText}>فيديو</Text>
+                      </View>
+                    </TouchableOpacity>
                   ) : (
                     <TouchableOpacity
                       activeOpacity={0.95}
-                      onPress={() => setShowImagePreview(true)}
+                      onPress={() => {
+                        setActiveImageIndex(index);
+                        setShowMediaPreview(true);
+                      }}
                     >
                       <Image
                         source={{ uri: item.url }}
@@ -613,11 +601,11 @@ export default function ListingDetailScreen() {
         </SafeAreaView>
       )}
 
-      {/* Modals */}
+      {/* Unified Media Preview Modal (Images + Video) */}
       <ImagePreviewModal
-        visible={showImagePreview}
-        onClose={() => setShowImagePreview(false)}
-        images={images}
+        visible={showMediaPreview}
+        onClose={() => setShowMediaPreview(false)}
+        mediaItems={mediaItems}
         initialIndex={activeImageIndex}
       />
 
@@ -702,6 +690,26 @@ const createStyles = (theme: Theme) =>
       width: SCREEN_WIDTH,
       height: IMAGE_HEIGHT,
       backgroundColor: '#000000',
+    },
+    videoThumbnail: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 16,
+    },
+    playButtonCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: 'rgba(255,255,255,0.5)',
+    },
+    videoThumbnailText: {
+      color: '#FFFFFF',
+      opacity: 0.8,
     },
     videoBadge: {
       position: 'absolute',

@@ -1112,27 +1112,41 @@ onPress={() => {
 |---------|--------|-------|
 | Home Page | ✅ Done | Categories, featured, recent |
 | Category Listings | ✅ Done | Filters, sorting, pagination |
-| Listing Detail | ✅ Done | Gallery, specs, contact |
+| Listing Detail | ✅ Done | Gallery, specs, contact, reviews |
 | Search | ✅ Done | Full-text with filters |
 | Wishlist | ✅ Done | Add/remove favorites |
-| Auth (Login/Register) | ✅ Done | Supabase Auth |
+| Auth (Login/Register) | ✅ Done | Email, Google OAuth |
+| Forgot Password | ✅ Done | Sends reset email |
+| View/Edit Profile | ✅ Done | Avatar upload/delete, all fields |
+| My Listings | ✅ Done | List, filter, status tracking |
+| Create Listing | ✅ Done | Full wizard with all steps |
+| Chat/Messaging | ✅ Done | Real-time, images, edit/delete |
+| Write Review | ✅ Done | Star rating + tags |
+| Contact Seller | ✅ Done | Modal integration |
+| Report Seller | ✅ Done | Report modal working |
 | View Tracking | ✅ Done | Analytics integration |
 | Error Boundary | ✅ Done | Graceful error handling |
 | LRU Cache | ✅ Done | GraphQL response caching |
 | Theme System | ✅ Done | Dark/Light mode ready |
+| Blocked Users | ✅ Done | View, unblock |
+| Account Settings | ✅ Done | Theme, currency |
 
-### Pending Features
+### Features Needing Work
 
-| Feature | Status | Blocked By |
-|---------|--------|------------|
-| Create Listing | 🔲 Pending | - |
-| Edit Listing | 🔲 Pending | Create Listing |
-| Chat/Messaging | 🔲 Pending | - |
-| User Profile | 🔲 Pending | - |
-| My Listings | 🔲 Pending | - |
-| Notifications | 🔲 Pending | Chat |
-| Offline Support | 🔲 Pending | Core features |
-| Push Notifications | 🔲 Pending | Chat |
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Edit Listing | 🟡 In Progress | Modal exists, save logic TODO |
+| Bidding Section | 🔲 Pending | No UI, backend ready |
+| Push Notifications | 🔲 Pending | Backend ready, needs mobile UI |
+| Offline Support | 🔲 Pending | Low priority for MVP |
+
+### Decided NOT to Implement (For Now)
+
+| Feature | Reason |
+|---------|--------|
+| OTP Login | Backend supports, decided to skip for MVP |
+| Biometric Auth | Post-launch feature |
+| 2FA | Post-launch feature |
 
 ### Legend
 - ✅ Done
@@ -1671,3 +1685,638 @@ npx expo install react-native-webview
 3. **Social Login:** Add Apple Sign-In (required for iOS App Store)
 4. **Session Management:** Show active sessions, allow logout from other devices
 5. **2FA:** Two-factor authentication support
+
+---
+
+## 🚨 PRODUCTION TODO LIST (Updated: March 2026)
+
+### Critical Before App Store Submission
+
+| Task | Status | Owner | Notes |
+|------|--------|-------|-------|
+| Edit Listing | 🟡 In Progress | User | Modal exists, needs save logic |
+| Bidding Section | 🔲 Pending | User | Create component + add to detail page |
+| Push Notifications | 🔲 Pending | TBD | See plan below |
+
+---
+
+## 📱 PUSH NOTIFICATIONS - COMPLETE IMPLEMENTATION PLAN
+
+### Overview
+
+Push notifications allow the app to receive real-time alerts even when closed. This requires:
+1. **Mobile Side:** Request permissions, get device token, handle notifications
+2. **Backend Side:** Store tokens, send notifications via Expo Push API
+3. **Triggers:** When to send (new message, bid, listing approved, etc.)
+
+---
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    PUSH NOTIFICATION FLOW                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   1. USER INSTALLS APP                                          │
+│      ↓                                                          │
+│   2. App requests permission (iOS/Android)                       │
+│      ↓                                                          │
+│   3. App gets Expo Push Token (ExponentPushToken[xxxxx])        │
+│      ↓                                                          │
+│   4. App sends token to backend (GraphQL mutation)              │
+│      ↓                                                          │
+│   5. Backend stores token in user_push_tokens table             │
+│                                                                  │
+│   ═══════════════════════════════════════════════════════════   │
+│                                                                  │
+│   6. EVENT OCCURS (new message, new bid, etc.)                  │
+│      ↓                                                          │
+│   7. Backend fetches user's push tokens                         │
+│      ↓                                                          │
+│   8. Backend sends to Expo Push API                             │
+│      POST https://exp.host/--/api/v2/push/send                  │
+│      ↓                                                          │
+│   9. Expo routes to Apple/Google push services                  │
+│      ↓                                                          │
+│   10. User's device receives notification                       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Phase 1: Mobile App Setup (2-3 hours)
+
+#### Step 1.1: Install Dependencies
+
+```bash
+npx expo install expo-notifications expo-device expo-constants
+```
+
+#### Step 1.2: Create Push Notification Service
+
+**File:** `src/services/pushNotifications.ts`
+
+```typescript
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import { graphqlRequest } from './graphql/client';
+
+// Configure how notifications appear when app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+// GraphQL mutation to register token
+const REGISTER_PUSH_TOKEN_MUTATION = `
+  mutation RegisterPushToken($input: RegisterPushTokenInput!) {
+    registerPushToken(input: $input) {
+      success
+    }
+  }
+`;
+
+export const pushNotificationService = {
+  /**
+   * Register for push notifications
+   * Call this after user logs in
+   */
+  async register(accessToken: string): Promise<string | null> {
+    // Only works on physical devices
+    if (!Device.isDevice) {
+      console.log('[Push] Must use physical device');
+      return null;
+    }
+
+    // Check/request permissions
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') {
+      console.log('[Push] Permission denied');
+      return null;
+    }
+
+    // Get Expo push token
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    const token = await Notifications.getExpoPushTokenAsync({ projectId });
+
+    // Android notification channel
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'الإشعارات',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#4F46E5',
+      });
+
+      // Chat messages channel
+      await Notifications.setNotificationChannelAsync('messages', {
+        name: 'الرسائل',
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: 'default',
+      });
+
+      // Bids channel
+      await Notifications.setNotificationChannelAsync('bids', {
+        name: 'العروض والمزايدات',
+        importance: Notifications.AndroidImportance.HIGH,
+      });
+    }
+
+    // Send token to backend
+    try {
+      await graphqlRequest(
+        REGISTER_PUSH_TOKEN_MUTATION,
+        {
+          input: {
+            token: token.data,
+            platform: Platform.OS,
+            deviceName: Device.deviceName || 'Unknown',
+          },
+        },
+        false,
+        accessToken
+      );
+      console.log('[Push] Token registered:', token.data);
+    } catch (error) {
+      console.error('[Push] Failed to register token:', error);
+    }
+
+    return token.data;
+  },
+
+  /**
+   * Unregister push token (call on logout)
+   */
+  async unregister(accessToken: string): Promise<void> {
+    try {
+      const token = await Notifications.getExpoPushTokenAsync();
+      await graphqlRequest(
+        `mutation UnregisterPushToken($token: String!) {
+          unregisterPushToken(token: $token)
+        }`,
+        { token: token.data },
+        false,
+        accessToken
+      );
+    } catch (error) {
+      console.error('[Push] Failed to unregister:', error);
+    }
+  },
+
+  /**
+   * Get current badge count
+   */
+  async getBadgeCount(): Promise<number> {
+    return await Notifications.getBadgeCountAsync();
+  },
+
+  /**
+   * Set badge count
+   */
+  async setBadgeCount(count: number): Promise<void> {
+    await Notifications.setBadgeCountAsync(count);
+  },
+
+  /**
+   * Clear all notifications
+   */
+  async clearAll(): Promise<void> {
+    await Notifications.dismissAllNotificationsAsync();
+    await Notifications.setBadgeCountAsync(0);
+  },
+};
+```
+
+#### Step 1.3: Create Notification Handler Hook
+
+**File:** `src/hooks/useNotificationHandlers.ts`
+
+```typescript
+import { useEffect, useRef } from 'react';
+import * as Notifications from 'expo-notifications';
+import { useRouter } from 'expo-router';
+
+export type NotificationType =
+  | 'NEW_MESSAGE'
+  | 'NEW_BID'
+  | 'BID_ACCEPTED'
+  | 'BID_REJECTED'
+  | 'LISTING_APPROVED'
+  | 'LISTING_REJECTED'
+  | 'LISTING_SOLD'
+  | 'PRICE_DROP'
+  | 'REVIEW_RECEIVED';
+
+interface NotificationData {
+  type: NotificationType;
+  listingId?: string;
+  threadId?: string;
+  userId?: string;
+  bidId?: string;
+}
+
+export function useNotificationHandlers() {
+  const router = useRouter();
+  const notificationListener = useRef<Notifications.Subscription>();
+  const responseListener = useRef<Notifications.Subscription>();
+
+  useEffect(() => {
+    // Handle notification received while app is open
+    notificationListener.current = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        console.log('[Push] Received:', notification);
+        // Could update badge count, show in-app toast, etc.
+      }
+    );
+
+    // Handle notification tap (user interacted)
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data as NotificationData;
+        console.log('[Push] Tapped:', data);
+
+        // Navigate based on notification type
+        switch (data.type) {
+          case 'NEW_MESSAGE':
+            if (data.threadId) {
+              router.push(`/chat/${data.threadId}`);
+            } else {
+              router.push('/(tabs)/messages');
+            }
+            break;
+
+          case 'NEW_BID':
+          case 'BID_ACCEPTED':
+          case 'BID_REJECTED':
+          case 'LISTING_APPROVED':
+          case 'LISTING_REJECTED':
+          case 'LISTING_SOLD':
+            if (data.listingId) {
+              router.push(`/listing/${data.listingId}`);
+            }
+            break;
+
+          case 'PRICE_DROP':
+            if (data.listingId) {
+              router.push(`/listing/${data.listingId}`);
+            } else {
+              router.push('/(tabs)/menu/wishlist');
+            }
+            break;
+
+          case 'REVIEW_RECEIVED':
+            router.push('/(tabs)/menu');
+            break;
+
+          default:
+            // Default: go to home
+            router.push('/(tabs)');
+        }
+      }
+    );
+
+    return () => {
+      if (notificationListener.current) {
+        Notifications.removeNotificationSubscription(notificationListener.current);
+      }
+      if (responseListener.current) {
+        Notifications.removeNotificationSubscription(responseListener.current);
+      }
+    };
+  }, [router]);
+}
+```
+
+#### Step 1.4: Integrate in App Layout
+
+**File:** `app/_layout.tsx` (add to existing)
+
+```typescript
+import { useNotificationHandlers } from '../src/hooks/useNotificationHandlers';
+import { pushNotificationService } from '../src/services/pushNotifications';
+
+function RootLayout() {
+  // ... existing code ...
+
+  // Add notification handlers
+  useNotificationHandlers();
+
+  // Register for push on auth state change
+  useEffect(() => {
+    if (session?.access_token) {
+      pushNotificationService.register(session.access_token);
+    }
+  }, [session?.access_token]);
+
+  // ... rest of component
+}
+```
+
+---
+
+### Phase 2: Backend Setup (3-4 hours)
+
+#### Step 2.1: Create Push Token Table
+
+**Migration:** `CreateUserPushTokensTable`
+
+```sql
+CREATE TABLE user_push_tokens (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token VARCHAR(255) NOT NULL UNIQUE,
+  platform VARCHAR(20) NOT NULL, -- 'ios' or 'android'
+  device_name VARCHAR(100),
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW(),
+  last_used_at TIMESTAMP DEFAULT NOW(),
+
+  UNIQUE(user_id, token)
+);
+
+CREATE INDEX idx_push_tokens_user ON user_push_tokens(user_id);
+CREATE INDEX idx_push_tokens_active ON user_push_tokens(is_active) WHERE is_active = true;
+```
+
+#### Step 2.2: Create Push Notification Service
+
+**File:** `src/notifications/push-notification.service.ts`
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserPushToken } from './user-push-token.entity';
+
+interface ExpoPushMessage {
+  to: string;
+  title: string;
+  body: string;
+  data?: Record<string, any>;
+  sound?: 'default' | null;
+  badge?: number;
+  channelId?: string;
+  priority?: 'default' | 'normal' | 'high';
+}
+
+@Injectable()
+export class PushNotificationService {
+  private readonly EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+
+  constructor(
+    @InjectRepository(UserPushToken)
+    private pushTokenRepo: Repository<UserPushToken>,
+  ) {}
+
+  /**
+   * Register a push token for a user
+   */
+  async registerToken(
+    userId: string,
+    token: string,
+    platform: string,
+    deviceName?: string,
+  ): Promise<void> {
+    await this.pushTokenRepo.upsert(
+      {
+        userId,
+        token,
+        platform,
+        deviceName,
+        isActive: true,
+        lastUsedAt: new Date(),
+      },
+      ['token'],
+    );
+  }
+
+  /**
+   * Unregister a push token
+   */
+  async unregisterToken(token: string): Promise<void> {
+    await this.pushTokenRepo.update({ token }, { isActive: false });
+  }
+
+  /**
+   * Send push notification to a user
+   */
+  async sendToUser(
+    userId: string,
+    title: string,
+    body: string,
+    data?: Record<string, any>,
+    options?: { sound?: boolean; badge?: number; channelId?: string },
+  ): Promise<void> {
+    const tokens = await this.pushTokenRepo.find({
+      where: { userId, isActive: true },
+    });
+
+    if (tokens.length === 0) {
+      console.log(`[Push] No active tokens for user ${userId}`);
+      return;
+    }
+
+    const messages: ExpoPushMessage[] = tokens.map((t) => ({
+      to: t.token,
+      title,
+      body,
+      data,
+      sound: options?.sound !== false ? 'default' : null,
+      badge: options?.badge,
+      channelId: options?.channelId,
+      priority: 'high',
+    }));
+
+    await this.sendPushMessages(messages);
+  }
+
+  /**
+   * Send push to multiple users
+   */
+  async sendToUsers(
+    userIds: string[],
+    title: string,
+    body: string,
+    data?: Record<string, any>,
+  ): Promise<void> {
+    for (const userId of userIds) {
+      await this.sendToUser(userId, title, body, data);
+    }
+  }
+
+  /**
+   * Send batch of push messages to Expo
+   */
+  private async sendPushMessages(messages: ExpoPushMessage[]): Promise<void> {
+    try {
+      const response = await fetch(this.EXPO_PUSH_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(messages),
+      });
+
+      const result = await response.json();
+
+      // Handle failed tokens (remove invalid ones)
+      if (result.data) {
+        for (let i = 0; i < result.data.length; i++) {
+          const receipt = result.data[i];
+          if (receipt.status === 'error') {
+            if (
+              receipt.details?.error === 'DeviceNotRegistered' ||
+              receipt.details?.error === 'InvalidCredentials'
+            ) {
+              // Remove invalid token
+              await this.unregisterToken(messages[i].to);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[Push] Failed to send:', error);
+    }
+  }
+}
+```
+
+#### Step 2.3: Add Notification Triggers
+
+**When to send notifications:**
+
+```typescript
+// In ChatService - when new message received
+async sendMessage(threadId: string, senderId: string, content: string) {
+  const message = await this.createMessage(...);
+
+  // Get other participants
+  const participants = await this.getOtherParticipants(threadId, senderId);
+
+  for (const participant of participants) {
+    await this.pushService.sendToUser(
+      participant.userId,
+      'رسالة جديدة',
+      `${message.sender.name}: ${content.substring(0, 50)}...`,
+      { type: 'NEW_MESSAGE', threadId },
+      { channelId: 'messages' }
+    );
+  }
+}
+
+// In BidsService - when new bid placed
+async placeBid(listingId: string, bidderId: string, amount: number) {
+  const bid = await this.createBid(...);
+  const listing = await this.getListing(listingId);
+
+  await this.pushService.sendToUser(
+    listing.userId,
+    'عرض جديد',
+    `تم تقديم عرض جديد على "${listing.title}" بقيمة ${amount}`,
+    { type: 'NEW_BID', listingId, bidId: bid.id },
+    { channelId: 'bids' }
+  );
+}
+
+// In ListingsService - when listing approved/rejected
+async updateListingStatus(listingId: string, status: string, reason?: string) {
+  const listing = await this.updateStatus(listingId, status);
+
+  const title = status === 'approved' ? 'تم قبول إعلانك' : 'تم رفض إعلانك';
+  const body = status === 'approved'
+    ? `إعلانك "${listing.title}" أصبح مرئياً الآن`
+    : `إعلانك "${listing.title}" يحتاج تعديل: ${reason}`;
+
+  await this.pushService.sendToUser(
+    listing.userId,
+    title,
+    body,
+    { type: status === 'approved' ? 'LISTING_APPROVED' : 'LISTING_REJECTED', listingId }
+  );
+}
+```
+
+---
+
+### Phase 3: Testing (1-2 hours)
+
+#### Test Checklist
+
+**Mobile App:**
+- [ ] Permission request appears on first login
+- [ ] Token is sent to backend after permission granted
+- [ ] Notification appears when app is in background
+- [ ] Notification appears when app is in foreground
+- [ ] Tapping notification navigates to correct screen
+- [ ] Badge count updates correctly
+- [ ] Android channels work (different sounds for messages vs bids)
+
+**Backend:**
+- [ ] Token stored in database correctly
+- [ ] Invalid tokens are removed automatically
+- [ ] Notifications sent when events occur
+- [ ] Arabic text displays correctly
+
+---
+
+### Notification Types Summary
+
+| Type | Trigger | Navigate To | Channel |
+|------|---------|-------------|---------|
+| `NEW_MESSAGE` | New chat message received | `/chat/[threadId]` | messages |
+| `NEW_BID` | Someone bid on your listing | `/listing/[id]` | bids |
+| `BID_ACCEPTED` | Your bid was accepted | `/listing/[id]` | bids |
+| `BID_REJECTED` | Your bid was rejected | `/listing/[id]` | bids |
+| `LISTING_APPROVED` | Admin approved listing | `/listing/[id]` | default |
+| `LISTING_REJECTED` | Admin rejected listing | `/listing/[id]` | default |
+| `LISTING_SOLD` | Your listing was sold | `/listing/[id]` | default |
+| `PRICE_DROP` | Wishlist item price dropped | `/listing/[id]` | default |
+| `REVIEW_RECEIVED` | Someone reviewed you | Profile | default |
+
+---
+
+### Estimated Time
+
+| Phase | Task | Time |
+|-------|------|------|
+| 1 | Mobile App Setup | 2-3 hours |
+| 2 | Backend Setup | 3-4 hours |
+| 3 | Testing | 1-2 hours |
+| **Total** | | **6-9 hours** |
+
+---
+
+### Dependencies
+
+**Mobile:**
+```bash
+npx expo install expo-notifications expo-device expo-constants
+```
+
+**Backend:**
+- No external dependencies (uses fetch to Expo Push API)
+
+---
+
+### Notes
+
+1. **Expo Push Tokens** expire if app is uninstalled. Backend handles cleanup automatically.
+2. **iOS requires** real device for testing (simulators don't support push).
+3. **Android emulator** can receive push notifications.
+4. **Rate Limits:** Expo allows 600 notifications/minute (more than enough).
+5. **Cost:** Expo Push Service is FREE for unlimited notifications.

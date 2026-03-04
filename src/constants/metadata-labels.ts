@@ -321,3 +321,84 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   SYP: "ل.س",
   EUR: "€",
 };
+
+// ============================================================
+// WARNING MESSAGE TRANSLATION
+// ============================================================
+
+/**
+ * Translate warning messages from backend to Arabic
+ * Backend sends messages like: "AI detected prohibited content in listing: inappropriate_images or sensitive content"
+ */
+export function translateWarningMessage(message: string | null | undefined): string {
+  if (!message) return '';
+
+  // Pattern: "AI detected prohibited content in listing: {reason}"
+  const aiDetectedMatch = message.match(/AI detected prohibited content in listing:\s*(.+)/i);
+  if (aiDetectedMatch) {
+    const reason = aiDetectedMatch[1].trim();
+    // Try to translate the reason
+    const translatedReason = translateRejectionReason(reason);
+    return `تم اكتشاف محتوى مخالف في إعلانك: ${translatedReason}`;
+  }
+
+  // Other common patterns
+  const patterns: Record<string, string> = {
+    'inappropriate content': 'محتوى غير لائق',
+    'prohibited content': 'محتوى محظور',
+    'sensitive content': 'محتوى حساس',
+    'inappropriate images': 'صور غير لائقة',
+    'prohibited item': 'منتج محظور',
+    'spam': 'رسائل مزعجة',
+    'scam': 'احتيال',
+    'fraud': 'احتيال',
+    'misleading': 'معلومات مضللة',
+    'duplicate': 'إعلان مكرر',
+  };
+
+  let translatedMessage = message;
+  for (const [en, ar] of Object.entries(patterns)) {
+    translatedMessage = translatedMessage.replace(new RegExp(en, 'gi'), ar);
+  }
+
+  return translatedMessage;
+}
+
+/**
+ * Translate rejection reason text to Arabic
+ */
+function translateRejectionReason(reason: string): string {
+  // Check exact match in REJECTION_REASON_LABELS
+  const upperReason = reason.toUpperCase().replace(/\s+/g, '_');
+  if (REJECTION_REASON_LABELS[upperReason]) {
+    return REJECTION_REASON_LABELS[upperReason];
+  }
+
+  // Common reason patterns
+  const reasonPatterns: Record<string, string> = {
+    'inappropriate_images': 'صور غير لائقة',
+    'inappropriate images': 'صور غير لائقة',
+    'sensitive content': 'محتوى حساس',
+    'inappropriate content': 'محتوى غير لائق',
+    'prohibited content': 'محتوى محظور',
+    'violence': 'عنف',
+    'weapons': 'أسلحة',
+    'drugs': 'مخدرات',
+    'adult content': 'محتوى للبالغين',
+    'nudity': 'محتوى عاري',
+    'hate speech': 'خطاب كراهية',
+    'harassment': 'تحرش',
+    'spam': 'رسائل مزعجة',
+    'scam': 'احتيال',
+  };
+
+  const lowerReason = reason.toLowerCase();
+  for (const [pattern, translation] of Object.entries(reasonPatterns)) {
+    if (lowerReason.includes(pattern.toLowerCase())) {
+      return translation;
+    }
+  }
+
+  // If no match, return the original with underscores replaced
+  return reason.replace(/_/g, ' ');
+}

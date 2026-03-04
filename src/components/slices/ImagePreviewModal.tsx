@@ -1,6 +1,7 @@
 /**
  * ImagePreviewModal Component
- * Full-screen image viewer with zoom and swipe
+ * Full-screen media viewer with zoom and swipe
+ * Supports both images and video
  */
 
 import React, { useState, useRef } from 'react';
@@ -14,7 +15,8 @@ import {
   Image,
   StatusBar,
 } from 'react-native';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { X, ChevronLeft, ChevronRight, Play } from 'lucide-react-native';
 import { Text } from './Text';
 import { useTheme, Theme } from '../../theme';
 import { getCloudflareImageUrl, getResponsiveImageUrl } from '../../utils/cloudflare-images';
@@ -32,17 +34,69 @@ import Animated, {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// Media item type for unified handling
+export interface MediaItem {
+  type: 'image' | 'video';
+  url: string;
+  id: string;
+}
+
 export interface ImagePreviewModalProps {
   visible: boolean;
   onClose: () => void;
-  images: string[];
+  /** @deprecated Use mediaItems instead */
+  images?: string[];
+  /** Media items (images and video) */
+  mediaItems?: MediaItem[];
   initialIndex?: number;
 }
+
+// Video player component for preview modal
+const VideoPreviewItem: React.FC<{ url: string; isActive: boolean }> = ({ url, isActive }) => {
+  const theme = useTheme();
+  const player = useVideoPlayer(url, (p) => {
+    p.loop = false;
+    // Auto-play when this item becomes active
+    if (isActive) {
+      p.play();
+    }
+  });
+
+  // Pause/play based on active state
+  React.useEffect(() => {
+    if (isActive) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [isActive, player]);
+
+  return (
+    <View style={{
+      width: SCREEN_WIDTH,
+      height: SCREEN_HEIGHT - 200,
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+      <VideoView
+        player={player}
+        style={{
+          width: SCREEN_WIDTH,
+          height: SCREEN_WIDTH * (9 / 16), // 16:9 aspect ratio
+        }}
+        nativeControls={true}
+        contentFit="contain"
+        allowsFullscreen={true}
+      />
+    </View>
+  );
+};
 
 export function ImagePreviewModal({
   visible,
   onClose,
   images,
+  mediaItems,
   initialIndex = 0,
 }: ImagePreviewModalProps) {
   const theme = useTheme();
@@ -51,7 +105,23 @@ export function ImagePreviewModal({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const flatListRef = useRef<FlatList>(null);
 
-  // Zoom state for current image
+  // Convert legacy images prop to mediaItems format
+  const items: MediaItem[] = React.useMemo(() => {
+    if (mediaItems && mediaItems.length > 0) {
+      return mediaItems;
+    }
+    // Fallback to legacy images prop
+    if (images && images.length > 0) {
+      return images.map((img, idx) => ({
+        type: 'image' as const,
+        url: img,
+        id: `img-${idx}`,
+      }));
+    }
+    return [];
+  }, [mediaItems, images]);
+
+  // Zoom state for current image (only for images, not video)
   const scale = useSharedValue(1);
   const baseScale = useSharedValue(1);
 
@@ -80,7 +150,7 @@ export function ImagePreviewModal({
   }));
 
   const goToNext = () => {
-    if (currentIndex < images.length - 1) {
+    if (currentIndex < items.length - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
       flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
@@ -110,9 +180,19 @@ export function ImagePreviewModal({
     }
   };
 
-  const renderImage = ({ item, index }: { item: string; index: number }) => {
+  const renderMediaItem = ({ item, index }: { item: MediaItem; index: number }) => {
     const isActive = index === currentIndex;
 
+    // Render video
+    if (item.type === 'video') {
+      return (
+        <View style={styles.imageContainer}>
+          <VideoPreviewItem url={item.url} isActive={isActive} />
+        </View>
+      );
+    }
+
+    // Render image with pinch-to-zoom
     return (
       <View style={styles.imageContainer}>
         <GestureHandlerRootView style={styles.gestureContainer}>
@@ -122,7 +202,7 @@ export function ImagePreviewModal({
           >
             <Animated.View style={[styles.imageWrapper, isActive && animatedStyle]}>
               <Image
-                source={{ uri: getResponsiveImageUrl(item, SCREEN_WIDTH, 'preview') }}
+                source={{ uri: getResponsiveImageUrl(item.id, SCREEN_WIDTH, 'preview') }}
                 style={styles.image}
                 resizeMode="contain"
               />
@@ -132,6 +212,10 @@ export function ImagePreviewModal({
       </View>
     );
   };
+
+  // Get current item type for conditional rendering
+  const currentItem = items[currentIndex];
+  const isCurrentVideo = currentItem?.type === 'video';
 
   return (
     <Modal
@@ -148,17 +232,25 @@ export function ImagePreviewModal({
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <X size={24} color={theme.colors.textInverse} />
           </TouchableOpacity>
-          <Text variant="body" style={styles.counter}>
-            {currentIndex + 1} / {images.length}
-          </Text>
+          <View style={styles.counterContainer}>
+            {isCurrentVideo && (
+              <View style={styles.videoBadge}>
+                <Play size={12} color="#FFFFFF" fill="#FFFFFF" />
+              </View>
+            )}
+            <Text variant="body" style={styles.counter}>
+              {currentIndex + 1} / {items.length}
+            </Text>
+          </View>
           <View style={styles.placeholder} />
         </View>
 
-        {/* Image Viewer */}
+        {/* Media Viewer */}
         <FlatList
           ref={flatListRef}
-          data={images}
+          data={items}
           horizontal
+          inverted={theme.isRTL}
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           initialScrollIndex={initialIndex}
@@ -168,15 +260,15 @@ export function ImagePreviewModal({
             index,
           })}
           onMomentumScrollEnd={handleScrollEnd}
-          renderItem={renderImage}
-          keyExtractor={(item, index) => `${item}-${index}`}
+          renderItem={renderMediaItem}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
         />
 
         {/* Navigation Arrows - RTL style (right arrow = prev, left arrow = next) */}
-        {images.length > 1 && (
+        {items.length > 1 && (
           <>
             {/* Next button - left side */}
-            {currentIndex < images.length - 1 && (
+            {currentIndex < items.length - 1 && (
               <TouchableOpacity
                 style={[styles.navButton, styles.navButtonLeft]}
                 onPress={goToNext}
@@ -197,12 +289,12 @@ export function ImagePreviewModal({
         )}
 
         {/* Thumbnails - RTL: start from right */}
-        {images.length > 1 && (
+        {items.length > 1 && (
           <View style={styles.thumbnails}>
             <FlatList
-              data={images}
+              data={items}
               horizontal
-              inverted
+              inverted={theme.isRTL}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.thumbnailsContent}
               renderItem={({ item, index }) => (
@@ -217,13 +309,19 @@ export function ImagePreviewModal({
                     index === currentIndex && styles.thumbnailActive,
                   ]}
                 >
-                  <Image
-                    source={{ uri: getCloudflareImageUrl(item, 'small') }}
-                    style={styles.thumbnailImage}
-                  />
+                  {item.type === 'video' ? (
+                    <View style={styles.videoThumbnail}>
+                      <Play size={20} color="#FFFFFF" fill="#FFFFFF" />
+                    </View>
+                  ) : (
+                    <Image
+                      source={{ uri: getCloudflareImageUrl(item.id, 'small') }}
+                      style={styles.thumbnailImage}
+                    />
+                  )}
                 </TouchableOpacity>
               )}
-              keyExtractor={(item, index) => `thumb-${item}-${index}`}
+              keyExtractor={(item, index) => `thumb-${item.id}-${index}`}
             />
           </View>
         )}
@@ -257,8 +355,18 @@ const createStyles = (theme: Theme) =>
     closeButton: {
       padding: theme.spacing.sm,
     },
+    counterContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
     counter: {
       color: theme.colors.textInverse,
+    },
+    videoBadge: {
+      backgroundColor: theme.colors.primary,
+      borderRadius: 4,
+      padding: 4,
     },
     placeholder: {
       width: 40,
@@ -333,6 +441,13 @@ const createStyles = (theme: Theme) =>
     thumbnailImage: {
       width: '100%',
       height: '100%',
+    },
+    videoThumbnail: {
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#1a1a1a',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
   });
 
