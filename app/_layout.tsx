@@ -13,6 +13,7 @@ import * as Font from 'expo-font';
 import { ThemeProvider, useTheme } from '../src/theme';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { NotificationToast } from '../src/components/slices';
+import { AnimatedSplash } from '../src/components/AnimatedSplash';
 import { useUserAuthStore } from '../src/stores/userAuthStore';
 import { useCategoriesStore } from '../src/stores/categoriesStore';
 import { useListingsStore } from '../src/stores/listingsStore';
@@ -93,7 +94,6 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       // Redirect to login if not authenticated
       router.replace('/auth/login');
     } else if (isAuthenticated && inAuthGroup) {
-      // Redirect to home if authenticated and in auth group
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, isLoading, segments, registrationComplete]);
@@ -190,9 +190,13 @@ function RootContent() {
  */
 export default function RootLayout() {
   const [appIsReady, setAppIsReady] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   const initialize = useUserAuthStore((state) => state.initialize);
 
   useEffect(() => {
+    // Hide native splash immediately - we'll show our custom animated one
+    SplashScreen.hideAsync();
+
     async function prepare() {
       try {
         // Load language preference first
@@ -226,21 +230,24 @@ export default function RootLayout() {
     prepare();
   }, [initialize]);
 
-  const onLayoutRootView = useCallback(async () => {
-    if (appIsReady) {
-      await SplashScreen.hideAsync();
-    }
-  }, [appIsReady]);
-
-  if (!appIsReady) {
-    return null;
-  }
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+  }, []);
 
   return (
-    <SafeAreaProvider onLayout={onLayoutRootView}>
+    <SafeAreaProvider>
       <ErrorBoundary>
         <ThemeProvider defaultMode="light">
-          <RootContent />
+          {/* Show app content (may be loading initially) */}
+          {appIsReady && <RootContent />}
+
+          {/* Animated splash overlay */}
+          {showSplash && (
+            <AnimatedSplash
+              isReady={appIsReady}
+              onAnimationComplete={handleSplashComplete}
+            />
+          )}
         </ThemeProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
