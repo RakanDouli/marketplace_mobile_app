@@ -1,23 +1,29 @@
 /**
  * Collapsible Component
- * Expandable/collapsible content container for FAQ sections
+ * Expandable/collapsible content container
+ * Supports string or ReactNode title for custom headers (like FormSection)
  */
 
 import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, LayoutAnimation } from 'react-native';
-import { Plus, Minus } from 'lucide-react-native';
+import { View, TouchableOpacity, StyleSheet, LayoutAnimation, ViewStyle } from 'react-native';
+import { Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { Text } from './Text';
-import { useTheme } from '../../theme';
-
-// Note: setLayoutAnimationEnabledExperimental is not needed on New Architecture (Expo 52+)
-// LayoutAnimation works natively without enabling it
+import { useTheme, Theme } from '../../theme';
 
 export interface CollapsibleProps {
-  title: string;
+  /** Title can be a string or ReactNode for custom headers */
+  title: React.ReactNode;
   children: React.ReactNode;
   defaultOpen?: boolean;
-  variant?: 'default' | 'bordered' | 'card' | 'accent';
+  variant?: 'default' | 'bordered' | 'card' | 'accent' | 'form';
+  /** Content padding size */
+  contentPadding?: 'sm' | 'md' | 'lg';
+  /** Custom container style */
+  style?: ViewStyle;
+  /** Callback when toggled */
   onToggle?: (isOpen: boolean) => void;
+  /** Use chevron icons instead of plus/minus */
+  useChevron?: boolean;
 }
 
 export function Collapsible({
@@ -25,7 +31,10 @@ export function Collapsible({
   children,
   defaultOpen = false,
   variant = 'default',
+  contentPadding = 'md',
+  style,
   onToggle,
+  useChevron = false,
 }: CollapsibleProps) {
   const theme = useTheme();
   const styles = createStyles(theme);
@@ -38,7 +47,7 @@ export function Collapsible({
     onToggle?.(newState);
   };
 
-  const getContainerStyle = () => {
+  const getContainerStyle = (): ViewStyle => {
     switch (variant) {
       case 'bordered':
         return {
@@ -61,6 +70,15 @@ export function Collapsible({
           borderBottomWidth: 1,
           borderBottomColor: theme.colors.border,
         };
+      case 'form':
+        return {
+          backgroundColor: theme.colors.bg,
+          borderWidth: 2,
+          borderColor: theme.colors.border,
+          borderRadius: theme.radius.lg,
+          marginBottom: theme.spacing.md,
+          overflow: 'hidden',
+        };
       default:
         return {
           borderBottomWidth: 1,
@@ -69,29 +87,70 @@ export function Collapsible({
     }
   };
 
+  const getContentPadding = () => {
+    switch (contentPadding) {
+      case 'sm':
+        return { padding: theme.spacing.sm };
+      case 'lg':
+        return { padding: theme.spacing.lg };
+      default:
+        return { padding: theme.spacing.md };
+    }
+  };
+
+  const IconComponent = useChevron
+    ? (isOpen ? ChevronUp : ChevronDown)
+    : (isOpen ? Minus : Plus);
+
+  const iconColor = variant === 'accent' || variant === 'form'
+    ? theme.colors.primary
+    : theme.colors.text;
+
+  const showIconBackground = variant === 'accent' || variant === 'form';
+
+  // Check if title is a string or ReactNode
+  const isStringTitle = typeof title === 'string';
+
   return (
-    <View style={[styles.container, getContainerStyle()]}>
+    <View style={[styles.container, getContainerStyle(), style]}>
       <TouchableOpacity
-        style={styles.trigger}
+        style={[
+          styles.trigger,
+          variant === 'form' && styles.formTrigger,
+        ]}
         onPress={handleToggle}
         activeOpacity={0.7}
       >
-        {/* RTL: Icon left, title right */}
-        <View style={[
-          styles.toggleIcon,
-          variant === 'accent' && { backgroundColor: theme.colors.primaryLight }
-        ]}>
-          {isOpen ? (
-            <Minus size={18} color={variant === 'accent' ? theme.colors.primary : theme.colors.text} />
+        {/* Title - either string Text or custom ReactNode */}
+        <View style={styles.titleContainer}>
+          {isStringTitle ? (
+            <Text
+              variant="body"
+              bold
+              style={[styles.title, { textAlign: theme.isRTL ? 'right' : 'left' }]}
+            >
+              {title}
+            </Text>
           ) : (
-            <Plus size={18} color={variant === 'accent' ? theme.colors.primary : theme.colors.text} />
+            title
           )}
         </View>
-        <Text style={[styles.title, { color: theme.colors.text }]}>{title}</Text>
+
+        {/* Toggle Icon */}
+        <View style={[
+          styles.toggleIcon,
+          showIconBackground && { backgroundColor: theme.colors.primaryLight }
+        ]}>
+          <IconComponent size={18} color={iconColor} />
+        </View>
       </TouchableOpacity>
 
       {isOpen && (
-        <View style={styles.content}>
+        <View style={[
+          styles.content,
+          getContentPadding(),
+          variant === 'form' && styles.formContent,
+        ]}>
           {children}
         </View>
       )}
@@ -99,7 +158,7 @@ export function Collapsible({
   );
 }
 
-const createStyles = (theme: ReturnType<typeof useTheme>) =>
+const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       overflow: 'hidden',
@@ -111,6 +170,17 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       paddingVertical: theme.spacing.md,
       paddingHorizontal: theme.spacing.md,
     },
+    formTrigger: {
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+    },
+    titleContainer: {
+      flex: 1,
+    },
+    title: {
+      fontSize: theme.fontSize.base,
+      fontFamily: theme.fontFamily.bodyMedium,
+    },
     toggleIcon: {
       width: 28,
       height: 28,
@@ -118,15 +188,14 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       justifyContent: 'center',
       alignItems: 'center',
     },
-    title: {
-      flex: 1,
-      fontSize: theme.fontSize.base,
-      fontFamily: theme.fontFamily.bodyMedium,
-      textAlign: theme.isRTL ? 'right' : 'left',
-    },
     content: {
       paddingHorizontal: theme.spacing.md,
       paddingBottom: theme.spacing.md,
+    },
+    formContent: {
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      paddingTop: theme.spacing.md,
     },
   });
 

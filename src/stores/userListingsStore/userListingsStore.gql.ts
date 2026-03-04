@@ -87,3 +87,79 @@ export const DELETE_MY_LISTING_MUTATION = `
     deleteMyListing(id: $id, archivalReason: $archivalReason)
   }
 `;
+
+// Create image upload URL (Cloudflare Images)
+export const CREATE_IMAGE_UPLOAD_URL_MUTATION = `
+  mutation CreateImageUploadUrl {
+    createImageUploadUrl {
+      uploadUrl
+      assetKey
+    }
+  }
+`;
+
+// Get attributes for a category (for edit form)
+export const GET_ATTRIBUTES_BY_CATEGORY = `
+  query GetAttributesByCategory($categoryId: String!) {
+    getAttributesByCategory(categoryId: $categoryId) {
+      id
+      key
+      name
+      type
+      validation
+      sortOrder
+      group
+      groupOrder
+      storageType
+      isActive
+      isGlobal
+      config
+      options {
+        id
+        key
+        value
+        sortOrder
+        isActive
+      }
+    }
+  }
+`;
+
+// Get brands by category
+export const GET_BRANDS_QUERY = `
+  query GetBrands($categoryId: String!) {
+    brands(categoryId: $categoryId) {
+      id
+      name
+      nameAr
+      slug
+      logoUrl
+      isActive
+    }
+  }
+`;
+
+// Get models by brand
+export const GET_MODELS_QUERY = `
+  query GetModels($brandId: String!) {
+    models(brandId: $brandId) {
+      id
+      name
+      slug
+      isActive
+    }
+  }
+`;
+
+// Get variants by model
+export const GET_VARIANTS_BY_MODEL_QUERY = `
+  query GetVariants($modelId: String!) {
+    variants(modelId: $modelId) {
+      id
+      modelId
+      name
+      slug
+      isActive
+    }
+  }
+`;

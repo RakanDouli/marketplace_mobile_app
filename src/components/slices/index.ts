@@ -62,6 +62,9 @@ export type { SliderProps } from './Slider';
 export { Collapsible } from './Collapsible';
 export type { CollapsibleProps } from './Collapsible';
 
+export { FormSection } from './FormSection';
+export type { FormSectionProps, FormSectionStatus } from './FormSection';
+
 // Feedback
 export { Loading } from './Loading';
 export type { default as LoadingProps } from './Loading';
