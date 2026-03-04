@@ -356,10 +356,19 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 
   const handleImageChange = async (newImages: ImageItem[]) => {
     // Find new images that need uploading
-    const imagesToUpload = newImages.filter(img => !img.isUploaded && img.file);
+    const imagesToUpload = newImages.filter(img => !img.isUploaded && !img.isUploading && img.file);
 
     if (imagesToUpload.length > 0) {
       setIsUploadingImage(true);
+
+      // Mark images as uploading immediately (so grid shows loading state)
+      const updatedImages = newImages.map(img => {
+        if (imagesToUpload.find(u => u.id === img.id)) {
+          return { ...img, isUploading: true, uploadProgress: 0 };
+        }
+        return img;
+      });
+      setImages(updatedImages);
 
       for (const img of imagesToUpload) {
         try {
@@ -385,19 +394,36 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
           const cloudflareKey = result?.result?.id;
 
           if (cloudflareKey) {
-            // Update image with cloudflare key
-            img.cloudflareKey = cloudflareKey;
-            img.isUploaded = true;
-            img.uri = getCloudflareImageUrl(cloudflareKey, 'card');
+            // Update image in state with uploaded status
+            setImages(prev => prev.map(prevImg => {
+              if (prevImg.id === img.id) {
+                return {
+                  ...prevImg,
+                  cloudflareKey,
+                  isUploaded: true,
+                  isUploading: false,
+                  uri: getCloudflareImageUrl(cloudflareKey, 'card'),
+                };
+              }
+              return prevImg;
+            }));
           }
         } catch (err) {
+          // Mark failed upload
+          setImages(prev => prev.map(prevImg => {
+            if (prevImg.id === img.id) {
+              return { ...prevImg, isUploading: false };
+            }
+            return prevImg;
+          }));
         }
       }
 
       setIsUploadingImage(false);
+    } else {
+      // No uploads needed, just update images (for removals/reorders)
+      setImages(newImages);
     }
-
-    setImages(newImages);
   };
 
   // ==========================================================================
