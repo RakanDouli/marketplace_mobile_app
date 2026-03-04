@@ -77,5 +77,10 @@ export {
   useRemoveNotification,
 } from "./notificationStore";
 
-// TODO: Add more stores as they are created
-// export { useChatStore } from "./chatStore";
+export {
+  useBidsStore,
+  type Bid,
+  type Bidder,
+} from "./bidsStore";
+
+export { useChatStore, type ChatThread, type ChatMessage, type BlockedUser } from "./chatStore";

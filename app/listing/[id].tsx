@@ -48,6 +48,7 @@ import { ReviewsModal } from '../../src/components/listing/ReviewsModal';
 import { FavoriteButton } from '../../src/components/listing/FavoriteButton';
 import { ShareButton } from '../../src/components/listing/ShareButton';
 import { ContactSellerModal } from '../../src/components/ContactSellerModal';
+import { BiddingSection } from '../../src/components/listing/BiddingSection';
 
 import { getCloudflareImageUrl, getResponsiveImageUrl } from '../../src/utils/cloudflare-images';
 import { ENV } from '../../src/constants/env';
@@ -508,6 +509,18 @@ export default function ListingDetailScreen() {
                   {currentListing.description}
                 </Text>
               </Collapsible>
+            </View>
+          )}
+
+          {/* Bidding Section - Only show if bidding is enabled */}
+          {currentListing.allowBidding && listingUserId && (
+            <View style={styles.section}>
+              <BiddingSection
+                listingId={currentListing.id}
+                listingOwnerId={listingUserId}
+                allowBidding={currentListing.allowBidding}
+                biddingStartPrice={currentListing.biddingStartPrice || null}
+              />
             </View>
           )}
 
