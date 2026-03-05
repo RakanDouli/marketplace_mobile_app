@@ -33,6 +33,34 @@ interface LocationMapProps {
   title?: string;
 }
 
+/**
+ * Extract coordinates from a Google Maps link
+ * Supports formats:
+ * - https://www.google.com/maps?q=LAT,LNG
+ * - https://www.google.com/maps/search/?api=1&query=LAT,LNG
+ */
+function extractCoordsFromLink(link?: string): { lat: number; lng: number } | null {
+  if (!link) return null;
+
+  try {
+    // Try to extract from ?q=LAT,LNG format
+    const qMatch = link.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (qMatch) {
+      return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
+    }
+
+    // Try to extract from query=LAT,LNG format
+    const queryMatch = link.match(/[?&]query=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (queryMatch) {
+      return { lat: parseFloat(queryMatch[1]), lng: parseFloat(queryMatch[2]) };
+    }
+  } catch {
+    // Parsing failed, return null
+  }
+
+  return null;
+}
+
 export function LocationMap({ location, title }: LocationMapProps) {
   const theme = useTheme();
   const styles = createStyles(theme);
@@ -65,13 +93,17 @@ export function LocationMap({ location, title }: LocationMapProps) {
   // Check if we have a direct Google Maps link
   const hasLink = !!location?.link;
 
-  // Check if we have coordinates
-  const hasCoordinates = location?.coordinates?.lat && location?.coordinates?.lng;
+  // Check if we have coordinates (either from coordinates object or extracted from link)
+  const extractedCoords = extractCoordsFromLink(location?.link);
+  const coords = location?.coordinates?.lat && location?.coordinates?.lng
+    ? location.coordinates
+    : extractedCoords;
+  const hasCoordinates = !!coords?.lat && !!coords?.lng;
 
   // Generate static map URL using OpenStreetMap tiles
   const getStaticMapUrl = () => {
-    if (!hasCoordinates) return null;
-    const { lat, lng } = location!.coordinates!;
+    if (!hasCoordinates || !coords) return null;
+    const { lat, lng } = coords;
     // Using OSM static maps - more reliable for Expo
     const zoom = 15;
     // Using openstreetmap.org static export (more reliable)
@@ -80,8 +112,8 @@ export function LocationMap({ location, title }: LocationMapProps) {
 
   // Alternative: Use tile-based static image URL
   const getStaticTileUrl = () => {
-    if (!hasCoordinates) return null;
-    const { lat, lng } = location!.coordinates!;
+    if (!hasCoordinates || !coords) return null;
+    const { lat, lng } = coords;
     const zoom = 15;
     // Calculate tile coordinates
     const n = Math.pow(2, zoom);
@@ -109,7 +141,7 @@ export function LocationMap({ location, title }: LocationMapProps) {
 
   // Helper to open maps with coordinates or search by name
   const openWithCoordinatesOrSearch = useCallback(() => {
-    if (!location?.coordinates?.lat || !location?.coordinates?.lng) {
+    if (!coords?.lat || !coords?.lng) {
       // If no coordinates, try searching by name
       const query = encodeURIComponent(formatLocation());
       const url = Platform.select({
@@ -120,7 +152,7 @@ export function LocationMap({ location, title }: LocationMapProps) {
       return;
     }
 
-    const { lat, lng } = location.coordinates;
+    const { lat, lng } = coords;
     const label = encodeURIComponent(title || formatLocation());
 
     const url = Platform.select({
@@ -144,12 +176,12 @@ export function LocationMap({ location, title }: LocationMapProps) {
       return;
     }
 
-    if (!location?.coordinates?.lat || !location?.coordinates?.lng) {
+    if (!coords?.lat || !coords?.lng) {
       openInMaps();
       return;
     }
 
-    const { lat, lng } = location.coordinates;
+    const { lat, lng } = coords;
     const url = Platform.select({
       ios: `maps:?daddr=${lat},${lng}`,
       android: `google.navigation:q=${lat},${lng}`,
