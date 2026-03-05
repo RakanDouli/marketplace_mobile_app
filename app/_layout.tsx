@@ -19,6 +19,7 @@ import { useCategoriesStore } from '../src/stores/categoriesStore';
 import { useListingsStore } from '../src/stores/listingsStore';
 import { useCurrencyStore } from '../src/stores/currencyStore';
 import { useLanguageStore } from '../src/stores/languageStore';
+import { usePushNotifications } from '../src/hooks';
 
 // Keep splash screen visible while loading
 SplashScreen.preventAutoHideAsync();
@@ -108,6 +109,28 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 }
 
 /**
+ * Push notification initializer - runs when user is authenticated
+ */
+function PushNotificationInitializer() {
+  const { isAuthenticated } = useUserAuthStore();
+  const { expoPushToken, error, isRegistered } = usePushNotifications();
+
+  useEffect(() => {
+    if (isAuthenticated && expoPushToken) {
+      console.log('Push notifications initialized:', {
+        token: expoPushToken.substring(0, 30) + '...',
+        isRegistered,
+      });
+    }
+    if (error) {
+      console.log('Push notification error:', error);
+    }
+  }, [isAuthenticated, expoPushToken, isRegistered, error]);
+
+  return null; // This component doesn't render anything
+}
+
+/**
  * Inner content with theme access
  */
 function RootContent() {
@@ -123,6 +146,8 @@ function RootContent() {
         barStyle={theme.isDark ? 'light-content' : 'dark-content'}
         backgroundColor={theme.colors.bg}
       />
+      {/* Initialize push notifications when user is logged in */}
+      <PushNotificationInitializer />
       <AuthGuard>
         <Stack
           screenOptions={{

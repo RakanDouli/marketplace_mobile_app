@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "136245589649",
+    "project_id": "marketplace-9be9d",
+    "storage_bucket": "marketplace-9be9d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:136245589649:android:3513b7caed5ea8cdd53130",
+        "android_client_info": {
+          "package_name": "com.shambay.marketplace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwhC4CAtfwpLGKxAdry3gzr3AUS_GOT0E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

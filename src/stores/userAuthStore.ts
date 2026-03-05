@@ -28,6 +28,7 @@ import {
   CREATE_AVATAR_UPLOAD_URL_MUTATION,
   DELETE_AVATAR_MUTATION,
   ACKNOWLEDGE_WARNING_MUTATION,
+  REGISTER_PUSH_TOKEN_MUTATION,
 } from './userAuthStore/userAuthStore.gql';
 import { useNotificationStore } from './notificationStore';
 import { translateWarningMessage } from '../constants/metadata-labels';
@@ -310,6 +311,9 @@ interface UserAuthState {
 
   // Warning Actions
   acknowledgeWarning: () => Promise<{ success: boolean; error?: string }>;
+
+  // Push Notification Actions
+  registerPushToken: (token: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 // =============================================================================
@@ -1251,6 +1255,37 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message || 'حدث خطأ' };
+    }
+  },
+
+  // =============================================================================
+  // PUSH NOTIFICATION ACTIONS
+  // =============================================================================
+
+  /**
+   * Register push notification token with backend
+   * Called from usePushNotifications hook when app gets Expo push token
+   * @param token - Expo push token (or empty string to unregister)
+   */
+  registerPushToken: async (token: string) => {
+    try {
+      const { session } = get();
+      if (!session?.access_token) {
+        return { success: false, error: 'غير مسجل الدخول' };
+      }
+
+      await graphqlRequest(
+        REGISTER_PUSH_TOKEN_MUTATION,
+        { token: token || null }, // null to unregister
+        false,
+        session.access_token
+      );
+
+      console.log('Push token registered:', token ? 'registered' : 'unregistered');
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to register push token:', error);
+      return { success: false, error: error.message || 'فشل في تسجيل الإشعارات' };
     }
   },
 }));

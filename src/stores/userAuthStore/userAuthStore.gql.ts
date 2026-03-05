@@ -117,3 +117,15 @@ export const ACKNOWLEDGE_WARNING_MUTATION = `
     acknowledgeWarning
   }
 `;
+
+// Register push notification token
+export const REGISTER_PUSH_TOKEN_MUTATION = `
+  mutation RegisterPushToken($token: String) {
+    registerPushToken(token: $token) {
+      id
+      userId
+      pushEnabled
+      expoPushToken
+    }
+  }
+`;
