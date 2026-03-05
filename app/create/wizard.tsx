@@ -35,7 +35,7 @@ export default function WizardScreen() {
   const isRTL = theme.isRTL;
   const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
   const router = useRouter();
-  const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
+  const { categoryId, draftId: draftIdParam } = useLocalSearchParams<{ categoryId?: string; draftId?: string }>();
 
   // Ref to ScrollView for programmatic scrolling
   const scrollViewRef = useRef<ScrollView>(null);
@@ -57,7 +57,17 @@ export default function WizardScreen() {
     deleteDraft,
     reset,
     validationErrors,
+    loadDraft,
   } = useCreateListingStore();
+
+  // Load draft when draftId is provided via URL (continuing a draft)
+  const [isLoadingDraft, setIsLoadingDraft] = React.useState(false);
+  useEffect(() => {
+    if (draftIdParam && !draftId) {
+      setIsLoadingDraft(true);
+      loadDraft(draftIdParam).finally(() => setIsLoadingDraft(false));
+    }
+  }, [draftIdParam]);
 
   // Keys that are handled in BasicInfoStep (not dynamic attributes)
   const basicInfoKeys = ['search', 'title', 'description', 'price', 'listingType', 'condition', 'location'];
@@ -125,33 +135,69 @@ export default function WizardScreen() {
     }
   };
 
-  // Cancel with confirmation - deletes draft and all uploaded images
+  // Cancel with confirmation
+  // When continuing a draft (draftIdParam): offer to save progress or delete
+  // When creating new: offer to delete or continue
   const handleCancel = () => {
-    Alert.alert(
-      'إلغاء الإعلان',
-      'هل أنت متأكد؟ سيتم حذف جميع البيانات والصور المرفوعة.',
-      [
-        {
-          text: 'متابعة',
-          style: 'cancel',
-        },
-        {
-          text: 'إلغاء الإعلان',
-          style: 'destructive',
-          onPress: async () => {
-            // Delete draft from backend (includes image cleanup)
-            if (draftId) {
-              await deleteDraft();
-            } else {
-              // Just reset local state if no draft
-              reset();
-            }
-            // Navigate to home
-            router.replace('/');
+    if (draftIdParam) {
+      // Continuing a draft - offer to save and exit
+      Alert.alert(
+        'الخروج من الإعلان',
+        'ماذا تريد أن تفعل؟',
+        [
+          {
+            text: 'متابعة التحرير',
+            style: 'cancel',
           },
-        },
-      ]
-    );
+          {
+            text: 'حفظ والخروج',
+            onPress: () => {
+              // Just reset local state and go back (draft is already saved)
+              reset();
+              router.replace('/(tabs)/menu/my-listings');
+            },
+          },
+          {
+            text: 'حذف المسودة',
+            style: 'destructive',
+            onPress: async () => {
+              if (draftId) {
+                await deleteDraft();
+              }
+              reset();
+              router.replace('/(tabs)/menu/my-listings');
+            },
+          },
+        ]
+      );
+    } else {
+      // Creating new - original behavior
+      Alert.alert(
+        'إلغاء الإعلان',
+        'هل أنت متأكد؟ سيتم حذف جميع البيانات والصور المرفوعة.',
+        [
+          {
+            text: 'متابعة',
+            style: 'cancel',
+          },
+          {
+            text: 'إلغاء الإعلان',
+            style: 'destructive',
+            onPress: async () => {
+              // Delete draft from backend (includes image cleanup)
+              if (draftId) {
+                await deleteDraft();
+              } else {
+                // Just reset local state if no draft
+                reset();
+              }
+              // Navigate to home
+              router.replace('/');
+            },
+          },
+        ]
+      );
+    }
   };
 
   // Render current step content
@@ -176,15 +222,15 @@ export default function WizardScreen() {
     }
   };
 
-  // Show loading while attributes are being fetched OR while steps are being generated
-  if (isLoadingAttributes || stepsNotReady) {
+  // Show loading while attributes are being fetched OR while steps are being generated OR while loading draft
+  if (isLoadingAttributes || stepsNotReady || isLoadingDraft) {
     return (
       <>
-        <Stack.Screen options={{ title: 'إضافة إعلان', headerShown: true }} />
+        <Stack.Screen options={{ title: draftIdParam ? 'إكمال الإعلان' : 'إضافة إعلان', headerShown: true }} />
         <View style={[styles.loadingContainer, { backgroundColor: theme.colors.surface }]}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text variant="paragraph" color="secondary" style={styles.loadingText}>
-            جاري تحميل النموذج...
+            {isLoadingDraft ? 'جاري تحميل المسودة...' : 'جاري تحميل النموذج...'}
           </Text>
         </View>
       </>

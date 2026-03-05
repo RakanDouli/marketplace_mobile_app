@@ -917,6 +917,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
                   }
                 }}
                 maxImages={10}
+                minImages={1}
                 disabled={isUploadingImage}
                 label="صور المنتج"
                 emptyStateTitle="أضف صور المنتج"

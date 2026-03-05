@@ -256,9 +256,12 @@ export const useUserListingsStore = create<UserListingsStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
+      // Convert reason to uppercase for GraphQL enum (e.g., "sold_externally" → "SOLD_EXTERNALLY")
+      const enumReason = archivalReason.toUpperCase();
+
       await graphqlRequest(
         DELETE_MY_LISTING_MUTATION,
-        { id, archivalReason },
+        { id, archivalReason: enumReason },
         true
       );
 

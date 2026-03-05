@@ -46,6 +46,7 @@ export interface ImageUploadGridProps {
   images: ImageItem[];
   onChange: (images: ImageItem[]) => void;
   maxImages?: number;
+  minImages?: number; // Minimum required images (prevents deletion below this)
   maxVideoSizeMB?: number; // Only for videos (images have no limit)
   accept?: 'image' | 'video';
   disabled?: boolean;
@@ -59,6 +60,7 @@ export function ImageUploadGrid({
   images,
   onChange,
   maxImages = 10,
+  minImages = 0, // Default: no minimum
   maxVideoSizeMB = 50, // 50MB default for videos
   accept = 'image',
   disabled = false,
@@ -185,6 +187,16 @@ export function ImageUploadGrid({
 
   // Remove image
   const handleRemoveImage = (id: string) => {
+    // Check minimum images requirement
+    const uploadedImages = images.filter(img => img.isUploaded || img.cloudflareKey);
+    if (minImages > 0 && uploadedImages.length <= minImages) {
+      Alert.alert(
+        'لا يمكن الحذف',
+        `يجب الاحتفاظ بصورة واحدة على الأقل`,
+        [{ text: 'حسناً' }]
+      );
+      return;
+    }
     onChange(images.filter(img => img.id !== id));
   };
 

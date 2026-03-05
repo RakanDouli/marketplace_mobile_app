@@ -218,8 +218,10 @@ export default function MyListingsScreen() {
       await deleteMyListing(listingToDelete, reason);
       setShowDeleteModal(false);
       setListingToDelete(null);
-    } catch (error) {
-      Alert.alert('خطأ', 'فشل في حذف الإعلان');
+    } catch (error: any) {
+      console.error('Delete listing error:', error);
+      const errorMessage = error?.message || 'فشل في حذف الإعلان';
+      Alert.alert('خطأ', errorMessage);
     } finally {
       setIsDeleting(false);
     }

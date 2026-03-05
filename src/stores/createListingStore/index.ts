@@ -711,9 +711,11 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
           images: (draft.imageKeys || []).map((key: string) => ({
             id: key,
             url: getCloudflareImageUrl(key, 'card'),
+            isUploaded: true,
+            cloudflareKey: key,
           })),
           video: draft.videoUrl
-            ? [{ id: draft.videoUrl, url: draft.videoUrl, isVideo: true }]
+            ? [{ id: draft.videoUrl, url: draft.videoUrl, isVideo: true, isUploaded: true }]
             : [],
           specs: parsedSpecs,
           location: {
@@ -728,6 +730,19 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
 
       // Fetch attributes for this category
       await get().fetchAttributes(draft.categoryId);
+
+      // Check if category has brand/model attributes and fetch catalog data
+      const { attributes } = get();
+      const hasBrandAttribute = attributes.some(attr => attr.key === 'brandId');
+
+      if (hasBrandAttribute) {
+        await get().fetchBrands(draft.categoryId);
+
+        // If draft has brandId, also fetch models and variants
+        if (parsedSpecs.brandId) {
+          await get().fetchModelsAndVariants(parsedSpecs.brandId);
+        }
+      }
     } catch (error: any) {
       set({ error: error.message || 'فشل تحميل المسودة' });
     }
