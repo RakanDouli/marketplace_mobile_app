@@ -790,7 +790,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, theme.rtl.flexDirection.row()]}>
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
             <X size={24} color={theme.colors.text} />
           </TouchableOpacity>
@@ -808,7 +808,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
           {/* Rejection Alert */}
           {isRejected && rejectionMessage && (
             <View style={styles.rejectionAlert}>
-              <View style={styles.rejectionHeader}>
+              <View style={[styles.rejectionHeader, theme.rtl.flexDirection.row()]}>
                 <AlertTriangle size={20} color={theme.colors.error} />
                 <Text variant="body" bold style={{ color: theme.colors.error }}>
                   تم رفض الإعلان
@@ -991,7 +991,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
                 onChangeText={setArea}
               />
 
-              <View style={styles.locationLinkRow}>
+              <View style={[styles.locationLinkRow, theme.rtl.flexDirection.row()]}>
                 <View style={{ flex: 1 }}>
                   <Input
                     label="رابط الموقع"
@@ -1030,7 +1030,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
         </ScrollView>
 
         {/* Footer */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, theme.rtl.flexDirection.row()]}>
           <Button
             variant="outline"
             onPress={handleClose}
@@ -1066,7 +1066,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       backgroundColor: theme.colors.bg,
     },
     header: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingStart: theme.spacing.md,
@@ -1103,7 +1102,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       gap: theme.spacing.xs,
     },
     rejectionHeader: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -1118,7 +1116,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       gap: theme.spacing.xs,
     },
     locationLinkRow: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'flex-end',
       gap: theme.spacing.sm,
     },
@@ -1134,7 +1131,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       borderColor: theme.colors.border,
     },
     footer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.md,
       padding: theme.spacing.md,
       borderTopWidth: 1,

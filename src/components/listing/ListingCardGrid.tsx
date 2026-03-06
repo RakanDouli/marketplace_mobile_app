@@ -100,19 +100,19 @@ export const ListingCardGrid = memo(function ListingCardGrid({
       </View>
 
       <View style={styles.content}>
-        <Text variant="h4" numberOfLines={2} style={styles.title}>
+        <Text variant="h4" numberOfLines={2} style={[styles.title, theme.rtl.textAlign.start()]}>
           {title}
         </Text>
-        <Text variant="h4" color="primary" style={styles.price}>
+        <Text variant="h4" color="primary" style={[styles.price, theme.rtl.textAlign.start()]}>
           {price}
         </Text>
         {specs && (
-          <Text variant="xs" color="secondary" numberOfLines={2} style={styles.specs}>
+          <Text variant="xs" color="secondary" numberOfLines={2} style={[styles.specs, theme.rtl.textAlign.start()]}>
             {specs}
           </Text>
         )}
         {location && (
-          <View style={styles.location}>
+          <View style={[styles.location, theme.rtl.flexDirection.row()]}>
             <MapPin size={14} color={theme.colors.textSecondary} />
             <Text variant="xs" color="secondary" style={styles.locationText}>
               {location}
@@ -171,14 +171,11 @@ const createStyles = (theme: Theme) =>
     },
     title: {
       marginBottom: theme.spacing.xs,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     price: {
       marginBottom: theme.spacing.xs,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     location: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
@@ -188,7 +185,6 @@ const createStyles = (theme: Theme) =>
     specs: {
       marginBottom: theme.spacing.xs,
       opacity: 0.8,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
   });
 

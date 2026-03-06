@@ -48,9 +48,7 @@ export const ListingCardList = memo(function ListingCardList({
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Direction-aware styles
-  const cardDirection = theme.isRTL ? 'row-reverse' : 'row';
-  const textAlign = theme.isRTL ? 'right' : 'left';
+  // Image corner style for RTL
   const imageCornerStyle = theme.isRTL
     ? { borderTopRightRadius: theme.radius.lg, borderBottomRightRadius: theme.radius.lg }
     : { borderTopLeftRadius: theme.radius.lg, borderBottomLeftRadius: theme.radius.lg };
@@ -67,7 +65,7 @@ export const ListingCardList = memo(function ListingCardList({
 
   return (
     <TouchableOpacity
-      style={[styles.card, { flexDirection: cardDirection }]}
+      style={[styles.card, theme.rtl.flexDirection.row()]}
       onPress={onPress}
       activeOpacity={0.9}
     >
@@ -100,18 +98,18 @@ export const ListingCardList = memo(function ListingCardList({
       {/* Content area */}
       <View style={styles.content}>
         {/* Title */}
-        <Text variant="body" numberOfLines={2} style={[styles.title, { textAlign }]}>
+        <Text variant="body" numberOfLines={2} style={[styles.title, theme.rtl.textAlign.start()]}>
           {title}
         </Text>
 
         {/* Price */}
-        <Text variant="h4" color="primary" style={[styles.price, { textAlign }]}>
+        <Text variant="h4" color="primary" style={[styles.price, theme.rtl.textAlign.start()]}>
           {price}
         </Text>
 
         {/* Specs - backend decides what to show */}
         {specsDisplay && Object.keys(specsDisplay).length > 0 ? (
-          <Text variant="xs" color="secondary" numberOfLines={2} style={[styles.specs, { textAlign }]}>
+          <Text variant="xs" color="secondary" numberOfLines={2} style={[styles.specs, theme.rtl.textAlign.start()]}>
             {[...new Set(
               Object.entries(specsDisplay)
                 .filter(([key]) => key !== 'accountType' && key !== 'account_type')
@@ -126,14 +124,14 @@ export const ListingCardList = memo(function ListingCardList({
               .join(' | ')}
           </Text>
         ) : specs ? (
-          <Text variant="xs" color="secondary" numberOfLines={2} style={[styles.specs, { textAlign }]}>
+          <Text variant="xs" color="secondary" numberOfLines={2} style={[styles.specs, theme.rtl.textAlign.start()]}>
             {specs}
           </Text>
         ) : null}
 
         {/* Location - icon position based on direction */}
         {location && (
-          <View style={styles.location}>
+          <View style={[styles.location, theme.rtl.flexDirection.row()]}>
             <MapPin size={12} color={theme.colors.textMuted} />
             <Text variant="xs" color="muted" numberOfLines={1}>
               {location}
@@ -150,7 +148,6 @@ ListingCardList.displayName = 'ListingCardList';
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     card: {
-      // flexDirection applied dynamically
       backgroundColor: theme.colors.bg,
       borderRadius: theme.radius.lg,
       overflow: 'hidden',
@@ -189,22 +186,18 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
     },
     title: {
-      // textAlign applied dynamically
       marginBottom: theme.spacing.xs,
       fontWeight: '600',
       lineHeight: 20,
     },
     price: {
-      // textAlign applied dynamically
       marginBottom: theme.spacing.xs,
     },
     specs: {
-      // textAlign applied dynamically
       marginBottom: theme.spacing.xs,
       opacity: 0.7,
     },
     location: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
