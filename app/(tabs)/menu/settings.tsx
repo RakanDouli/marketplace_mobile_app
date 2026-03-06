@@ -152,7 +152,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       overflow: 'hidden',
     },
     sectionHeader: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       padding: theme.spacing.md,
       borderBottomWidth: 1,
@@ -167,7 +166,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       padding: theme.spacing.sm,
     },
     option: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: theme.spacing.md,
@@ -177,7 +175,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       backgroundColor: theme.colors.primaryLight,
     },
     optionContent: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -190,13 +187,11 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Settings Row
     row: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: theme.spacing.md,
     },
     rowLeft: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -206,7 +201,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Restart Notice
     restartNotice: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       padding: theme.spacing.sm,
       paddingStart: theme.spacing.md,
@@ -222,7 +216,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     // Modal
     modalMessage: {
       marginBottom: theme.spacing.lg,
-      textAlign: isRTL ? 'right' : 'left',
     },
     versionText: {
       marginTop: theme.spacing.lg,

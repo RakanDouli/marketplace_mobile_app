@@ -157,10 +157,10 @@ export const ListingCard = memo(function ListingCard({
         </View>
       </View>
       <View style={styles.content}>
-        <Text variant="small" numberOfLines={2} style={styles.title}>
+        <Text variant="small" numberOfLines={2} style={[styles.title, theme.rtl.textAlign.start()]}>
           {title}
         </Text>
-        <Text variant="h4" color="primary" style={styles.price}>
+        <Text variant="h4" color="primary" style={[styles.price, theme.rtl.textAlign.start()]}>
           {price}
         </Text>
       </View>
@@ -200,10 +200,8 @@ const createCompactStyles = (theme: Theme) =>
     },
     title: {
       marginBottom: theme.spacing.xs,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     price: {
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
   });
 
