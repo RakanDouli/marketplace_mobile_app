@@ -188,7 +188,8 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       backgroundColor: theme.colors.bg,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.md,
     },
     searchBarInner: {
@@ -196,7 +197,8 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       gap: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.full,
       borderWidth: 1,
@@ -208,7 +210,8 @@ const createStyles = (theme: Theme) =>
       fontSize: theme.fontSize.sm,
       color: theme.colors.text,
       paddingVertical: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
     },
     iconButton: {
       width: 40,

@@ -201,14 +201,16 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       gap: theme.spacing.sm,
     },
     rowLabel: {
-      marginHorizontal: theme.spacing.sm,
+      marginStart: theme.spacing.sm,
+        marginEnd: theme.spacing.sm,
     },
     // Restart Notice
     restartNotice: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       padding: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       backgroundColor: theme.colors.warningLight || 'rgba(255, 193, 7, 0.1)',
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,

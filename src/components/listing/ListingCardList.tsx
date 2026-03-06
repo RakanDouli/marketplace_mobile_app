@@ -173,7 +173,8 @@ const createStyles = (theme: Theme) =>
       top: theme.spacing.xs,
       // left/right applied dynamically
       backgroundColor: theme.colors.primary,
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       paddingVertical: 2,
       borderRadius: theme.radius.sm,
     },

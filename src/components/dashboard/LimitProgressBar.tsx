@@ -107,7 +107,8 @@ const createStyles = (theme: Theme) =>
     container: {
       backgroundColor: theme.colors.surface,
       padding: theme.spacing.md,
-      marginHorizontal: theme.spacing.md,
+      marginStart: theme.spacing.md,
+      marginEnd: theme.spacing.md,
       marginTop: theme.spacing.md,
       borderRadius: theme.radius.lg,
       borderWidth: 1,

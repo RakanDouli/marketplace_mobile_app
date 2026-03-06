@@ -563,7 +563,8 @@ const createStyles = (theme: Theme) =>
       flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
       borderBottomWidth: 1,
@@ -576,7 +577,8 @@ const createStyles = (theme: Theme) =>
     progressSection: {
       backgroundColor: theme.colors.surface,
       padding: theme.spacing.md,
-      marginHorizontal: theme.spacing.md,
+      marginStart: theme.spacing.md,
+        marginEnd: theme.spacing.md,
       marginTop: theme.spacing.sm,
       borderRadius: theme.radius.lg,
       borderWidth: 1,
@@ -614,7 +616,8 @@ const createStyles = (theme: Theme) =>
       paddingBottom: theme.spacing.xl,
     },
     row: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       gap: theme.spacing.md,
     },
     cardContainer: {
@@ -641,7 +644,8 @@ const createStyles = (theme: Theme) =>
     searchContainer: {
       flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingTop: theme.spacing.sm,
       paddingBottom: theme.spacing.xs,
       alignItems: 'center',
@@ -654,7 +658,8 @@ const createStyles = (theme: Theme) =>
       flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
     },
     clearFilterButton: {
@@ -692,7 +697,8 @@ const createStyles = (theme: Theme) =>
     filterOptionActive: {
       backgroundColor: theme.colors.primary + '10',
       marginHorizontal: -theme.spacing.lg,
-      paddingHorizontal: theme.spacing.lg,
+      paddingStart: theme.spacing.lg,
+        paddingEnd: theme.spacing.lg,
     },
     deleteModal: {
       backgroundColor: theme.colors.surface,

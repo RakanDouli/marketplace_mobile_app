@@ -369,14 +369,16 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       backgroundColor: theme.colors.successLight,
       paddingVertical: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       borderRadius: theme.radius.full,
     },
     tagNegative: {
       flexDirection: 'row',
       backgroundColor: theme.colors.errorLight,
       paddingVertical: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       borderRadius: theme.radius.full,
     },
 
@@ -431,7 +433,8 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
       backgroundColor: theme.colors.successLight,
       paddingVertical: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       borderRadius: theme.radius.full,
     },
     reviewTagNegative: {
@@ -440,7 +443,8 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
       backgroundColor: theme.colors.errorLight,
       paddingVertical: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       borderRadius: theme.radius.full,
     },
   });

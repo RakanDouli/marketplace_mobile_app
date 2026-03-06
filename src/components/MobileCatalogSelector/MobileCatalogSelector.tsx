@@ -348,7 +348,8 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       backgroundColor: theme.colors.bg,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
@@ -359,7 +360,8 @@ const createStyles = (theme: Theme) =>
     // Section headers (for grouped variants by model)
     sectionHeader: {
       backgroundColor: theme.colors.surface,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
@@ -386,7 +388,8 @@ const createStyles = (theme: Theme) =>
 
     // Count badge
     countBadge: {
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
       borderWidth: 1,
       borderColor: theme.colors.border,
@@ -399,7 +402,8 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: theme.spacing.xl,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
     },
   });
 

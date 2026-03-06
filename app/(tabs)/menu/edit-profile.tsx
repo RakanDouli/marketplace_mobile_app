@@ -758,7 +758,8 @@ const createStyles = (theme: Theme) =>
       flex: 1,
     },
     content: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       gap: 0,
     },
     // Avatar Section

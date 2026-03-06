@@ -482,12 +482,14 @@ const createStyles = (theme: Theme) =>
       borderBottomColor: theme.colors.border,
     },
     dateRangeScroll: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       gap: theme.spacing.sm,
       flexDirection: 'row',
     },
     dateRangeButton: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.full,
       backgroundColor: theme.colors.surface,
@@ -576,7 +578,8 @@ const createStyles = (theme: Theme) =>
       gap: 4,
     },
     performanceBadge: {
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+        paddingEnd: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
       borderRadius: theme.radius.full,
     },

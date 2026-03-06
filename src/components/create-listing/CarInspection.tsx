@@ -356,7 +356,8 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     viewsRow: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.xs,
+      paddingStart: theme.spacing.xs,
+      paddingEnd: theme.spacing.xs,
     },
     bottomViews: {
       flexDirection: isRTL ? 'row-reverse' : 'row',
@@ -416,7 +417,8 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
       borderRadius: theme.radius.full,
       borderWidth: 1,

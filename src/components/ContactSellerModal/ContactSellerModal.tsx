@@ -196,7 +196,8 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginBottom: theme.spacing.lg,
     },
     templateButton: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.md,
       borderWidth: 1,
@@ -222,7 +223,8 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     input: {
       minHeight: 120,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.md,

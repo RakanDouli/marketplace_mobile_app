@@ -262,7 +262,8 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.surface,
     },
     header: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.md,
       backgroundColor: theme.colors.bg,
       borderBottomWidth: 1,
@@ -283,7 +284,8 @@ const createStyles = (theme: Theme) =>
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      paddingHorizontal: theme.spacing.xl,
+      paddingStart: theme.spacing.xl,
+        paddingEnd: theme.spacing.xl,
       paddingBottom: 100,
     },
 
@@ -291,7 +293,8 @@ const createStyles = (theme: Theme) =>
     threadItem: {
       flexDirection: theme.isRTL ? 'row' : 'row-reverse',
       alignItems: 'center',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.md,
       backgroundColor: theme.colors.bg,
       borderBottomWidth: 1,

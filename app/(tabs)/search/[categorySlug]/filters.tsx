@@ -1046,7 +1046,8 @@ const createStyles = (theme: Theme) =>
     filterItem: {
       flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.lg,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
@@ -1072,7 +1073,8 @@ const createStyles = (theme: Theme) =>
     optionItem: {
       flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.lg,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
@@ -1091,7 +1093,8 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.primary,
     },
     optionCount: {
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+        paddingEnd: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
       borderWidth: 1,
       borderColor: theme.colors.border,
@@ -1101,7 +1104,8 @@ const createStyles = (theme: Theme) =>
     // Section headers (for grouped variants by model)
     sectionHeader: {
       backgroundColor: theme.colors.surface,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
@@ -1117,7 +1121,8 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       backgroundColor: theme.colors.bg,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
@@ -1131,13 +1136,15 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: theme.spacing.xl,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
     },
 
     // Footer
     footer: {
       flexDirection: 'row',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.md,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
@@ -1148,7 +1155,8 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: theme.spacing.lg,
+      paddingStart: theme.spacing.lg,
+        paddingEnd: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
       borderRadius: theme.radius.full,
       borderWidth: 1,

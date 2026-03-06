@@ -427,7 +427,8 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       textAlign: isRTL ? 'right' : 'left',
     },
     optionalBadge: {
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
       backgroundColor: theme.colors.border,
       borderRadius: theme.radius.sm,

@@ -277,7 +277,8 @@ export default function MenuScreen() {
             variant="primary"
             onPress={() => router.push('/auth/login')}
             fullWidth
-            style={{ marginHorizontal: theme.spacing.md, marginBottom: theme.spacing.md }}
+            style={{ marginStart: theme.spacing.md,
+        marginEnd: theme.spacing.md, marginBottom: theme.spacing.md }}
           >
             {t('menu.login')}
           </Button>
@@ -386,7 +387,8 @@ export default function MenuScreen() {
           iconStart={<LogOut size={20} color="#FFFFFF" />}
           onPress={signOut}
           fullWidth
-          style={{ marginHorizontal: theme.spacing.md, marginTop: theme.spacing.sm }}
+          style={{ marginStart: theme.spacing.md,
+        marginEnd: theme.spacing.md, marginTop: theme.spacing.sm }}
         >
           {t('menu.logout')}
         </Button>
@@ -435,11 +437,13 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     },
     userInfo: {
       flex: 1,
-      marginHorizontal: theme.spacing.lg,
+      marginStart: theme.spacing.lg,
+        marginEnd: theme.spacing.lg,
     },
     guestInfo: {
       flex: 1,
-      marginHorizontal: theme.spacing.lg,
+      marginStart: theme.spacing.lg,
+        marginEnd: theme.spacing.lg,
     },
     userName: {
       fontSize: theme.fontSize.lg,
@@ -459,7 +463,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       alignItems: 'center',
       gap: 4,
       marginTop: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+        paddingEnd: theme.spacing.sm,
       paddingVertical: 2,
       backgroundColor: theme.colors.primaryLight,
       borderRadius: theme.radius.sm,
@@ -490,7 +495,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: theme.fontSize.sm,
       fontFamily: theme.fontFamily.bodyMedium,
       color: theme.colors.textMuted,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       marginBottom: theme.spacing.sm,
       // textAlign applied dynamically
     },
@@ -516,7 +522,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       paddingVertical: theme.spacing.sm,
     },
     settingRow: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
     },
     settingLabel: {
@@ -537,7 +544,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       justifyContent: 'center',
       gap: 6,
       paddingVertical: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+        paddingEnd: theme.spacing.sm,
       backgroundColor: theme.colors.surface, // Inactive toggle = surface
       borderRadius: theme.radius.md,
       borderWidth: 1,
@@ -566,7 +574,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: 6,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingTop: theme.spacing.xs,
       paddingBottom: theme.spacing.sm,
     },

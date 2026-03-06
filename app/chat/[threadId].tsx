@@ -866,7 +866,8 @@ const createStyles = (theme: Theme) =>
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
       borderBottomWidth: 1,
@@ -900,7 +901,8 @@ const createStyles = (theme: Theme) =>
       flex: 1,
     },
     messagesList: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.md,
     },
     emptyMessages: {
@@ -912,7 +914,8 @@ const createStyles = (theme: Theme) =>
 
     // Typing Indicator
     typingIndicator: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.xs,
     },
 
@@ -921,7 +924,8 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.primary + '20',
       borderTopWidth: 1,
@@ -953,7 +957,8 @@ const createStyles = (theme: Theme) =>
     // Message Bubble
     messageBubble: {
       maxWidth: '75%',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.lg,
     },
@@ -980,7 +985,8 @@ const createStyles = (theme: Theme) =>
     },
     writeReviewButton: {
       backgroundColor: theme.colors.primary,
-      paddingHorizontal: theme.spacing.lg,
+      paddingStart: theme.spacing.lg,
+        paddingEnd: theme.spacing.lg,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.md,
       marginTop: theme.spacing.xs,
@@ -1049,7 +1055,8 @@ const createStyles = (theme: Theme) =>
 
     // Pending Images
     pendingImagesContainer: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
       borderTopWidth: 1,
@@ -1084,7 +1091,8 @@ const createStyles = (theme: Theme) =>
     inputContainer: {
       flexDirection: 'row',
       alignItems: 'flex-end',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
       borderTopWidth: 1,
@@ -1115,7 +1123,8 @@ const createStyles = (theme: Theme) =>
       flex: 1,
       minHeight: 40,
       maxHeight: 120,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+        paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.lg,

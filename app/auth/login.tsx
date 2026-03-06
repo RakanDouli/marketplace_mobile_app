@@ -395,7 +395,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>, isRTL: boolean) =>
       backgroundColor: theme.colors.border,
     },
     dividerText: {
-      marginHorizontal: theme.spacing.md,
+      marginStart: theme.spacing.md,
+        marginEnd: theme.spacing.md,
     },
     // Common
     forgotPassword: {

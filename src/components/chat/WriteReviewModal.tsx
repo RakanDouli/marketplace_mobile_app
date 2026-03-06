@@ -279,7 +279,8 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginBottom: theme.spacing.sm,
     },
     tag: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.full,
       borderWidth: 1,
