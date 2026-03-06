@@ -75,8 +75,7 @@ export function Select({
   containerStyle,
 }: SelectProps) {
   const theme = useTheme();
-  const isRTL = theme.isRTL;
-  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
+  const styles = useMemo(() => createStyles(theme, theme.isRTL), [theme]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -129,6 +128,7 @@ export function Select({
       key={item.value}
       style={[
         styles.option,
+        theme.rtl.flexDirection.row(),
         item.value === value && styles.optionSelected,
         item.disabled && styles.optionDisabled,
       ]}
@@ -167,6 +167,7 @@ export function Select({
       <TouchableOpacity
         style={[
           styles.selectButton,
+          theme.rtl.flexDirection.row(),
           { borderColor: getBorderColor() },
           disabled && styles.selectButtonDisabled,
         ]}
@@ -206,16 +207,15 @@ export function Select({
       >
         {/* Search Input */}
         {searchable && (
-          <View style={styles.searchContainer}>
+          <View style={[styles.searchContainer, theme.rtl.flexDirection.row()]}>
             <Search size={20} color={theme.colors.textMuted} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, theme.rtl.textAlign.start()]}
               placeholder="بحث..."
               placeholderTextColor={theme.colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCorrect={false}
-              textAlign={isRTL ? 'right' : 'left'}
             />
           </View>
         )}
@@ -223,7 +223,7 @@ export function Select({
         {/* Create New Option */}
         {canCreateNew && (
           <TouchableOpacity
-            style={styles.createOption}
+            style={[styles.createOption, theme.rtl.flexDirection.row()]}
             onPress={handleCreateNew}
           >
             <Plus size={20} color={theme.colors.primary} />
@@ -260,7 +260,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginBottom: theme.spacing.md,
     },
     labelContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       marginBottom: theme.spacing.sm,
     },
     label: {
@@ -270,13 +269,13 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       color: theme.colors.error,
     },
     selectButton: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       borderWidth: 1,
       borderRadius: theme.radius.md,
       backgroundColor: theme.colors.bg,
-      paddingHorizontal: theme.spacing.lg,
+      paddingStart: theme.spacing.lg,
+      paddingEnd: theme.spacing.lg,
       minHeight: theme.layout.inputHeight,
     },
     selectButtonDisabled: {
@@ -284,19 +283,18 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     selectText: {
       flex: 1,
-      textAlign: isRTL ? 'right' : 'left',
     },
     helperText: {
       marginTop: theme.spacing.xs,
-      textAlign: isRTL ? 'right' : 'left',
     },
     // Search
     searchContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      marginHorizontal: theme.spacing.lg,
+      marginStart: theme.spacing.lg,
+      marginEnd: theme.spacing.lg,
       marginVertical: theme.spacing.md,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.md,
       gap: theme.spacing.sm,
@@ -309,9 +307,9 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Create new option
     createOption: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
-      paddingHorizontal: theme.spacing.lg,
+      paddingStart: theme.spacing.lg,
+      paddingEnd: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
       gap: theme.spacing.sm,
       borderBottomWidth: 1,
@@ -322,10 +320,10 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       flexGrow: 0,
     },
     option: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: theme.spacing.lg,
+      paddingStart: theme.spacing.lg,
+      paddingEnd: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
     },
     optionSelected: {
@@ -336,7 +334,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     optionText: {
       flex: 1,
-      textAlign: isRTL ? 'right' : 'left',
     },
     emptyState: {
       padding: theme.spacing.xl,

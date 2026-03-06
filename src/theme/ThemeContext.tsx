@@ -10,6 +10,7 @@ import colors, { ThemeColors } from './colors';
 import { spacing, radius, layout, iconSize, shadows } from './spacing';
 import { fontFamily, fontSize, fontWeight, lineHeight, textStyles } from './typography';
 import { useLanguageStore, type Direction } from '../stores/languageStore';
+import * as RTLUtils from '../utils/rtl';
 
 // Theme mode type
 type ThemeMode = 'light' | 'dark' | 'system';
@@ -31,6 +32,8 @@ export interface Theme {
   // i18n support
   direction: Direction;
   isRTL: boolean;
+  // RTL utilities
+  rtl: typeof RTLUtils;
 }
 
 // Context value type
@@ -86,6 +89,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     // i18n support
     direction,
     isRTL: direction === 'rtl',
+    // RTL utilities
+    rtl: RTLUtils,
   }), [isDark, direction]);
 
   // Memoize setThemeMode callback
@@ -123,6 +128,7 @@ const defaultTheme: Theme = {
   isDark: false,
   direction: 'rtl',
   isRTL: true,
+  rtl: RTLUtils,
 };
 
 /**

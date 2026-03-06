@@ -132,8 +132,8 @@ export function Input({
           {
             borderColor: getBorderColor(),
             backgroundColor: theme.colors.bg,
-            flexDirection: theme.isRTL ? 'row-reverse' : 'row',
           },
+          theme.rtl.flexDirection.row(),
         ]}
       >
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
@@ -143,9 +143,9 @@ export function Input({
             styles.input,
             {
               color: theme.colors.text,
-              textAlign: theme.isRTL ? 'right' : 'left',
               writingDirection: theme.direction,
             },
+            theme.rtl.textAlign.start(),
             leftIcon ? styles.inputWithLeftIcon : undefined,
             (rightIcon || isPassword) ? styles.inputWithRightIcon : undefined,
             inputStyle,
@@ -208,7 +208,6 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.md,
     },
     labelContainer: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       marginBottom: theme.spacing.xs,
     },
     label: {
@@ -225,7 +224,8 @@ const createStyles = (theme: Theme) =>
     },
     input: {
       flex: 1,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       fontSize: theme.fontSize.base,
     },

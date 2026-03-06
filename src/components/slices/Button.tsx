@@ -155,22 +155,25 @@ export function Button(props: ButtonProps) {
           return { padding: theme.spacing.md };
       }
     }
-    // Regular buttons with text
+    // Regular buttons with text - Use logical properties
     switch (size) {
       case 'sm':
         return {
           paddingVertical: theme.spacing.xs,
-          paddingHorizontal: theme.spacing.sm,
+          paddingStart: theme.spacing.sm,
+          paddingEnd: theme.spacing.sm,
         };
       case 'lg':
         return {
           paddingVertical: theme.spacing.md,
-          paddingHorizontal: theme.spacing.lg,
+          paddingStart: theme.spacing.lg,
+          paddingEnd: theme.spacing.lg,
         };
       default:
         return {
           paddingVertical: theme.spacing.sm,
-          paddingHorizontal: theme.spacing.sm,
+          paddingStart: theme.spacing.sm,
+          paddingEnd: theme.spacing.sm,
         };
     }
   };
@@ -216,11 +219,11 @@ export function Button(props: ButtonProps) {
     }
   };
 
-  // Direction-aware arrow icons
+  // Direction-aware arrow icons using RTL utilities
   // Back arrow: points to the "back" direction (RTL: right, LTR: left)
-  const BackArrowIcon = theme.isRTL ? ChevronRight : ChevronLeft;
+  const BackArrowIcon = theme.rtl.getChevronDirection('backward') === 'left' ? ChevronLeft : ChevronRight;
   // Forward arrow: points to the "forward" direction (RTL: left, LTR: right)
-  const ForwardArrowIcon = theme.isRTL ? ChevronLeft : ChevronRight;
+  const ForwardArrowIcon = theme.rtl.getChevronDirection('forward') === 'left' ? ChevronLeft : ChevronRight;
 
   // Resolve start icon (iconStart > icon > arrowBack)
   const resolvedStartIcon = iconStart || icon || (arrowBack ? (
@@ -254,9 +257,8 @@ export function Button(props: ButtonProps) {
         <View style={[
           styles.content,
           { gap: getGap() },
-          // RTL: row-reverse so iconStart appears on right, iconEnd on left
-          // LTR: row so iconStart appears on left, iconEnd on right
-          { flexDirection: theme.isRTL ? 'row-reverse' : 'row' },
+          // Use RTL utility for flex direction
+          theme.rtl.flexDirection.row(),
         ]}>
           {/* Start icon (appears at start of reading direction) */}
           {resolvedStartIcon && (
@@ -323,7 +325,8 @@ const createStyles = (theme: Theme) =>
     },
     linkButton: {
       paddingVertical: theme.spacing.xs,
-      paddingHorizontal: 0,
+      paddingStart: 0,
+      paddingEnd: 0,
       backgroundColor: 'transparent',
     },
     fullWidth: {

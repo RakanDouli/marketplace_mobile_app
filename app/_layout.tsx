@@ -26,18 +26,20 @@ SplashScreen.preventAutoHideAsync();
 
 /**
  * Configure RTL based on language
- * Note: On Android, RTL changes require an app restart to take effect.
- * This is set once and persisted by React Native.
+ *
+ * PROFESSIONAL APPROACH:
+ * - Never use I18nManager.forceRTL() - causes Android corruption
+ * - Keep layout always LTR
+ * - Handle Arabic text alignment at component level using theme.isRTL
+ * - This matches how major apps (Instagram, Facebook) handle RTL
  */
-const configureRTL = (direction: 'rtl' | 'ltr'): void => {
-  const shouldBeRTL = direction === 'rtl';
+const configureRTL = (): void => {
+  // ALWAYS keep layout LTR - we handle RTL at component level
+  I18nManager.allowRTL(false);
+  I18nManager.forceRTL(false);
 
-  if (I18nManager.isRTL !== shouldBeRTL) {
-    I18nManager.allowRTL(shouldBeRTL);
-    I18nManager.forceRTL(shouldBeRTL);
-    // RTL will take effect after app restart on Android
-    // On iOS, it takes effect immediately
-  }
+  // Language store maintains direction for component-level RTL handling
+  // Components use theme.isRTL and theme.rtl utilities for proper RTL support
 };
 
 /**
@@ -227,9 +229,8 @@ export default function RootLayout() {
         // Load language preference first
         await useLanguageStore.getState().loadLanguage();
 
-        // Configure RTL based on language (persisted, requires restart on Android)
-        const direction = useLanguageStore.getState().direction;
-        configureRTL(direction);
+        // Configure RTL - always LTR layout, components handle text direction
+        configureRTL();
 
         // Load fonts
         await loadFonts();

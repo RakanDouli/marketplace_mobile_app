@@ -64,7 +64,8 @@ export function Container({
         styles.container,
         {
           paddingVertical: paddingMap[paddingY],
-          paddingHorizontal: horizontalPadding,
+          paddingStart: horizontalPadding,
+          paddingEnd: horizontalPadding,
           backgroundColor: backgroundMap[background],
         },
         style,

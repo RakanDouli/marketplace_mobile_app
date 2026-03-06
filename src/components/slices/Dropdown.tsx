@@ -65,7 +65,7 @@ export function DropdownMenuItem({
     <TouchableOpacity
       style={[
         styles.menuItem,
-        { flexDirection: theme.isRTL ? 'row-reverse' : 'row' },
+        theme.rtl.flexDirection.row(),
         disabled && styles.menuItemDisabled,
       ]}
       onPress={onPress}
@@ -92,7 +92,8 @@ const createMenuItemStyles = (theme: Theme) =>
     menuItem: {
       alignItems: 'center',
       paddingVertical: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       gap: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
     },

@@ -132,7 +132,7 @@ export function FormSection({
 
   // Custom header content
   const headerContent = (
-    <View style={[styles.header, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
+    <View style={[styles.header, theme.rtl.flexDirection.row()]}>
       {/* Status Indicator */}
       <View style={[styles.indicator, getIndicatorStyle()]}>
         {actualStatus === 'complete' || actualStatus === 'required' ? (
@@ -151,9 +151,9 @@ export function FormSection({
       {/* Title Group */}
       <View style={[
         styles.titleGroup,
-        { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }
+        theme.rtl.alignItems.start()
       ]}>
-        <View style={[styles.titleRow, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
+        <View style={[styles.titleRow, theme.rtl.flexDirection.row()]}>
           <Text variant="body" bold style={styles.title}>
             {title}
           </Text>

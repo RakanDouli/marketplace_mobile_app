@@ -208,7 +208,8 @@ const createStyles = (
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
@@ -254,7 +255,8 @@ const createStyles = (
 
     // Footer
     footer: {
-      paddingHorizontal: theme.spacing.lg,
+      paddingStart: theme.spacing.lg,
+      paddingEnd: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,

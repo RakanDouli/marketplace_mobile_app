@@ -51,8 +51,17 @@ export function Text({
 }: TextProps) {
   const theme = useTheme();
 
-  // Determine text alignment based on direction
-  const shouldAlignRight = right !== undefined ? right : theme.isRTL;
+  // Determine text alignment based on RTL
+  // If center is true, always center regardless of RTL
+  // If right is explicitly set, use that value
+  // Otherwise, align to start of reading direction
+  const getTextAlign = (): TextStyle => {
+    if (center) return { textAlign: 'center' };
+    if (right !== undefined) {
+      return right ? { textAlign: 'right' } : { textAlign: 'left' };
+    }
+    return theme.rtl.textAlign.start();
+  };
 
   const variantStyles: Record<TextVariant, TextStyle> = {
     h1: {
@@ -128,9 +137,7 @@ export function Text({
         variantStyles[variant],
         { color: color ? colorStyles[color] : theme.colors.text },
         bold && { fontWeight: 'bold' },
-        center && { textAlign: 'center' },
-        !center && shouldAlignRight && { textAlign: 'right' },
-        !center && !shouldAlignRight && { textAlign: 'left' },
+        getTextAlign(),
         { writingDirection: theme.direction },
         style,
       ]}

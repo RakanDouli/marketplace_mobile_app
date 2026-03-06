@@ -58,18 +58,17 @@ export function ListItem({
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme, size), [theme, size]);
 
-  // In RTL: icon on right, arrow on left (row-reverse)
-  // In LTR: icon on left, arrow on right (row)
-  const containerDirection = theme.isRTL ? 'row-reverse' : 'row';
+  // Use RTL utility for flex direction
+  const containerDirection = theme.rtl.flexDirection.row();
 
-  // Arrow icon - in RTL show ChevronLeft pointing left, in LTR show ChevronRight pointing right
-  const ArrowIcon = theme.isRTL ? ChevronLeft : ChevronRight;
+  // Arrow icon using RTL utility
+  const ArrowIcon = theme.rtl.getChevronDirection('forward') === 'right' ? ChevronRight : ChevronLeft;
 
   return (
     <TouchableOpacity
       style={[
         styles.container,
-        { flexDirection: containerDirection },
+        containerDirection,
         showBorder && styles.withBorder,
         selected && styles.selected,
         disabled && styles.disabled,
@@ -89,13 +88,13 @@ export function ListItem({
       {/* Middle section: Label and subtitle */}
       <View style={[
         styles.content,
-        { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' },
+        theme.rtl.alignItems.start(),
       ]}>
         <Text
           variant="body"
           style={[
             styles.label,
-            { textAlign: theme.isRTL ? 'right' : 'left' },
+            theme.rtl.textAlign.start(),
             selected && { color: theme.colors.primary },
           ]}
         >
@@ -105,7 +104,7 @@ export function ListItem({
           <Text
             variant="small"
             color="secondary"
-            style={{ textAlign: theme.isRTL ? 'right' : 'left' }}
+            style={theme.rtl.textAlign.start()}
           >
             {subtitle}
           </Text>
@@ -142,7 +141,9 @@ const createStyles = (theme: Theme, size: ListItemSize) => {
     container: {
       alignItems: 'center',
       paddingVertical: sizeConfig.paddingVertical,
-      paddingHorizontal: theme.spacing.md,
+      // Use logical properties
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       backgroundColor: theme.colors.bg,
       gap: sizeConfig.gap,
     },
@@ -170,7 +171,9 @@ const createStyles = (theme: Theme, size: ListItemSize) => {
       fontWeight: '500',
     },
     endContent: {
-      marginHorizontal: theme.spacing.xs,
+      // Use logical properties
+      marginStart: theme.spacing.xs,
+      marginEnd: theme.spacing.xs,
     },
   });
 };
