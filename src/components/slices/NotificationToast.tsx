@@ -151,7 +151,7 @@ const ToastItem: React.FC<ToastItemProps> = ({
       <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, borderRadius: theme.radius.lg }]} />
 
       {/* Content */}
-      <View style={styles.toastContent}>
+      <View style={[styles.toastContent, theme.rtl.flexDirection.row()]}>
         <View style={styles.iconContainer}>
           {getIcon(type, colors.icon)}
         </View>
@@ -254,24 +254,20 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       overflow: 'hidden',
     },
     toastContent: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'flex-start',
       padding: theme.spacing.md,
     },
     iconContainer: {
-      marginRight: isRTL ? 0 : theme.spacing.sm,
-      marginLeft: isRTL ? theme.spacing.sm : 0,
+      marginEnd: theme.spacing.sm,
       marginTop: 2,
     },
     content: {
       flex: 1,
     },
     title: {
-      textAlign: isRTL ? 'right' : 'left',
     },
     message: {
       marginTop: 2,
-      textAlign: isRTL ? 'right' : 'left',
     },
     actionButton: {
       marginTop: theme.spacing.xs,

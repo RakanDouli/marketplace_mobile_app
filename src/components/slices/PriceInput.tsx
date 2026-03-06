@@ -138,7 +138,7 @@ export function PriceInput({
         </Text>
       )}
 
-      <View style={styles.inputRow}>
+      <View style={[styles.inputRow, theme.rtl.flexDirection.row()]}>
         {/* Currency Selector */}
         <TouchableOpacity
           style={[
@@ -155,6 +155,7 @@ export function PriceInput({
         <TextInput
           style={[
             styles.input,
+            theme.rtl.textAlign.start(),
             {
               backgroundColor: theme.colors.bg,
               borderColor: hasError ? theme.colors.error : theme.colors.border,
@@ -166,7 +167,6 @@ export function PriceInput({
           placeholder={placeholder}
           placeholderTextColor={theme.colors.textMuted}
           keyboardType="number-pad"
-          textAlign={isRTL ? 'right' : 'left'}
         />
       </View>
 
@@ -229,14 +229,14 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     label: {},
     inputRow: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
     },
     currencySelector: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.md,
       borderWidth: 1,
       borderRadius: theme.radius.lg,

@@ -229,7 +229,6 @@ export function SelectWithAdd({
             onChangeText={handleCustomChange}
             placeholder={disabled ? disabledPlaceholder : customInputPlaceholder}
             placeholderTextColor={theme.colors.textMuted}
-            textAlign={isRTL ? 'right' : 'left'}
             editable={!disabled}
           />
         </View>
@@ -342,7 +341,6 @@ export function SelectWithAdd({
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCorrect={false}
-              textAlign={isRTL ? 'right' : 'left'}
             />
           </View>
         )}
@@ -380,7 +378,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginBottom: theme.spacing.md,
     },
     labelContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       marginBottom: theme.spacing.sm,
     },
     label: {
@@ -390,7 +387,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       color: theme.colors.error,
     },
     selectButton: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       borderWidth: 1,
@@ -412,7 +408,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // "Other" toggle
     otherToggleRow: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
       gap: theme.spacing.sm,
@@ -423,7 +418,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Custom input for "Other"
     customInputContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
     },
     customInputIcon: {
@@ -445,7 +439,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Search
     searchContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       marginHorizontal: theme.spacing.lg,
       marginVertical: theme.spacing.md,
@@ -470,7 +463,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       flexGrow: 0,
     },
     option: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: theme.spacing.lg,
@@ -483,7 +475,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       opacity: 0.5,
     },
     optionContent: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.md,
       flex: 1,

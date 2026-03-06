@@ -37,8 +37,8 @@ export function ToggleField({
   const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
 
   return (
-    <View style={[styles.container, containerStyle, disabled && styles.disabled]}>
-      <View style={styles.labelContainer}>
+    <View style={[styles.container, theme.rtl.flexDirection.row(), containerStyle, disabled && styles.disabled]}>
+      <View style={[styles.labelContainer, theme.rtl.alignItems.start()]}>
         <Text variant="body">{label}</Text>
         {description && (
           <Text variant="small" color="secondary">
@@ -61,7 +61,6 @@ export function ToggleField({
 const createStyles = (theme: Theme, isRTL: boolean) =>
   StyleSheet.create({
     container: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingVertical: theme.spacing.sm,
@@ -69,7 +68,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     labelContainer: {
       flex: 1,
-      alignItems: isRTL ? 'flex-end' : 'flex-start',
       gap: theme.spacing.xs,
     },
     disabled: {
