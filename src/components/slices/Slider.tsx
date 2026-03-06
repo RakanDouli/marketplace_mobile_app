@@ -89,8 +89,8 @@ export function Slider<T>({
       {(title || onViewAll) && (
         <View style={[
           styles.header,
-          { paddingHorizontal: theme.spacing.md },
-          { flexDirection: theme.isRTL ? 'row-reverse' : 'row' },
+          { paddingStart: theme.spacing.md, paddingEnd: theme.spacing.md },
+          theme.rtl.flexDirection.row(),
         ]}>
           {title && <Text variant="h3">{title}</Text>}
           {onViewAll && (
@@ -120,7 +120,8 @@ export function Slider<T>({
           styles.listContent,
           {
             gap: gapValue,
-            paddingHorizontal: theme.spacing.md,
+            paddingStart: theme.spacing.md,
+            paddingEnd: theme.spacing.md,
           },
         ]}
         renderItem={({ item, index }) => (

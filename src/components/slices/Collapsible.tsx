@@ -116,6 +116,7 @@ export function Collapsible({
       <TouchableOpacity
         style={[
           styles.trigger,
+          theme.rtl.flexDirection.row(),
           variant === 'form' && styles.formTrigger,
         ]}
         onPress={handleToggle}
@@ -127,7 +128,7 @@ export function Collapsible({
             <Text
               variant="body"
               bold
-              style={[styles.title, { textAlign: theme.isRTL ? 'right' : 'left' }]}
+              style={[styles.title, theme.rtl.textAlign.start()]}
             >
               {title}
             </Text>
@@ -165,14 +166,15 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.sm,
     },
     trigger: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       paddingVertical: theme.spacing.md,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
     },
     formTrigger: {
       paddingVertical: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
     },
     titleContainer: {
       flex: 1,
@@ -189,7 +191,8 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
     },
     content: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingBottom: theme.spacing.md,
     },
     formContent: {

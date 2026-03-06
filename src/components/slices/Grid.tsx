@@ -114,7 +114,7 @@ export function Grid({
     <View style={[
       styles.grid,
       { gap: gapValue },
-      { flexDirection: theme.isRTL ? 'row-reverse' : 'row' },
+      theme.rtl.flexDirection.row(),
     ]}>
       {gridItems}
     </View>
@@ -129,7 +129,7 @@ export function Grid({
         <View
           style={[
             styles.header,
-            { flexDirection: theme.isRTL ? 'row-reverse' : 'row' },
+            theme.rtl.flexDirection.row(),
             titleAlign === 'center' && styles.headerCenter,
           ]}
         >
