@@ -560,7 +560,6 @@ const createStyles = (theme: Theme) =>
       flex: 1,
     },
     stickyHeader: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingStart: theme.spacing.md,
@@ -572,7 +571,6 @@ const createStyles = (theme: Theme) =>
     },
     headerDescription: {
       flex: 1,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     progressSection: {
       backgroundColor: theme.colors.surface,
@@ -642,7 +640,6 @@ const createStyles = (theme: Theme) =>
       marginTop: theme.spacing.lg,
     },
     searchContainer: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
       paddingStart: theme.spacing.md,
         paddingEnd: theme.spacing.md,
@@ -655,7 +652,6 @@ const createStyles = (theme: Theme) =>
       marginBottom: 0,
     },
     resultsHeader: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingStart: theme.spacing.md,
@@ -663,7 +659,6 @@ const createStyles = (theme: Theme) =>
       paddingVertical: theme.spacing.sm,
     },
     clearFilterButton: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: 4,
     },

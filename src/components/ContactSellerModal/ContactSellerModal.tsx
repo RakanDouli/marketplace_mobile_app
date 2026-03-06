@@ -187,7 +187,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     // Section label
     sectionLabel: {
       marginBottom: theme.spacing.md,
-      textAlign: isRTL ? 'right' : 'left',
     },
 
     // Templates
@@ -210,7 +209,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     templateText: {
       color: theme.colors.text,
-      textAlign: isRTL ? 'right' : 'left',
     },
     templateTextSelected: {
       color: theme.colors.primary,
@@ -219,7 +217,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     // Input
     inputLabel: {
       marginBottom: theme.spacing.sm,
-      textAlign: isRTL ? 'right' : 'left',
     },
     input: {
       minHeight: 120,
@@ -233,7 +230,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       fontFamily: theme.fontFamily.body,
       fontSize: theme.fontSize.body,
       color: theme.colors.text,
-      textAlign: isRTL ? 'right' : 'left',
     },
     inputError: {
       borderColor: theme.colors.error,
@@ -241,12 +237,10 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     errorText: {
       color: theme.colors.error,
       marginTop: theme.spacing.xs,
-      textAlign: isRTL ? 'right' : 'left',
     },
 
     // Actions (footer)
     actions: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
     },
     cancelButton: {

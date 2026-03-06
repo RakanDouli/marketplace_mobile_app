@@ -1044,7 +1044,6 @@ const createStyles = (theme: Theme) =>
 
     // Filter list items
     filterItem: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       paddingStart: theme.spacing.md,
         paddingEnd: theme.spacing.md,
@@ -1061,7 +1060,6 @@ const createStyles = (theme: Theme) =>
     },
     filterItemName: {
       fontWeight: '500',
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Icon grid
@@ -1071,7 +1069,6 @@ const createStyles = (theme: Theme) =>
 
     // Options list
     optionItem: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       paddingStart: theme.spacing.md,
         paddingEnd: theme.spacing.md,
@@ -1084,7 +1081,6 @@ const createStyles = (theme: Theme) =>
     },
     optionContent: {
       flex: 1,
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
     },
@@ -1113,7 +1109,6 @@ const createStyles = (theme: Theme) =>
     sectionHeaderText: {
       fontWeight: '600',
       color: theme.colors.text,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Section divider (between grouped variants and standalone models)

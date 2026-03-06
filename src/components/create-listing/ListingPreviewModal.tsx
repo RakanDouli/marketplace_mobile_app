@@ -553,26 +553,22 @@ const createStyles = (theme: Theme) =>
     },
     price: {
       color: theme.colors.primary,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     title: {
       marginTop: theme.spacing.sm,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     metaRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       marginTop: theme.spacing.md,
       gap: theme.spacing.md,
     },
     metaItem: {
-      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
+      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
     metaText: {},
     tagsRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       marginTop: theme.spacing.md,
       gap: theme.spacing.sm,
@@ -608,7 +604,6 @@ const createStyles = (theme: Theme) =>
 
     // Description
     description: {
-      textAlign: theme.isRTL ? 'right' : 'left',
       lineHeight: 24,
     },
 

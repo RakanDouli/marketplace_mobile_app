@@ -828,7 +828,6 @@ const createStyles = (theme: Theme) =>
     },
     // Security
     securityRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingVertical: theme.spacing.sm,
@@ -864,7 +863,6 @@ const createStyles = (theme: Theme) =>
     },
     // Modal Actions
     modalActions: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
       marginTop: theme.spacing.md,
     },

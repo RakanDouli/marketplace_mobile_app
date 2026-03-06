@@ -320,7 +320,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginBottom: theme.spacing.sm,
     },
     autoFillLoadingContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: theme.spacing.sm,

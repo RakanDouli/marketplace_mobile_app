@@ -67,7 +67,7 @@ export function PromoCard({
   // Content component
   const contentComponent = (
     <View style={[styles.content, { alignItems: contentAlign }]}>
-      <View style={[styles.titleRow, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
+      <View style={[styles.titleRow, theme.rtl.flexDirection.row()]}>
         {badge && (
           <View style={[styles.badge, { backgroundColor: theme.colors.error }]}>
             <Text variant="xs" color="inverse">{badge}</Text>

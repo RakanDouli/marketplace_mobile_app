@@ -260,7 +260,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     sectionTitle: {
       marginBottom: theme.spacing.sm,
-      textAlign: isRTL ? 'right' : 'left',
       fontWeight: '600',
     },
     starsContainer: {
@@ -273,7 +272,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       padding: theme.spacing.xs,
     },
     tagsContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.sm,
       marginBottom: theme.spacing.sm,
@@ -309,11 +307,9 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     errorText: {
       color: theme.colors.error,
-      textAlign: isRTL ? 'right' : 'left',
       marginTop: theme.spacing.xs,
     },
     actions: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
     },
     actionButton: {

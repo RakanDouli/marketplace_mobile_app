@@ -996,7 +996,6 @@ const createStyles = (theme: Theme) =>
     },
     messageText: {
       color: theme.colors.text,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     ownMessageText: {
       color: '#FFFFFF',
@@ -1010,7 +1009,6 @@ const createStyles = (theme: Theme) =>
     },
     messageTime: {
       color: theme.colors.textMuted,
-      textAlign: theme.isRTL ? 'right' : 'left',
       fontSize: 10,
     },
     ownMessageTime: {
@@ -1018,7 +1016,6 @@ const createStyles = (theme: Theme) =>
     },
     // Message images - simple grid like WhatsApp
     messageImagesContainer: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: theme.isRTL ? 'wrap-reverse' : 'wrap',
       gap: 4,
       marginBottom: theme.spacing.xs,
@@ -1084,7 +1081,6 @@ const createStyles = (theme: Theme) =>
     },
     imageCount: {
       marginTop: theme.spacing.xs,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Input - Standard layout: attachment left, input middle, send right
@@ -1131,7 +1127,6 @@ const createStyles = (theme: Theme) =>
       fontFamily: theme.fontFamily.body,
       fontSize: theme.fontSize.body,
       color: theme.colors.text,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     sendButton: {
       width: 40,

@@ -783,26 +783,22 @@ const createStyles = (theme: Theme) =>
     },
     price: {
       color: theme.colors.primary,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     title: {
       marginTop: theme.spacing.sm,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     metaRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       marginTop: theme.spacing.md,
       gap: theme.spacing.md,
     },
     metaItem: {
-      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
+      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
     metaText: {},
     statsRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       marginTop: theme.spacing.md,
       paddingTop: theme.spacing.md,
       borderTopWidth: 1,
@@ -810,7 +806,7 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.lg,
     },
     statItem: {
-      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
+      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
@@ -827,7 +823,6 @@ const createStyles = (theme: Theme) =>
     },
     sectionTitle: {
       marginBottom: theme.spacing.md,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Specs
@@ -846,7 +841,6 @@ const createStyles = (theme: Theme) =>
 
     // Description
     description: {
-      textAlign: theme.isRTL ? 'right' : 'left',
       lineHeight: 24,
     },
 
@@ -859,7 +853,6 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.bg,
     },
     bottomActions: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       padding: theme.spacing.md,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,

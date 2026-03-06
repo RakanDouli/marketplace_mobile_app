@@ -408,7 +408,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       gap: theme.spacing.md,
     },
     sectionHeader: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -421,10 +420,8 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     sectionTitle: {
       flex: 1,
-      textAlign: isRTL ? 'right' : 'left',
     },
     sectionSubtitle: {
-      textAlign: isRTL ? 'right' : 'left',
     },
     optionalBadge: {
       paddingStart: theme.spacing.sm,
@@ -434,7 +431,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       borderRadius: theme.radius.sm,
     },
     infoNote: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.md,
       padding: theme.spacing.md,
@@ -442,21 +438,17 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     infoText: {
       flex: 1,
-      textAlign: isRTL ? 'right' : 'left',
     },
     // Error styles
     errorContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
       justifyContent: isRTL ? 'flex-end' : 'flex-start',
     },
     errorText: {
-      textAlign: isRTL ? 'right' : 'left',
     },
     // Toggle row styles
     toggleRow: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: theme.spacing.md,
@@ -471,6 +463,5 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginLeft: isRTL ? theme.spacing.md : 0,
     },
     toggleLabel: {
-      textAlign: isRTL ? 'right' : 'left',
     },
   });

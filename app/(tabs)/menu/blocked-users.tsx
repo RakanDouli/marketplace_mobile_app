@@ -279,13 +279,11 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.sm,
     },
     headerRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
     userCard: {
       backgroundColor: theme.colors.bg,
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingVertical: theme.spacing.md,
@@ -295,7 +293,6 @@ const createStyles = (theme: Theme) =>
       borderBottomColor: theme.colors.border,
     },
     userInfo: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       flex: 1,
       gap: theme.spacing.md,

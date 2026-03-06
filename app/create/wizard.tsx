@@ -417,7 +417,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     footer: {
       // RTL: row-reverse puts buttons in correct order for RTL
       // LTR: row puts buttons in correct order for LTR
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       padding: 16,
       gap: 8,
       borderTopWidth: 1,

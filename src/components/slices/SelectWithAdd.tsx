@@ -400,11 +400,9 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     selectText: {
       flex: 1,
-      textAlign: isRTL ? 'right' : 'left',
     },
     helperText: {
       marginTop: theme.spacing.xs,
-      textAlign: isRTL ? 'right' : 'left',
     },
     // "Other" toggle
     otherToggleRow: {
@@ -481,7 +479,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     optionText: {
       flex: 1,
-      textAlign: isRTL ? 'right' : 'left',
     },
     // Logo
     logoContainer: {

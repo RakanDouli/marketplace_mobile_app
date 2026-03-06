@@ -1107,7 +1107,6 @@ const createStyles = (
 
     // Chips Row - container with filter button fixed, chips scrollable
     chipsRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.bg,
       paddingHorizontal: horizontalPadding,
@@ -1125,7 +1124,6 @@ const createStyles = (
       gap: theme.spacing.sm,
     },
     filterButton: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.primary,
       paddingStart: theme.spacing.md,
@@ -1152,7 +1150,6 @@ const createStyles = (
       fontWeight: '600',
     },
     filterChip: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.surface,
       paddingStart: theme.spacing.md,
@@ -1166,7 +1163,6 @@ const createStyles = (
 
     // Toolbar Row
     toolbar: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: horizontalPadding,
@@ -1176,7 +1172,6 @@ const createStyles = (
       borderBottomColor: theme.colors.border,
     },
     sortButton: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -1198,7 +1193,6 @@ const createStyles = (
       backgroundColor: theme.colors.surface,
     },
     viewToggle: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.lg,
       borderWidth: 1,
@@ -1230,7 +1224,6 @@ const createStyles = (
       paddingBottom: theme.spacing.xxl + theme.spacing.xxl,
     },
     row: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'flex-start',
       marginBottom: CARD_GAP,
     },

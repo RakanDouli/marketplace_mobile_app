@@ -471,7 +471,6 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
     },
     headerRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -508,7 +507,6 @@ const createStyles = (theme: Theme) =>
     },
     sectionTitle: {
       marginBottom: theme.spacing.md,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     statsGrid: {
       flexDirection: 'row',
@@ -520,7 +518,6 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.bg,
       borderRadius: theme.radius.lg,
       padding: theme.spacing.md,
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.md,
       borderWidth: 1,
@@ -542,7 +539,6 @@ const createStyles = (theme: Theme) =>
       paddingTop: 0,
     },
     sectionHeaderRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: theme.spacing.md,
@@ -552,7 +548,6 @@ const createStyles = (theme: Theme) =>
       borderRadius: theme.radius.lg,
       padding: theme.spacing.md,
       marginBottom: theme.spacing.sm,
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       borderWidth: 1,
@@ -566,14 +561,11 @@ const createStyles = (theme: Theme) =>
     },
     listingTitle: {
       marginBottom: theme.spacing.xs,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     listingStats: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.md,
     },
     listingStat: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: 4,
     },

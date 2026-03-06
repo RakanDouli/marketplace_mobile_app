@@ -265,7 +265,7 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.md,
     },
     header: {
-      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
+      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -297,7 +297,6 @@ const createStyles = (theme: Theme) =>
       maxHeight: 200,
     },
     bidRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing.md,

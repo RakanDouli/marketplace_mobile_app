@@ -231,7 +231,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       gap: theme.spacing.md,
     },
     sectionHeader: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -239,7 +238,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       gap: theme.spacing.sm,
     },
     linkLabelRow: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },

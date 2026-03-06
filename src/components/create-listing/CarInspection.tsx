@@ -354,13 +354,11 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       flexGrow: 0,
     },
     viewsRow: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
       paddingStart: theme.spacing.xs,
       paddingEnd: theme.spacing.xs,
     },
     bottomViews: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       justifyContent: 'center',
       gap: theme.spacing.md,
     },
@@ -409,12 +407,10 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       gap: theme.spacing.xs,
     },
     summaryItems: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.xs,
     },
     summaryItem: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
       paddingStart: theme.spacing.sm,
@@ -425,7 +421,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       backgroundColor: theme.colors.surface,
     },
     noIssues: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: theme.spacing.sm,
@@ -447,12 +442,10 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       gap: theme.spacing.md,
     },
     modalHeader: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
     modalSubtitle: {
-      textAlign: isRTL ? 'right' : 'left',
     },
     damageOptions: {
       gap: theme.spacing.sm,

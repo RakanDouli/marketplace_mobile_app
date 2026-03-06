@@ -70,7 +70,7 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
   if (isLoading || !owner) {
     return (
       <View style={styles.container}>
-        <View style={[styles.skeleton, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
+        <View style={[styles.skeleton, theme.rtl.flexDirection.row()]}>
           <View style={styles.skeletonAvatar} />
           <View style={[styles.skeletonText, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
             <View style={[styles.skeletonLine, { width: '60%' }]} />
@@ -88,7 +88,7 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
   return (
     <View style={styles.container}>
       {/* Header Row */}
-      <View style={[styles.header, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
+      <View style={[styles.header, theme.rtl.flexDirection.row()]}>
         {/* Avatar */}
         <View style={styles.avatarContainer}>
           {hasAvatar ? (
@@ -132,7 +132,7 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
           {/* Rating */}
           {owner.reviewCount != null && owner.reviewCount > 0 ? (
             <TouchableOpacity
-              style={[styles.ratingRow, { flexDirection: theme.isRTL ? 'row' : 'row-reverse' }]}
+              style={[styles.ratingRow, { flexDirection: 'row' }]}
               onPress={onViewReviews}
               activeOpacity={0.7}
             >
@@ -156,7 +156,7 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
 
           {/* Member since */}
           {owner.createdAt && (
-            <View style={[styles.memberSince, { flexDirection: theme.isRTL ? 'row' : 'row-reverse' }]}>
+            <View style={[styles.memberSince, { flexDirection: 'row' }]}>
               <Text variant="xs" color="muted">
                 {`عضو منذ ${formatMemberSince(owner.createdAt)}`}
               </Text>

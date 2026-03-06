@@ -373,7 +373,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       gap: theme.spacing.md,
     },
     label: {
-      textAlign: isRTL ? 'right' : 'left',
     },
     emptyState: {
       borderWidth: 2,
@@ -398,7 +397,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       textAlign: 'center',
     },
     grid: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.sm,
     },

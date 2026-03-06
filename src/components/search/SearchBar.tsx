@@ -105,7 +105,7 @@ export function SearchBar({
             style={{ marginStart: theme.spacing.xs }}
           />
           <TextInput
-            style={[styles.input, { textAlign: theme.isRTL ? 'right' : 'left' }]}
+            style={[styles.input, theme.rtl.textAlign.start()]}
             value={value}
             onChangeText={onChangeText}
             onSubmitEditing={onSubmitEditing}
@@ -193,7 +193,7 @@ const createStyles = (theme: Theme) =>
       paddingVertical: theme.spacing.md,
     },
     searchBarInner: {
-      flexDirection: theme.isRTL ? 'row' : 'row-reverse',
+      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
@@ -241,7 +241,6 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
     },
     dropdownOption: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.md,
       padding: theme.spacing.md,

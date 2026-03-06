@@ -311,7 +311,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>, isRTL: boolean) =>
     },
     // Terms
     termsContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
       marginBottom: theme.spacing.md,
@@ -336,7 +335,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>, isRTL: boolean) =>
     },
     termsText: {
       flex: 1,
-      textAlign: isRTL ? 'right' : 'left',
     },
     termsLink: {
       color: theme.colors.primary,

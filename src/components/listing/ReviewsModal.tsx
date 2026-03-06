@@ -314,7 +314,6 @@ const createStyles = (theme: Theme) =>
 
     // Rating Bar
     ratingBar: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -341,7 +340,7 @@ const createStyles = (theme: Theme) =>
     },
     ratingBarCount: {
       width: 24,
-      textAlign: theme.isRTL ? 'left' : 'right',
+      
     },
 
     // Tag Summary
@@ -356,12 +355,10 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.sm,
     },
     tagHeader: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
     tags: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.xs,
     },
@@ -387,7 +384,6 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.xl,
     },
     reviewsTitle: {
-      textAlign: theme.isRTL ? 'right' : 'left',
       marginBottom: theme.spacing.md,
     },
     reviewItem: {
@@ -397,7 +393,6 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.sm,
     },
     reviewerRow: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -422,7 +417,6 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
     },
     reviewTags: {
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.xs,
       marginTop: theme.spacing.sm,

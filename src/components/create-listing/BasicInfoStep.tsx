@@ -200,7 +200,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginBottom: 0,
     },
     listingTypeContainer: {
-      flexDirection: isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.md,
     },
     listingTypeCard: {

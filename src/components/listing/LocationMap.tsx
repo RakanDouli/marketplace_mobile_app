@@ -316,20 +316,17 @@ const createStyles = (theme: Theme) =>
     // Info
     info: {
       padding: theme.spacing.md,
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing.md,
     },
     locationRow: {
       flex: 1,
-      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
     locationText: {
       flex: 1,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
 
     // Directions Button
