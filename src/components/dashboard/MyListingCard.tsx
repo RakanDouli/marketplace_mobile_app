@@ -112,10 +112,10 @@ export const MyListingCard = memo(function MyListingCard({
             </Text>
           </View>
 
-          <Text variant="small" numberOfLines={2} style={styles.title}>
+          <Text variant="small" numberOfLines={2} style={[styles.title, theme.rtl.textAlign.start()]}>
             {listing.title}
           </Text>
-          <Text variant="h4" color="primary" style={styles.price}>
+          <Text variant="h4" color="primary" style={[styles.price, theme.rtl.textAlign.start()]}>
             {priceFormatted}
           </Text>
         </View>
@@ -130,7 +130,7 @@ export const MyListingCard = memo(function MyListingCard({
             )}
             <Text
               variant="xs"
-              style={[styles.warningText, isRejected && { color: theme.colors.error }]}
+              style={[styles.warningText, theme.rtl.textAlign.start(), isRejected && { color: theme.colors.error }]}
               numberOfLines={2}
             >
               {isRejected
@@ -241,10 +241,8 @@ const createStyles = (theme: Theme) =>
     },
     title: {
       marginBottom: theme.spacing.xs,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     price: {
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     warningBanner: {
       flexDirection: 'row',
@@ -264,7 +262,6 @@ const createStyles = (theme: Theme) =>
     warningText: {
       flex: 1,
       color: theme.colors.warning,
-      textAlign: theme.isRTL ? 'right' : 'left',
     },
     pendingBanner: {
       backgroundColor: '#f59e0b10',
