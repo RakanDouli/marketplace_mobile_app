@@ -97,10 +97,10 @@ export default function ListingTypeSelectionScreen() {
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
-            <Text variant="h2" style={[styles.headerTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+            <Text variant="h2" style={[styles.headerTitle, theme.rtl.textAlign.start()]}>
               ماذا تريد أن تفعل؟
             </Text>
-            <Text variant="paragraph" color="secondary" style={[styles.headerSubtitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+            <Text variant="paragraph" color="secondary" style={[styles.headerSubtitle, theme.rtl.textAlign.start()]}>
               اختر نوع الإعلانات التي تريد تصفحها في {category.nameAr}
             </Text>
           </View>
@@ -109,7 +109,7 @@ export default function ListingTypeSelectionScreen() {
           <View style={styles.optionsContainer}>
             {/* Sale Option */}
             <TouchableOpacity
-              style={[styles.optionCard, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}
+              style={[styles.optionCard, theme.rtl.flexDirection.row()]}
               onPress={() => handleTypePress('sale')}
               activeOpacity={0.8}
             >
@@ -120,7 +120,7 @@ export default function ListingTypeSelectionScreen() {
                 <Text variant="h3" style={styles.optionTitle}>
                   للبيع
                 </Text>
-                <Text variant="paragraph" color="secondary" style={[styles.optionDescription, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+                <Text variant="paragraph" color="secondary" style={[styles.optionDescription, theme.rtl.textAlign.start()]}>
                   تصفح {category.nameAr} المعروضة للبيع
                 </Text>
               </View>
@@ -133,7 +133,7 @@ export default function ListingTypeSelectionScreen() {
 
             {/* Rent Option */}
             <TouchableOpacity
-              style={[styles.optionCard, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}
+              style={[styles.optionCard, theme.rtl.flexDirection.row()]}
               onPress={() => handleTypePress('rent')}
               activeOpacity={0.8}
             >
@@ -144,7 +144,7 @@ export default function ListingTypeSelectionScreen() {
                 <Text variant="h3" style={styles.optionTitle}>
                   للإيجار
                 </Text>
-                <Text variant="paragraph" color="secondary" style={[styles.optionDescription, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+                <Text variant="paragraph" color="secondary" style={[styles.optionDescription, theme.rtl.textAlign.start()]}>
                   تصفح {category.nameAr} المعروضة للإيجار
                 </Text>
               </View>

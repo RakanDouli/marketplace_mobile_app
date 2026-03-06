@@ -606,10 +606,10 @@ export default function ChatScreen() {
             />
           )}
           <View style={[styles.headerText, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
-            <Text variant="body" weight="semibold" numberOfLines={1} style={{ textAlign: theme.isRTL ? 'right' : 'left' }}>
+            <Text variant="body" weight="semibold" numberOfLines={1} style={theme.rtl.textAlign.start()}>
               {thread.listing?.title || 'إعلان محذوف'}
             </Text>
-            <Text variant="small" color="secondary" numberOfLines={1} style={{ textAlign: theme.isRTL ? 'right' : 'left' }}>
+            <Text variant="small" color="secondary" numberOfLines={1} style={theme.rtl.textAlign.start()}>
               {otherUserName}
             </Text>
           </View>

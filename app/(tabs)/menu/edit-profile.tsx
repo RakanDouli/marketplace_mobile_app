@@ -524,7 +524,7 @@ export default function EditProfileScreen() {
 
           {/* Email */}
           <View style={styles.securityRow}>
-            <View style={[styles.securityInfo, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
+            <View style={[styles.securityInfo, theme.rtl.flexDirection.row()]}>
               <Mail size={20} color={theme.colors.textSecondary} />
               <View style={[styles.securityTexts, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
                 <Text variant="small" color="secondary">البريد الإلكتروني</Text>
@@ -542,7 +542,7 @@ export default function EditProfileScreen() {
 
           {/* Password */}
           <View style={styles.securityRow}>
-            <View style={[styles.securityInfo, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
+            <View style={[styles.securityInfo, theme.rtl.flexDirection.row()]}>
               <Lock size={20} color={theme.colors.textSecondary} />
               <View style={[styles.securityTexts, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
                 <Text variant="small" color="secondary">كلمة المرور</Text>

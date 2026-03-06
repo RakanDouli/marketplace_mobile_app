@@ -179,7 +179,7 @@ export default function MenuScreen() {
     <View style={styles.settingsSection}>
       {/* Theme Toggle */}
       <View style={styles.settingRow}>
-        <Text style={[styles.settingLabel, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+        <Text style={[styles.settingLabel, theme.rtl.textAlign.start()]}>
           {t('menu.theme')}
         </Text>
         <View style={styles.toggleGroup}>
@@ -208,7 +208,7 @@ export default function MenuScreen() {
 
       {/* Currency Selector */}
       <View style={styles.settingRow}>
-        <Text style={[styles.settingLabel, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+        <Text style={[styles.settingLabel, theme.rtl.textAlign.start()]}>
           {t('menu.currency')}
         </Text>
         <View style={styles.toggleGroup}>
@@ -258,12 +258,12 @@ export default function MenuScreen() {
       <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Guest Header */}
-          <View style={[styles.guestHeader, { flexDirection: theme.isRTL ? 'row' : 'row-reverse' }]}>
+          <View style={styles.guestHeader}>
             <View style={styles.guestInfo}>
-              <Text style={[styles.guestTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+              <Text style={[styles.guestTitle, theme.rtl.textAlign.start()]}>
                 {t('menu.welcome')}
               </Text>
-              <Text style={[styles.guestSubtitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+              <Text style={[styles.guestSubtitle, theme.rtl.textAlign.start()]}>
                 {t('menu.loginPrompt')}
               </Text>
             </View>
@@ -288,7 +288,7 @@ export default function MenuScreen() {
 
           {/* Support & Info Menu */}
           <View style={styles.menuSection}>
-            <Text style={[styles.sectionTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+            <Text style={[styles.sectionTitle, theme.rtl.textAlign.start()]}>
               {t('menu.helpAndSettings')}
             </Text>
             <View style={styles.menu}>
@@ -305,17 +305,17 @@ export default function MenuScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* User Profile Header - Display only (no navigation) */}
-        <View style={[styles.header, { flexDirection: theme.isRTL ? 'row' : 'row-reverse' }]}>
+        <View style={styles.header}>
           <View style={styles.userInfo}>
-            <Text style={[styles.userName, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+            <Text style={[styles.userName, theme.rtl.textAlign.start()]}>
               {profile?.name || user?.user_metadata?.full_name || t('chat.user')}
             </Text>
-            <Text style={[styles.userEmail, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+            <Text style={[styles.userEmail, theme.rtl.textAlign.start()]}>
               {profile?.email || user?.email}
             </Text>
             {/* Subscription title */}
             {userPackage?.userSubscription?.title && (
-              <View style={[styles.subscriptionBadge, { alignSelf: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
+              <View style={[styles.subscriptionBadge, theme.rtl.alignItems.start()]}>
                 <Crown size={12} color={theme.colors.primary} />
                 <Text style={styles.subscriptionTitle}>
                   {userPackage.userSubscription.title}
@@ -353,7 +353,7 @@ export default function MenuScreen() {
 
         {/* Account Menu */}
         <View style={styles.menuSection}>
-          <Text style={[styles.sectionTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+          <Text style={[styles.sectionTitle, theme.rtl.textAlign.start()]}>
             {t('menu.myAccount')}
           </Text>
           <View style={styles.menu}>
@@ -363,7 +363,7 @@ export default function MenuScreen() {
 
         {/* Subscriptions & Advertising Menu */}
         <View style={styles.menuSection}>
-          <Text style={[styles.sectionTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+          <Text style={[styles.sectionTitle, theme.rtl.textAlign.start()]}>
             {t('menu.packagesAndAds')}
           </Text>
           <View style={styles.menu}>
@@ -373,7 +373,7 @@ export default function MenuScreen() {
 
         {/* Support & Settings Menu */}
         <View style={styles.menuSection}>
-          <Text style={[styles.sectionTitle, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
+          <Text style={[styles.sectionTitle, theme.rtl.textAlign.start()]}>
             {t('menu.helpAndSettings')}
           </Text>
           <View style={styles.menu}>
