@@ -46,7 +46,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      paddingHorizontal: theme.spacing.lg,
+      paddingStart: theme.spacing.lg,
+      paddingEnd: theme.spacing.lg,
     },
     title: {
       fontSize: theme.fontSize['2xl'],
@@ -64,7 +65,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       marginBottom: theme.spacing.lg,
     },
     badge: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.md,
       backgroundColor: theme.colors.warningLight,

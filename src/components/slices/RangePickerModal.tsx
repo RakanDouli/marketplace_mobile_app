@@ -258,7 +258,8 @@ const createStyles = (theme: Theme) =>
     // Column headers
     columnHeaders: {
       flexDirection: 'row',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
@@ -294,7 +295,8 @@ const createStyles = (theme: Theme) =>
 
     // Android: Select component layout
     androidSelectContainer: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.lg,
     },
     androidSelectRow: {

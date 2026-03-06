@@ -312,7 +312,8 @@ const createStyles = (theme: Theme) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
       borderRadius: theme.radius.md,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.md,
       minHeight: 48,
     },
@@ -328,7 +329,8 @@ const createStyles = (theme: Theme) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
       borderRadius: theme.radius.md,
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       minHeight: 48,
     },
     textInput: {
@@ -376,7 +378,8 @@ const createStyles = (theme: Theme) =>
       borderBottomColor: theme.colors.border,
     },
     optionsList: {
-      paddingHorizontal: theme.spacing.lg,
+      paddingStart: theme.spacing.lg,
+      paddingEnd: theme.spacing.lg,
     },
     optionItem: {
       flexDirection: 'row-reverse',

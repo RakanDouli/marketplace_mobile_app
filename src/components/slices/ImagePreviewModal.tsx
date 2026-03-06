@@ -342,7 +342,8 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingTop: 50, // Account for status bar
       paddingBottom: theme.spacing.md,
       position: 'absolute',
@@ -424,7 +425,8 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.overlay,
     },
     thumbnailsContent: {
-      paddingHorizontal: theme.spacing.md,
+      paddingStart: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       gap: theme.spacing.sm,
     },
     thumbnail: {

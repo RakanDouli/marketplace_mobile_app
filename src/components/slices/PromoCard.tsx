@@ -124,7 +124,8 @@ const createPromoCardStyles = (theme: Theme) =>
       flexWrap: 'wrap',
     },
     badge: {
-      paddingHorizontal: theme.spacing.sm,
+      paddingStart: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
       borderRadius: theme.radius.full,
     },
