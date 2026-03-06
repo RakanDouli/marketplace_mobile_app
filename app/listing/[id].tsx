@@ -174,7 +174,7 @@ export default function ListingDetailScreen() {
   const headerRight = useCallback(() => {
     if (!currentListing || !shareMetadata) return null;
     return (
-      <View style={styles.headerActions}>
+      <View style={[styles.headerActions, theme.rtl.flexDirection.row()]}>
         <ShareButton
           metadata={shareMetadata}
           size={22}
@@ -366,7 +366,7 @@ export default function ListingDetailScreen() {
                         </Text>
                       </View>
                       {/* Video badge */}
-                      <View style={styles.videoBadge}>
+                      <View style={[styles.videoBadge, theme.rtl.flexDirection.row()]}>
                         <Play size={16} color="#FFFFFF" fill="#FFFFFF" />
                         <Text variant="xs" style={styles.videoBadgeText}>فيديو</Text>
                       </View>
@@ -439,7 +439,7 @@ export default function ListingDetailScreen() {
           {/* Meta info */}
           <View style={styles.metaRow}>
             {location && (
-              <View style={styles.metaItem}>
+              <View style={[styles.metaItem, theme.rtl.flexDirection.row()]}>
                 <Text variant="small" color="secondary" style={styles.metaText}>
                   {location}
                 </Text>
@@ -447,7 +447,7 @@ export default function ListingDetailScreen() {
               </View>
             )}
             {currentListing.createdAt && (
-              <View style={styles.metaItem}>
+              <View style={[styles.metaItem, theme.rtl.flexDirection.row()]}>
                 <Text variant="small" color="secondary" style={styles.metaText}>
                   {formatDate(currentListing.createdAt)}
                 </Text>
@@ -458,13 +458,13 @@ export default function ListingDetailScreen() {
 
           {/* Stats */}
           <View style={styles.statsRow}>
-            <View style={styles.statItem}>
+            <View style={[styles.statItem, theme.rtl.flexDirection.row()]}>
               <Text variant="small" color="muted">
                 {currentListing.viewCount || 0} مشاهدة
               </Text>
               <Eye size={16} color={theme.colors.textMuted} />
             </View>
-            <View style={styles.statItem}>
+            <View style={[styles.statItem, theme.rtl.flexDirection.row()]}>
               <Text variant="small" color="muted">
                 {currentListing.wishlistCount || 0} مفضلة
               </Text>
@@ -476,9 +476,9 @@ export default function ListingDetailScreen() {
           {specsList.length > 0 && (
             <View style={styles.collapsibleContainer}>
               <Collapsible title="المواصفات" defaultOpen variant="bordered">
-                <View style={styles.specsGrid}>
+                <View style={[styles.specsGrid, theme.rtl.flexDirection.row()]}>
                   {specsList.map((spec) => (
-                    <View key={spec.key} style={styles.specItem}>
+                    <View key={spec.key} style={[styles.specItem, theme.rtl.alignItems.start()]}>
                       <Text variant="small" color="muted">
                         {spec.label}
                       </Text>
@@ -683,7 +683,6 @@ const createStyles = (theme: Theme) =>
 
     // Native Header Actions (headerRight)
     headerActions: {
-      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -728,7 +727,6 @@ const createStyles = (theme: Theme) =>
       position: 'absolute',
       top: theme.spacing.md,
       right: theme.spacing.md,
-      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
       backgroundColor: 'rgba(0,0,0,0.7)',
@@ -793,7 +791,6 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.md,
     },
     metaItem: {
-      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
@@ -806,7 +803,6 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.lg,
     },
     statItem: {
-      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
@@ -827,7 +823,6 @@ const createStyles = (theme: Theme) =>
 
     // Specs
     specsGrid: {
-      flexDirection: 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.sm,
     },
@@ -836,7 +831,6 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.bg,
       padding: theme.spacing.md,
       borderRadius: theme.radius.lg,
-      alignItems: theme.isRTL ? 'flex-end' : 'flex-start',
     },
 
     // Description
