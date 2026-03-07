@@ -37,8 +37,8 @@ export function ToggleField({
   const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
 
   return (
-    <View style={[styles.container, theme.rtl.flexDirection.row(), containerStyle, disabled && styles.disabled]}>
-      <View style={[styles.labelContainer, theme.rtl.alignItems.start()]}>
+    <View style={[styles.container, { flexDirection: isRTL ? 'row-reverse' : 'row' }, containerStyle, disabled && styles.disabled]}>
+      <View style={[styles.labelContainer, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
         <Text variant="body">{label}</Text>
         {description && (
           <Text variant="small" color="secondary">

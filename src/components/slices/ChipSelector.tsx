@@ -72,7 +72,7 @@ export function ChipSelector({
         </Text>
       )}
 
-      <View style={[styles.chipsContainer, theme.rtl.flexDirection.row()]}>
+      <View style={[styles.chipsContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         {options.map((option) => {
           const isSelected = selectedValues.includes(option.key);
           return (
@@ -80,7 +80,7 @@ export function ChipSelector({
               key={option.key}
               style={[
                 styles.chip,
-                theme.rtl.flexDirection.row(),
+                { flexDirection: isRTL ? 'row-reverse' : 'row' },
                 {
                   backgroundColor: isSelected
                     ? theme.colors.primary

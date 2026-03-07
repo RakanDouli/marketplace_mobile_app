@@ -1,6 +1,8 @@
 /**
- * Listing Type Selection Screen
- * Shows buy/sell options for a category before showing listings
+ * Category Selection Screen
+ * - If category is a collection: show child categories
+ * - If category supports both types: show buy/sell options
+ * - If category supports one type: redirect to listings
  */
 
 import React, { useEffect, useMemo } from 'react';
@@ -8,15 +10,35 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ShoppingBag, Key, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ShoppingBag, Key, ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react-native';
+import { SvgXml } from 'react-native-svg';
 import { useTheme, Theme } from '../../../../src/theme';
-import { Text, Loading } from '../../../../src/components/slices';
+import { Text, Loading, ListItem } from '../../../../src/components/slices';
 import { useCategoriesStore } from '../../../../src/stores/categoriesStore';
 
-export default function ListingTypeSelectionScreen() {
+/**
+ * Renders category icon from SVG string
+ */
+function renderCategoryIcon(iconSvg: string | undefined, size: number, color: string) {
+  if (!iconSvg) return <LayoutGrid size={size} color={color} />;
+
+  const styledSvg = iconSvg
+    .replace(/<svg/, `<svg width="${size}" height="${size}"`)
+    .replace(/stroke="currentColor"/g, `stroke="${color}"`)
+    .replace(/fill="currentColor"/g, `fill="${color}"`);
+
+  try {
+    return <SvgXml xml={styledSvg} width={size} height={size} />;
+  } catch {
+    return <LayoutGrid size={size} color={color} />;
+  }
+}
+
+export default function CategorySelectionScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { categorySlug, search: searchParam } = useLocalSearchParams<{ categorySlug: string; search?: string }>();
@@ -34,27 +56,38 @@ export default function ListingTypeSelectionScreen() {
 
   // Get category info
   const category = getCategoryBySlug(categorySlug || '');
+  const isCollection = category?.isCollection || false;
   const supportedTypes = category?.supportedListingTypes || ['sale'];
   const supportsBothTypes = supportedTypes.length === 2;
 
+  // Get child categories if this is a collection
+  const childCategories = useMemo(() => {
+    if (!isCollection || !category) return [];
+    return categories.filter(cat => cat.parentCollectionId === category.id && cat.isActive);
+  }, [categories, category, isCollection]);
+
   // Build URL with search param if present
-  const buildUrl = (type: string) => {
-    const base = `/search/${categorySlug}/${type}`;
+  const buildUrl = (slug: string, type?: string) => {
+    const base = type ? `/search/${slug}/${type}` : `/search/${slug}`;
     if (searchParam) {
       return `${base}?search=${encodeURIComponent(searchParam)}`;
     }
     return base;
   };
 
-  // If category only supports one type, navigate directly to listings
+  // If category is NOT a collection and only supports one type, navigate directly to listings
   useEffect(() => {
-    if (category && !supportsBothTypes) {
-      router.replace(buildUrl(supportedTypes[0]));
+    if (category && !isCollection && !supportsBothTypes) {
+      router.replace(buildUrl(categorySlug || '', supportedTypes[0]));
     }
-  }, [category, supportsBothTypes, searchParam]);
+  }, [category, isCollection, supportsBothTypes, searchParam]);
 
   const handleTypePress = (type: 'sale' | 'rent') => {
-    router.push(buildUrl(type));
+    router.push(buildUrl(categorySlug || '', type));
+  };
+
+  const handleChildCategoryPress = (childSlug: string) => {
+    router.push(buildUrl(childSlug));
   };
 
   // Loading state
@@ -71,14 +104,56 @@ export default function ListingTypeSelectionScreen() {
     );
   }
 
-  // If only supports one type, show loading while redirecting
-  if (!supportsBothTypes) {
+  // If NOT a collection and only supports one type, show loading while redirecting
+  if (!isCollection && !supportsBothTypes) {
     return (
       <>
         <Stack.Screen options={{ title: category.nameAr }} />
         <SafeAreaView style={styles.container} edges={['bottom']}>
           <View style={styles.loadingContainer}>
             <Loading type="svg" size="lg" />
+          </View>
+        </SafeAreaView>
+      </>
+    );
+  }
+
+  // If this is a collection, show child categories
+  if (isCollection) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: category.nameAr,
+            headerBackTitle: 'الأقسام',
+          }}
+        />
+        <SafeAreaView style={styles.container} edges={['bottom']}>
+          <View style={styles.content}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text variant="h2" style={styles.headerTitle}>
+                {category.nameAr}
+              </Text>
+              <Text variant="paragraph" color="secondary" style={styles.headerSubtitle}>
+                اختر القسم الذي تبحث عنه
+              </Text>
+            </View>
+
+            {/* Child Categories List */}
+            <ScrollView style={styles.childCategoriesList}>
+              {childCategories.map((child, index) => (
+                <ListItem
+                  key={child.id}
+                  label={child.nameAr || child.name}
+                  icon={renderCategoryIcon(child.icon, 24, theme.colors.primary)}
+                  onPress={() => handleChildCategoryPress(child.slug)}
+                  showArrow
+                  showBorder={index < childCategories.length - 1}
+                  size="lg"
+                />
+              ))}
+            </ScrollView>
           </View>
         </SafeAreaView>
       </>
@@ -180,17 +255,18 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.xl,
     },
     headerTitle: {
-      // textAlign applied dynamically
       marginBottom: theme.spacing.sm,
     },
     headerSubtitle: {
-      // textAlign applied dynamically
+    },
+    childCategoriesList: {
+      flex: 1,
+      marginHorizontal: -theme.spacing.lg,
     },
     optionsContainer: {
       gap: theme.spacing.md,
     },
     optionCard: {
-      // flexDirection applied dynamically
       alignItems: 'center',
       backgroundColor: theme.colors.bg,
       padding: theme.spacing.lg,
@@ -208,12 +284,10 @@ const createStyles = (theme: Theme) =>
     },
     optionContent: {
       flex: 1,
-      // alignItems applied dynamically
     },
     optionTitle: {
       marginBottom: theme.spacing.xs,
     },
     optionDescription: {
-      // textAlign applied dynamically
     },
   });

@@ -69,7 +69,8 @@ export function Input({
   ...props
 }: InputProps) {
   const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [validationError, setValidationError] = useState<string | undefined>();
@@ -133,7 +134,6 @@ export function Input({
             borderColor: getBorderColor(),
             backgroundColor: theme.colors.bg,
           },
-          theme.rtl.flexDirection.row(),
         ]}
       >
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
@@ -141,11 +141,7 @@ export function Input({
         <TextInput
           style={[
             styles.input,
-            {
-              color: theme.colors.text,
-              writingDirection: theme.direction,
-            },
-            theme.rtl.textAlign.start(),
+            { color: theme.colors.text },
             leftIcon ? styles.inputWithLeftIcon : undefined,
             (rightIcon || isPassword) ? styles.inputWithRightIcon : undefined,
             inputStyle,
@@ -202,7 +198,7 @@ export function Input({
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, isRTL: boolean) =>
   StyleSheet.create({
     container: {
       marginBottom: theme.spacing.md,
@@ -217,6 +213,7 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.error,
     },
     inputContainer: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       borderWidth: 1,
       borderRadius: theme.radius.full,
@@ -224,22 +221,22 @@ const createStyles = (theme: Theme) =>
     },
     input: {
       flex: 1,
-      paddingStart: theme.spacing.md,
-      paddingEnd: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       fontSize: theme.fontSize.base,
+      textAlign: isRTL ? 'right' : 'left',
     },
     inputWithLeftIcon: {
-      paddingStart: theme.spacing.sm,
+      [isRTL ? 'paddingRight' : 'paddingLeft']: theme.spacing.sm,
     },
     inputWithRightIcon: {
-      paddingEnd: theme.spacing.sm,
+      [isRTL ? 'paddingLeft' : 'paddingRight']: theme.spacing.sm,
     },
     leftIcon: {
-      paddingStart: theme.spacing.md,
+      [isRTL ? 'paddingRight' : 'paddingLeft']: theme.spacing.md,
     },
     rightIcon: {
-      paddingEnd: theme.spacing.md,
+      [isRTL ? 'paddingLeft' : 'paddingRight']: theme.spacing.md,
     },
     helperText: {
       marginTop: theme.spacing.xs,

@@ -319,7 +319,7 @@ export default function WizardScreen() {
         </KeyboardAvoidingView>
 
         {/* Navigation Buttons - 3 buttons: Back | Cancel | Next */}
-        <View style={[styles.footer, { backgroundColor: theme.colors.bg, borderTopColor: theme.colors.border }]}>
+        <View style={[styles.footer, { backgroundColor: theme.colors.bg, borderTopColor: theme.colors.border, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           {/* Back Button - goes to previous step or previous screen */}
           <Button
             variant="outline"
@@ -415,8 +415,6 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       padding: 40,
     },
     footer: {
-      // RTL: row-reverse puts buttons in correct order for RTL
-      // LTR: row puts buttons in correct order for LTR
       padding: 16,
       gap: 8,
       borderTopWidth: 1,

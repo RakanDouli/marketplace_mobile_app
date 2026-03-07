@@ -390,30 +390,22 @@ export default function CategoryListingsScreen() {
 
   // Compute filter chips from local state
   const filterChips = useMemo((): FilterChip[] => {
-    console.log('🟢 [filterChips:useMemo] Recomputing chips...');
-    console.log('🟢 [filterChips:useMemo] activeFilters:', JSON.stringify(activeFilters));
-    console.log('🟢 [filterChips:useMemo] appliedFilters:', JSON.stringify(appliedFilters));
-
     const chips: FilterChip[] = [];
     // Special keys that are handled separately (not shown as individual chips)
     const specialKeys = ['search', 'province', 'priceMinMinor', 'priceMaxMinor', 'priceCurrency'];
 
     if (activeFilters.search) {
-      console.log('🟢 [filterChips:useMemo] Adding search chip');
       chips.push({ key: 'search', value: activeFilters.search, label: `"${activeFilters.search}"` });
     }
 
     if (activeFilters.province) {
-      console.log('🟢 [filterChips:useMemo] Adding province chip');
       chips.push({ key: 'province', value: activeFilters.province, label: getProvinceArabicName(activeFilters.province) });
     }
 
     // Price chip with currency symbol
     if (activeFilters.priceMinMinor || activeFilters.priceMaxMinor) {
-      console.log('🟢 [filterChips:useMemo] Adding price chip');
       const min = activeFilters.priceMinMinor ? Number(activeFilters.priceMinMinor).toLocaleString('en-US') : '';
       const max = activeFilters.priceMaxMinor ? Number(activeFilters.priceMaxMinor).toLocaleString('en-US') : '';
-      // Get currency symbol from stored priceCurrency or fallback to current
       const priceCurrency = activeFilters.priceCurrency || preferredCurrency;
       const symbol = priceCurrency === 'USD' ? '$' : priceCurrency === 'EUR' ? '€' : 'ل.س';
 
@@ -431,14 +423,11 @@ export default function CategoryListingsScreen() {
     // Add attribute filters (brandId, modelId, fuel_type, etc.)
     Object.entries(activeFilters).forEach(([key, value]) => {
       if (value && !specialKeys.includes(key)) {
-        console.log('🟢 [filterChips:useMemo] Adding attribute chip:', key, value);
-        // Look up Arabic label from filtersStore
         const label = getAttributeValueLabel(key, String(value));
         chips.push({ key, value: String(value), label });
       }
     });
 
-    console.log('🟢 [filterChips:useMemo] Final chips:', JSON.stringify(chips));
     return chips;
   }, [activeFilters, getProvinceArabicName, getAttributeValueLabel, preferredCurrency, appliedFilters]);
 
@@ -451,67 +440,45 @@ export default function CategoryListingsScreen() {
 
   // Remove a single filter - handles both store filters and URL params
   const removeFilter = useCallback((filterKey: string) => {
-    console.log('🔴 [removeFilter] Called with filterKey:', filterKey);
-    console.log('🔴 [removeFilter] Current appliedFilters:', JSON.stringify(appliedFilters));
-
     if (filterKey === 'search') {
-      console.log('🔴 [removeFilter] Removing search filter');
       setSearchQuery('');
-      // Also clear from URL
       router.setParams({ search: undefined });
       return;
     }
 
     // Check if this is a URL param filter (brandId, modelId, variantId)
     if (filterKey === 'brandId' || filterKey === 'modelId' || filterKey === 'variantId') {
-      console.log('🔴 [removeFilter] Removing URL param filter:', filterKey);
-
-      // CRITICAL FIX: Remove from BOTH store AND URL
-      // First, remove from store
+      // Remove from BOTH store AND URL
       const updated = appliedFilters.filter(f => f.key !== filterKey);
-      console.log('🔴 [removeFilter] Removing from store, updated filters:', JSON.stringify(updated));
       setAppliedFilters(updated);
 
-      // Then, remove from URL
-      const newParams: Record<string, string | undefined> = {
+      router.setParams({
         showListings: 'true',
-        [filterKey]: undefined, // Remove this param
-      };
-      console.log('🔴 [removeFilter] Setting params:', newParams);
-      router.setParams(newParams);
+        [filterKey]: undefined,
+      });
       return;
     }
 
     // For store filters, just update the store
-    // Don't update URL here to avoid race condition with useEffect that reads from URL
-    // URL will be updated when user navigates to filters screen
     if (filterKey === 'price') {
-      console.log('🔴 [removeFilter] Removing price filters');
       // Remove all price-related filters from store
       const updated = appliedFilters.filter(f =>
         f.key !== 'priceMinMinor' &&
         f.key !== 'priceMaxMinor' &&
         f.key !== 'priceCurrency'
       );
-      console.log('🔴 [removeFilter] Updated filters (price removed):', JSON.stringify(updated));
       setAppliedFilters(updated);
     } else {
-      console.log('🔴 [removeFilter] Removing single store filter:', filterKey);
       // Remove single filter from store
       const updated = appliedFilters.filter(f => f.key !== filterKey);
-      console.log('🔴 [removeFilter] Updated filters (single removed):', JSON.stringify(updated));
-      console.log('🔴 [removeFilter] Calling setAppliedFilters...');
       setAppliedFilters(updated);
     }
   }, [appliedFilters, setAppliedFilters, router]);
 
   // Clear all filters - clears both store filters and URL params
   const clearAllFilters = useCallback(() => {
-    console.log('🟡 [clearAllFilters] Clearing all filters');
-    console.log('🟡 [clearAllFilters] Current appliedFilters:', JSON.stringify(appliedFilters));
     storeClearFilters();
     setSearchQuery('');
-    // Clear URL params for catalog and search (but not appliedFilters to avoid race condition)
     router.setParams({
       showListings: 'true',
       brandId: undefined,
@@ -519,8 +486,7 @@ export default function CategoryListingsScreen() {
       variantId: undefined,
       search: undefined,
     });
-    console.log('🟡 [clearAllFilters] Filters cleared');
-  }, [storeClearFilters, router, appliedFilters]);
+  }, [storeClearFilters, router]);
 
   // Navigate to filters screen - pass current appliedFilters from store + URL params
   const openFilters = () => {

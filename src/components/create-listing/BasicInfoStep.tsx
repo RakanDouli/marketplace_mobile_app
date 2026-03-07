@@ -200,6 +200,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginBottom: 0,
     },
     listingTypeContainer: {
+      flexDirection: 'row',
       gap: theme.spacing.md,
     },
     listingTypeCard: {

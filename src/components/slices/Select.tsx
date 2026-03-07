@@ -123,12 +123,14 @@ export function Select({
     return theme.colors.border;
   };
 
+  const isRTL = theme.isRTL;
+
   const renderOption = (item: SelectOption) => (
     <TouchableOpacity
       key={item.value}
       style={[
         styles.option,
-        theme.rtl.flexDirection.row(),
+        { flexDirection: isRTL ? 'row-reverse' : 'row' },
         item.value === value && styles.optionSelected,
         item.disabled && styles.optionDisabled,
       ]}
@@ -167,8 +169,7 @@ export function Select({
       <TouchableOpacity
         style={[
           styles.selectButton,
-          theme.rtl.flexDirection.row(),
-          { borderColor: getBorderColor() },
+          { flexDirection: isRTL ? 'row-reverse' : 'row', borderColor: getBorderColor() },
           disabled && styles.selectButtonDisabled,
         ]}
         onPress={() => !disabled && setIsOpen(true)}
@@ -207,10 +208,10 @@ export function Select({
       >
         {/* Search Input */}
         {searchable && (
-          <View style={[styles.searchContainer, theme.rtl.flexDirection.row()]}>
+          <View style={[styles.searchContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <Search size={20} color={theme.colors.textMuted} />
             <TextInput
-              style={[styles.searchInput, theme.rtl.textAlign.start()]}
+              style={[styles.searchInput, { textAlign: isRTL ? 'right' : 'left' }]}
               placeholder="بحث..."
               placeholderTextColor={theme.colors.textMuted}
               value={searchQuery}
@@ -223,7 +224,7 @@ export function Select({
         {/* Create New Option */}
         {canCreateNew && (
           <TouchableOpacity
-            style={[styles.createOption, theme.rtl.flexDirection.row()]}
+            style={[styles.createOption, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
             onPress={handleCreateNew}
           >
             <Plus size={20} color={theme.colors.primary} />

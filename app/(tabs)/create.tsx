@@ -1,10 +1,12 @@
 /**
  * Create Listing - Select Category
- * Uses ListItem slice with SVG icons from backend
+ * Shows top-level categories and collections (no child categories)
+ * - Collections navigate to /create/collection to show children
+ * - Regular categories navigate to brand/wizard flow
  */
 
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LayoutGrid } from 'lucide-react-native';
@@ -55,7 +57,26 @@ export default function CreateListingScreen() {
     reset();
   }, []);
 
+  // Filter to show only top-level categories (no parentCollectionId)
+  // This includes standalone categories AND collections
+  const topLevelCategories = useMemo(() => {
+    return categories.filter(cat => !cat.parentCollectionId && cat.isActive);
+  }, [categories]);
+
   const handleCategorySelect = async (category: Category) => {
+    // If this is a collection, navigate to collection children page
+    if (category.isCollection) {
+      console.log('[Create] Navigating to collection:', category.id, category.nameAr);
+      router.push({
+        pathname: '/create/collection' as const,
+        params: {
+          collectionId: category.id,
+          collectionName: category.nameAr || category.name,
+        },
+      });
+      return;
+    }
+
     // Set category in create listing store (this fetches attributes & brands)
     await setCategory(category.id);
 
@@ -116,14 +137,14 @@ export default function CreateListingScreen() {
       {/* Categories - Using ListItem slice */}
       {!isLoading && !error && (
         <ScrollView style={styles.categories} contentContainerStyle={styles.categoriesContent}>
-          {categories.map((category, index) => (
+          {topLevelCategories.map((category, index) => (
             <ListItem
               key={category.id}
               label={category.nameAr || category.name}
               icon={renderCategoryIcon(category.icon, 24, theme.colors.primary)}
               onPress={() => handleCategorySelect(category)}
               showArrow
-              showBorder={index < categories.length - 1}
+              showBorder={index < topLevelCategories.length - 1}
               size="lg"
             />
           ))}

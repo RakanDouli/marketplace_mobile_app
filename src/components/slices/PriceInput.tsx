@@ -138,7 +138,7 @@ export function PriceInput({
         </Text>
       )}
 
-      <View style={[styles.inputRow, theme.rtl.flexDirection.row()]}>
+      <View style={[styles.inputRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         {/* Currency Selector */}
         <TouchableOpacity
           style={[
@@ -155,7 +155,7 @@ export function PriceInput({
         <TextInput
           style={[
             styles.input,
-            theme.rtl.textAlign.start(),
+            { textAlign: isRTL ? 'right' : 'left' },
             {
               backgroundColor: theme.colors.bg,
               borderColor: hasError ? theme.colors.error : theme.colors.border,

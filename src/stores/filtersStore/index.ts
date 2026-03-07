@@ -445,41 +445,28 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
   },
 
   setAppliedFilters: (filters: ActiveFilter[]) => {
-    console.log('🟣 [STORE:setAppliedFilters] Called with:', JSON.stringify(filters));
-    const currentFilters = get().appliedFilters;
-    console.log('🟣 [STORE:setAppliedFilters] Current filters before update:', JSON.stringify(currentFilters));
     set({ appliedFilters: filters });
-    console.log('🟣 [STORE:setAppliedFilters] Filters updated successfully');
   },
 
   addFilter: (filter: ActiveFilter) => {
-    console.log('🟣 [STORE:addFilter] Called with:', JSON.stringify(filter));
     const { appliedFilters } = get();
     const existing = appliedFilters.findIndex((f) => f.key === filter.key);
 
     if (existing >= 0) {
       const updated = [...appliedFilters];
       updated[existing] = filter;
-      console.log('🟣 [STORE:addFilter] Updating existing filter, new state:', JSON.stringify(updated));
       set({ appliedFilters: updated });
     } else {
-      const updated = [...appliedFilters, filter];
-      console.log('🟣 [STORE:addFilter] Adding new filter, new state:', JSON.stringify(updated));
-      set({ appliedFilters: updated });
+      set({ appliedFilters: [...appliedFilters, filter] });
     }
   },
 
   removeFilter: (key: string) => {
-    console.log('🟣 [STORE:removeFilter] Called with key:', key);
     const { appliedFilters } = get();
-    console.log('🟣 [STORE:removeFilter] Current filters:', JSON.stringify(appliedFilters));
-    const updated = appliedFilters.filter((f) => f.key !== key);
-    console.log('🟣 [STORE:removeFilter] Filters after removal:', JSON.stringify(updated));
-    set({ appliedFilters: updated });
+    set({ appliedFilters: appliedFilters.filter((f) => f.key !== key) });
   },
 
   clearFilters: () => {
-    console.log('🟣 [STORE:clearFilters] Clearing all filters');
     set({ appliedFilters: [] });
   },
 

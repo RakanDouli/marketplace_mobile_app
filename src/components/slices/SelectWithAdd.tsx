@@ -9,11 +9,11 @@ import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   TouchableOpacity,
-  FlatList,
   TextInput,
   StyleSheet,
   Switch,
   Image,
+  ScrollView,
 } from 'react-native';
 import { ChevronDown, Search, Check, Plus, Car } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
@@ -332,10 +332,10 @@ export function SelectWithAdd({
       >
         {/* Search Input */}
         {searchable && (
-          <View style={styles.searchContainer}>
+          <View style={[styles.searchContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <Search size={20} color={theme.colors.textMuted} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { textAlign: isRTL ? 'right' : 'left' }]}
               placeholder="بحث..."
               placeholderTextColor={theme.colors.textMuted}
               value={searchQuery}
@@ -351,21 +351,26 @@ export function SelectWithAdd({
             <Loading type="svg" size="sm" />
           </View>
         ) : (
-          /* Options List */
-          <FlatList
-            data={filteredOptions}
-            keyExtractor={(item, index) => item.value || `option-${index}`}
-            renderItem={renderOption}
+          /* Options List - Using ScrollView instead of FlatList to avoid nesting issues */
+          <ScrollView
             style={styles.optionsList}
             keyboardShouldPersistTaps="handled"
-            ListEmptyComponent={
+            nestedScrollEnabled
+          >
+            {filteredOptions.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text variant="body" color="muted">
                   لا توجد نتائج
                 </Text>
               </View>
-            }
-          />
+            ) : (
+              filteredOptions.map((item, index) => (
+                <React.Fragment key={item.value || `option-${index}`}>
+                  {renderOption({ item })}
+                </React.Fragment>
+              ))
+            )}
+          </ScrollView>
         )}
       </BaseModal>
     </View>
@@ -387,6 +392,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       color: theme.colors.error,
     },
     selectButton: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       borderWidth: 1,
@@ -406,6 +412,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // "Other" toggle
     otherToggleRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
       gap: theme.spacing.sm,
@@ -416,6 +423,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Custom input for "Other"
     customInputContainer: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
     },
     customInputIcon: {
@@ -431,12 +439,14 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       [isRTL ? 'paddingRight' : 'paddingLeft']: 44,
       minHeight: theme.layout.inputHeight,
       fontSize: theme.fontSize.base,
+      textAlign: isRTL ? 'right' : 'left',
     },
     inputDisabled: {
       opacity: 0.5,
     },
     // Search
     searchContainer: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       marginHorizontal: theme.spacing.lg,
       marginVertical: theme.spacing.md,
@@ -450,6 +460,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       paddingVertical: theme.spacing.md,
       fontSize: theme.fontSize.base,
       color: theme.colors.text,
+      textAlign: isRTL ? 'right' : 'left',
     },
     // Loading
     loadingContainer: {
@@ -461,6 +472,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       flexGrow: 0,
     },
     option: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: theme.spacing.lg,
@@ -473,12 +485,14 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       opacity: 0.5,
     },
     optionContent: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.md,
       flex: 1,
     },
     optionText: {
       flex: 1,
+      textAlign: isRTL ? 'right' : 'left',
     },
     // Logo
     logoContainer: {
