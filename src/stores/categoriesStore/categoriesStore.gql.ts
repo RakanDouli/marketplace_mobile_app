@@ -13,6 +13,8 @@ export const CATEGORIES_QUERY = `
       isActive
       icon
       supportedListingTypes
+      isCollection
+      parentCollectionId
     }
   }
 `;

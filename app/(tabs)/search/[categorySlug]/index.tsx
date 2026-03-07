@@ -97,10 +97,10 @@ export default function ListingTypeSelectionScreen() {
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
-            <Text variant="h2" style={[styles.headerTitle, theme.rtl.textAlign.start()]}>
+            <Text variant="h2" style={styles.headerTitle}>
               ماذا تريد أن تفعل؟
             </Text>
-            <Text variant="paragraph" color="secondary" style={[styles.headerSubtitle, theme.rtl.textAlign.start()]}>
+            <Text variant="paragraph" color="secondary" style={styles.headerSubtitle}>
               اختر نوع الإعلانات التي تريد تصفحها في {category.nameAr}
             </Text>
           </View>
@@ -120,7 +120,7 @@ export default function ListingTypeSelectionScreen() {
                 <Text variant="h3" style={styles.optionTitle}>
                   للبيع
                 </Text>
-                <Text variant="paragraph" color="secondary" style={[styles.optionDescription, theme.rtl.textAlign.start()]}>
+                <Text variant="paragraph" color="secondary" style={styles.optionDescription}>
                   تصفح {category.nameAr} المعروضة للبيع
                 </Text>
               </View>
@@ -144,7 +144,7 @@ export default function ListingTypeSelectionScreen() {
                 <Text variant="h3" style={styles.optionTitle}>
                   للإيجار
                 </Text>
-                <Text variant="paragraph" color="secondary" style={[styles.optionDescription, theme.rtl.textAlign.start()]}>
+                <Text variant="paragraph" color="secondary" style={styles.optionDescription}>
                   تصفح {category.nameAr} المعروضة للإيجار
                 </Text>
               </View>

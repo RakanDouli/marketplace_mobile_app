@@ -60,11 +60,12 @@ export default function SettingsScreen() {
               key={lang}
               style={[
                 styles.option,
+                theme.rtl.flexDirection.row(),
                 language === lang && styles.optionSelected,
               ]}
               onPress={() => handleLanguageChange(lang)}
             >
-              <View style={styles.optionContent}>
+              <View style={[styles.optionContent, theme.rtl.flexDirection.row()]}>
                 <Text
                   variant="body"
                   style={[

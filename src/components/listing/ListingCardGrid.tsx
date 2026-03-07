@@ -100,14 +100,14 @@ export const ListingCardGrid = memo(function ListingCardGrid({
       </View>
 
       <View style={styles.content}>
-        <Text variant="h4" numberOfLines={2} style={[styles.title, theme.rtl.textAlign.start()]}>
+        <Text variant="h4" numberOfLines={2} style={styles.title}>
           {title}
         </Text>
-        <Text variant="h4" color="primary" style={[styles.price, theme.rtl.textAlign.start()]}>
+        <Text variant="h4" color="primary" style={styles.price}>
           {price}
         </Text>
         {specs && (
-          <Text variant="xs" color="secondary" numberOfLines={2} style={[styles.specs, theme.rtl.textAlign.start()]}>
+          <Text variant="xs" color="secondary" numberOfLines={2} style={styles.specs}>
             {specs}
           </Text>
         )}

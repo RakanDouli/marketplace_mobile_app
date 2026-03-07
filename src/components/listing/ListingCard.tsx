@@ -157,10 +157,10 @@ export const ListingCard = memo(function ListingCard({
         </View>
       </View>
       <View style={styles.content}>
-        <Text variant="small" numberOfLines={2} style={[styles.title, theme.rtl.textAlign.start()]}>
+        <Text variant="small" numberOfLines={2} style={[styles.title]}>
           {title}
         </Text>
-        <Text variant="h4" color="primary" style={[styles.price, theme.rtl.textAlign.start()]}>
+        <Text variant="h4" color="primary" style={[styles.price]}>
           {price}
         </Text>
       </View>

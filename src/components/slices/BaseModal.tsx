@@ -8,7 +8,7 @@
  * This ensures consistency - close button always on left
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Modal,
@@ -18,6 +18,7 @@ import {
   Platform,
   ScrollView,
   Pressable,
+  Animated,
 } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
@@ -81,25 +82,89 @@ export function BaseModal({
 
   const hasHeader = title || showCloseButton || rightAction;
 
+  // Animation values
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+
+  // Animate when visible changes
+  useEffect(() => {
+    if (visible) {
+      // Reset to initial state first
+      slideAnim.setValue(0);
+      backdropOpacity.setValue(0);
+
+      // Show: backdrop fades in, content slides up
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 65,
+          friction: 11,
+        }),
+      ]).start();
+    } else {
+      // Hide: both animate out
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, backdropOpacity, slideAnim]);
+
+  // Calculate slide transform based on position
+  const slideTransform = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: position === 'bottom' ? [300, 0] : [0, 0],
+  });
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType={position === 'bottom' ? 'slide' : 'fade'}
+      animationType="none"
       onRequestClose={closeOnBackdropPress ? onClose : undefined}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.overlay}
       >
-        {/* Backdrop */}
-        <Pressable
-          style={styles.backdrop}
-          onPress={closeOnBackdropPress ? onClose : undefined}
-        />
+        {/* Backdrop - fades in/out */}
+        <Animated.View
+          style={[
+            styles.backdrop,
+            {
+              opacity: backdropOpacity,
+            },
+          ]}
+        >
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={closeOnBackdropPress ? onClose : undefined}
+          />
+        </Animated.View>
 
-        {/* Content Container */}
-        <View style={styles.container}>
+        {/* Content Container - slides up */}
+        <Animated.View
+          style={[
+            styles.container,
+            {
+              transform: [{ translateY: slideTransform }],
+            },
+          ]}
+        >
           {/* Header - Close button ALWAYS on left for consistency */}
           {hasHeader && (
             <View style={styles.header}>
@@ -161,7 +226,7 @@ export function BaseModal({
 
           {/* Footer */}
           {footer && <View style={styles.footer}>{footer}</View>}
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );

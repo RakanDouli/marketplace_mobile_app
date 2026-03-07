@@ -98,18 +98,18 @@ export const ListingCardList = memo(function ListingCardList({
       {/* Content area */}
       <View style={styles.content}>
         {/* Title */}
-        <Text variant="body" numberOfLines={2} style={[styles.title, theme.rtl.textAlign.start()]}>
+        <Text variant="body" numberOfLines={2} style={styles.title}>
           {title}
         </Text>
 
         {/* Price */}
-        <Text variant="h4" color="primary" style={[styles.price, theme.rtl.textAlign.start()]}>
+        <Text variant="h4" color="primary" style={styles.price}>
           {price}
         </Text>
 
         {/* Specs - backend decides what to show */}
         {specsDisplay && Object.keys(specsDisplay).length > 0 ? (
-          <Text variant="xs" color="secondary" numberOfLines={2} style={[styles.specs, theme.rtl.textAlign.start()]}>
+          <Text variant="xs" color="secondary" numberOfLines={2} style={styles.specs}>
             {[...new Set(
               Object.entries(specsDisplay)
                 .filter(([key]) => key !== 'accountType' && key !== 'account_type')
@@ -124,7 +124,7 @@ export const ListingCardList = memo(function ListingCardList({
               .join(' | ')}
           </Text>
         ) : specs ? (
-          <Text variant="xs" color="secondary" numberOfLines={2} style={[styles.specs, theme.rtl.textAlign.start()]}>
+          <Text variant="xs" color="secondary" numberOfLines={2} style={styles.specs}>
             {specs}
           </Text>
         ) : null}

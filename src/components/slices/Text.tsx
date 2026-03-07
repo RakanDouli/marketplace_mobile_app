@@ -60,7 +60,8 @@ export function Text({
     if (right !== undefined) {
       return right ? { textAlign: 'right' } : { textAlign: 'left' };
     }
-    return theme.rtl.textAlign.start();
+    // Default: align to start of reading direction
+    return { textAlign: theme.isRTL ? 'right' : 'left' };
   };
 
   const variantStyles: Record<TextVariant, TextStyle> = {

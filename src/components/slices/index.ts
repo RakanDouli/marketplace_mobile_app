@@ -103,3 +103,10 @@ export type { ImageItem, ImageUploadGridProps } from './ImageUploadGrid';
 // Navigation
 export { ListItem } from './ListItem';
 export type { ListItemProps } from './ListItem';
+
+// Data Display
+export { MetaItem } from './MetaItem';
+export type { MetaItemProps } from './MetaItem';
+
+export { StatItem } from './StatItem';
+export type { StatItemProps } from './StatItem';

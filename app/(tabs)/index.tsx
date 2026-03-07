@@ -8,15 +8,12 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { SvgXml } from 'react-native-svg';
 import {
   Search,
-  LayoutGrid,
   Shield,
   Tag,
   Zap,
@@ -25,8 +22,8 @@ import { useTheme } from '../../src/theme';
 import { LogoIcon } from '../../src/components/icons';
 import { Text } from '../../src/components/slices/Text';
 import { FeaturedListings } from '../../src/components/listing';
-import { Loading } from '../../src/components/slices/Loading';
 import { SearchBar } from '../../src/components/search';
+import { CategorySelector } from '../../src/components/CategorySelector';
 import { useCategoriesStore, useListingsStore, useWishlistStore, useUserAuthStore, useFiltersStore } from '../../src/stores';
 import {
   Container,
@@ -83,7 +80,7 @@ export default function HomeTab() {
   const { width: screenWidth } = useWindowDimensions();
 
   // Stores
-  const { categories, isLoading: categoriesLoading } = useCategoriesStore();
+  const { categories, isLoading: categoriesLoading, fetchCategories } = useCategoriesStore();
   const { listings, isLoading: listingsLoading } = useListingsStore();
   const { loadMyWishlist, isInitialized: wishlistInitialized } = useWishlistStore();
   const { isAuthenticated, isLoading: authLoading } = useUserAuthStore();
@@ -93,14 +90,7 @@ export default function HomeTab() {
   const isTablet = screenWidth >= 600;
   const isDesktop = screenWidth >= 900;
 
-  // Get visible categories count for responsive grid
-  const visibleCategories = useMemo(() =>
-    categories.filter(cat => cat.isActive && !COMING_SOON_CATEGORIES.includes(cat.slug)),
-    [categories]
-  );
-  const visibleCategoryCount = visibleCategories.length;
-
-  const styles = createStyles(theme, screenWidth, isTablet, isDesktop, visibleCategoryCount);
+  const styles = createStyles(theme, screenWidth, isTablet, isDesktop);
 
   // Load wishlist only when authenticated and auth is fully loaded
   useEffect(() => {
@@ -108,6 +98,13 @@ export default function HomeTab() {
       loadMyWishlist();
     }
   }, [authLoading, isAuthenticated, wishlistInitialized, loadMyWishlist]);
+
+  // Ensure categories are loaded
+  useEffect(() => {
+    if (categories.length === 0 && !categoriesLoading) {
+      fetchCategories();
+    }
+  }, [categories.length, categoriesLoading, fetchCategories]);
 
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -141,16 +138,6 @@ export default function HomeTab() {
     setSelectedCategory(slug);
   }, []);
 
-  const renderCategoryIcon = (iconSvg: string | undefined, size: number, color: string) => {
-    if (!iconSvg) return <LayoutGrid size={size} color={color} />;
-    const styledSvg = iconSvg
-      .replace(/<svg/, `<svg width="${size}" height="${size}"`)
-      .replace(/stroke="currentColor"/g, `stroke="${color}"`)
-      .replace(/fill="currentColor"/g, `fill="${color}"`);
-    try { return <SvgXml xml={styledSvg} width={size} height={size} />; }
-    catch { return <LayoutGrid size={size} color={color} />; }
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -178,21 +165,17 @@ export default function HomeTab() {
           </View>
         </View>
 
-        {/* Category Cards */}
-        <View style={styles.categoriesContainer}>
-          {categoriesLoading ? (
-            <View style={styles.loadingContainer}><Loading type="dots" size="sm" /></View>
-          ) : (
-            <View style={styles.categoriesGrid}>
-              {visibleCategories.map((category) => (
-                <TouchableOpacity key={category.id} style={styles.categoryCard} onPress={() => goToCategory(category.slug, category.nameAr)} activeOpacity={0.8}>
-                  <View style={styles.categoryCardIcon}>{renderCategoryIcon(category.icon, 24, theme.colors.primary)}</View>
-                  <Text variant="h4" style={{ color: theme.colors.text }}>{category.nameAr}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
+        <Container paddingY="none" style={styles.categoriesContainer}>
+          <CategorySelector
+            categories={categories}
+            isLoading={categoriesLoading}
+            onCategoryPress={goToCategory}
+            columns={isDesktop ? 4 : isTablet ? 3 : 2}
+            mobileColumns={2}
+            excludeSlugs={COMING_SOON_CATEGORIES}
+            parentCollectionId={null}
+          />
+        </Container>
 
         {/* CTA Banner - Use PromoBanner component for consistency */}
         <PromoBanner
@@ -292,7 +275,7 @@ export default function HomeTab() {
   );
 }
 
-const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, isTablet: boolean, isDesktop: boolean, categoryCount: number) => {
+const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, isTablet: boolean, isDesktop: boolean) => {
   const horizontalPadding = isDesktop ? theme.spacing.md * 3 : isTablet ? theme.spacing.md * 2 : theme.spacing.md;
   const gridColumns = isDesktop ? 4 : isTablet ? 3 : 2;
   const gridGap = theme.spacing.sm;
@@ -300,26 +283,12 @@ const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, i
   const featureColumns = isDesktop ? 4 : 2;
   const featureCardWidth = (screenWidth - horizontalPadding * 2 - theme.spacing.md * (featureColumns - 1)) / featureColumns;
 
-  // Responsive category columns based on screen size AND category count
-  // Max columns: desktop=4, tablet=3, mobile=2
-  // Actual columns = min(categoryCount, maxColumns)
-  const maxCategoryColumns = isDesktop ? 4 : isTablet ? 3 : 2;
-  const categoryColumns = Math.min(categoryCount || 1, maxCategoryColumns);
-  const categoryGap = theme.spacing.md;
-  const categoryCardWidth = categoryColumns === 1
-    ? screenWidth - horizontalPadding * 2  // Full width for single category
-    : (screenWidth - horizontalPadding * 2 - categoryGap * (categoryColumns - 1)) / categoryColumns;
-
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.surface },
     heroSection: { paddingVertical: isTablet ? theme.spacing.xxl : theme.spacing.xl, paddingHorizontal: horizontalPadding, alignItems: 'center', justifyContent: 'center', minHeight: isTablet ? 280 : 220, overflow: 'hidden', position: 'relative' },
     heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: theme.colors.overlay },
     heroContent: { alignItems: 'center', zIndex: 1 },
-    loadingContainer: { paddingVertical: theme.spacing.xl, alignItems: 'center', justifyContent: 'center' },
     categoriesContainer: { marginTop: -40, paddingHorizontal: horizontalPadding, paddingBottom: theme.spacing.md, zIndex: 10 },
-    categoriesGrid: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: categoryGap },
-    categoryCard: { width: categoryCardWidth, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: theme.spacing.md, backgroundColor: theme.colors.bg, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.lg, minHeight: 100, gap: theme.spacing.sm, ...theme.shadows.sm },
-    categoryCardIcon: { width: 48, height: 48, borderRadius: theme.radius.lg, backgroundColor: theme.colors.surface, justifyContent: 'center', alignItems: 'center' },
     section: { paddingVertical: theme.spacing.md },
     sectionHeader: { justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: horizontalPadding, marginBottom: theme.spacing.md },
     listingsScroll: { paddingHorizontal: horizontalPadding },

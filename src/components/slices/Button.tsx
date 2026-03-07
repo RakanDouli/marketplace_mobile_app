@@ -219,21 +219,23 @@ export function Button(props: ButtonProps) {
     }
   };
 
-  // Direction-aware arrow icons using RTL utilities
-  // Back arrow: points to the "back" direction (RTL: right, LTR: left)
-  const BackArrowIcon = theme.rtl.getChevronDirection('backward') === 'left' ? ChevronLeft : ChevronRight;
-  // Forward arrow: points to the "forward" direction (RTL: left, LTR: right)
-  const ForwardArrowIcon = theme.rtl.getChevronDirection('forward') === 'left' ? ChevronLeft : ChevronRight;
+  // Arrows are rendered on BOTH sides, CSS hides/shows based on RTL
+  // LEFT side always shows ChevronLeft, RIGHT side always shows ChevronRight
+  const hasArrow = arrowBack || arrow || arrowForward;
 
-  // Resolve start icon (iconStart > icon > arrowBack)
-  const resolvedStartIcon = iconStart || icon || (arrowBack ? (
-    <BackArrowIcon size={getIconSize()} color={getTextColor()} />
-  ) : null);
+  // LEFT side arrow (ChevronLeft)
+  const leftArrow = hasArrow ? (
+    <ChevronLeft size={getIconSize()} color={getTextColor()} />
+  ) : null;
 
-  // Resolve end icon (iconEnd > arrow/arrowForward)
-  const resolvedEndIcon = iconEnd || ((arrow || arrowForward) ? (
-    <ForwardArrowIcon size={getIconSize()} color={getTextColor()} />
-  ) : null);
+  // RIGHT side arrow (ChevronRight)
+  const rightArrow = hasArrow ? (
+    <ChevronRight size={getIconSize()} color={getTextColor()} />
+  ) : null;
+
+  // Regular icons follow start/end logic
+  const leftIcon = iconStart || icon;
+  const rightIcon = iconEnd;
 
   return (
     <TouchableOpacity
@@ -256,13 +258,27 @@ export function Button(props: ButtonProps) {
       ) : (
         <View style={[
           styles.content,
-          { gap: getGap() },
-          // Use RTL utility for flex direction
-          theme.rtl.flexDirection.row(),
+          { gap: getGap(), flexDirection: 'row' },
         ]}>
-          {/* Start icon (appears at start of reading direction) */}
-          {resolvedStartIcon && (
-            <View style={styles.icon}>{resolvedStartIcon}</View>
+          {/* LEFT SIDE - ChevronLeft arrow (visible in RTL, hidden in LTR) */}
+          {leftArrow && (
+            <View style={[styles.icon, { display: theme.isRTL ? 'flex' : 'none' }]}>
+              {leftArrow}
+            </View>
+          )}
+
+          {/* LEFT SIDE ICON - visible in RTL, hidden in LTR */}
+          {(leftIcon || rightIcon) && !hasArrow && (
+            <View style={[styles.icon, { display: theme.isRTL ? 'flex' : 'none' }]}>
+              {leftIcon || rightIcon}
+            </View>
+          )}
+
+          {/* START ICON (LTR only) - hidden in RTL */}
+          {leftIcon && !hasArrow && (
+            <View style={[styles.icon, { display: !theme.isRTL ? 'flex' : 'none' }]}>
+              {leftIcon}
+            </View>
           )}
 
           {/* Text content */}
@@ -285,9 +301,18 @@ export function Button(props: ButtonProps) {
             </Text>
           )}
 
-          {/* End icon (appears at end of reading direction) */}
-          {resolvedEndIcon && (
-            <View style={styles.icon}>{resolvedEndIcon}</View>
+          {/* END ICON (LTR only) - hidden in RTL */}
+          {rightIcon && !hasArrow && (
+            <View style={[styles.icon, { display: !theme.isRTL ? 'flex' : 'none' }]}>
+              {rightIcon}
+            </View>
+          )}
+
+          {/* RIGHT SIDE - ChevronRight arrow (visible in LTR, hidden in RTL) */}
+          {rightArrow && (
+            <View style={[styles.icon, { display: !theme.isRTL ? 'flex' : 'none' }]}>
+              {rightArrow}
+            </View>
           )}
         </View>
       )}

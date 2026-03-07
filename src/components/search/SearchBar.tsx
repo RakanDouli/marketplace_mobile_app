@@ -142,7 +142,7 @@ export function SearchBar({
             onPress={onSubmitEditing}
             activeOpacity={0.8}
           >
-            <Search size={18} color={theme.colors.textInverse} />
+            <Search size={18} color={theme.colors.textLight} />
           </TouchableOpacity>
         </View>
       </View>
@@ -163,7 +163,7 @@ export function SearchBar({
                 style={[
                   styles.dropdownOption,
                   selectedCategory === category.slug &&
-                    styles.dropdownOptionSelected,
+                  styles.dropdownOptionSelected,
                 ]}
                 onPress={() => handleCategoryPress(category.slug)}
               >

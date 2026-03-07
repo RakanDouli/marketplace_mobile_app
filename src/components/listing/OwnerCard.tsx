@@ -88,7 +88,7 @@ export function OwnerCard({ userId, onViewReviews, onReport }: OwnerCardProps) {
   return (
     <View style={styles.container}>
       {/* Header Row */}
-      <View style={[styles.header, theme.rtl.flexDirection.row()]}>
+      <View style={[styles.header, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
         {/* Avatar */}
         <View style={styles.avatarContainer}>
           {hasAvatar ? (

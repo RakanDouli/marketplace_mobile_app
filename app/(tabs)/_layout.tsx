@@ -64,7 +64,11 @@ function IOSTabs() {
   return (
     <NativeTabs tintColor={theme.colors.primary}>
       {tabs.map((tab) => (
-        <NativeTabs.Trigger key={tab.name} name={tab.name} role={tab.role}>
+        <NativeTabs.Trigger
+          key={tab.name}
+          name={tab.name}
+          role={tab.role}
+        >
           <Icon
             sf={tab.sfIcon as any}
             androidSrc={<VectorIcon family={Ionicons} name={tab.icon} />}

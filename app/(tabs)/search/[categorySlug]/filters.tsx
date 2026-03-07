@@ -20,13 +20,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import {
   ChevronLeft,
-  ChevronRight,
   X,
   Trash2,
-  Check,
 } from 'lucide-react-native';
 import { useTheme, Theme } from '../../../../src/theme';
-import { Text, Loading, IconGridSelector, RangePickerModal } from '../../../../src/components/slices';
+import { Text, Loading, IconGridSelector, RangePickerModal, ListItem } from '../../../../src/components/slices';
 import {
   useFiltersStore,
   type ActiveFilter,
@@ -205,7 +203,7 @@ export default function FiltersScreen() {
       });
       setIsUpdatingCounts(true);
       updateFiltersWithCascading(categorySlug, listingType, filtersMap)
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => setIsUpdatingCounts(false));
     }
   }, [appliedFilters, categorySlug, listingType, isInitialized]);
@@ -240,6 +238,7 @@ export default function FiltersScreen() {
       .filter(attr => {
         if (attr.showInFilter === false) return false;
         if (attr.key === 'listingType') return false; // Handled by route
+        if (attr.key === 'search') return false; // Handled by search bar in main page
         // Hide modelId - it's handled within variantId screen (shows both variants AND standalone models)
         if (attr.key === 'modelId') return false;
         return true;
@@ -484,11 +483,13 @@ export default function FiltersScreen() {
   // Apply filters and navigate back
   const applyFilters = useCallback(() => {
     const filtersJson = JSON.stringify(appliedFilters);
-    router.replace({
-      pathname: `/search/${categorySlug}/${listingType}`,
-      params: { appliedFilters: filtersJson },
+    // Update params in current route and go back - avoids navigation stack buildup
+    router.setParams({
+      appliedFilters: filtersJson,
+      showListings: 'true', // Force listings view, skip catalog selector
     });
-  }, [router, categorySlug, listingType, appliedFilters]);
+    router.back();
+  }, [router, appliedFilters]);
 
   // Get header title based on screen
   const getHeaderTitle = () => {
@@ -522,9 +523,18 @@ export default function FiltersScreen() {
         const isRange = isRangeAttribute(attr.type);
         const hasNoOptions = !isRange && (!attr.processedOptions || attr.processedOptions.length === 0);
 
-        // Handle press - range filters open native picker, others navigate to detail
-        const handlePress = () => {
-          if (disabled || hasNoOptions) return;
+        // Determine subtitle for disabled/empty filters
+        let subtitle: string | undefined;
+        if (disabled && attr.key === 'variantId') {
+          subtitle = 'اختر العلامة أولاً';
+        } else if (hasNoOptions) {
+          subtitle = 'لا توجد خيارات متاحة';
+        }
+
+        const isDisabled = disabled || hasNoOptions;
+
+        // Handle press - only create handler if not disabled
+        const handlePress = isDisabled ? undefined : () => {
           if (isRange) {
             openRangeModal(attr);
           } else {
@@ -533,42 +543,17 @@ export default function FiltersScreen() {
         };
 
         return (
-          <TouchableOpacity
+          <ListItem
             key={attr.key}
-            style={[
-              styles.filterItem,
-              (disabled || hasNoOptions) && styles.filterItemDisabled,
-            ]}
+            label={attr.name}
+            subtitle={subtitle}
+            endContent={valueDisplay ? (
+              <Text variant="small" color="primary">{valueDisplay}</Text>
+            ) : undefined}
             onPress={handlePress}
-            disabled={disabled || hasNoOptions}
-          >
-            <View style={styles.filterItemContent}>
-              <Text
-                variant="body"
-                color={(disabled || hasNoOptions) ? 'muted' : undefined}
-                style={styles.filterItemName}
-              >
-                {attr.name}
-              </Text>
-              {valueDisplay && (
-                <Text variant="small" color="primary">{valueDisplay}</Text>
-              )}
-              {disabled && attr.key === 'variantId' && (
-                <Text variant="xs" color="muted">اختر العلامة أولاً</Text>
-              )}
-            </View>
-            {theme.isRTL ? (
-              <ChevronLeft
-                size={20}
-                color={(disabled || hasNoOptions) ? theme.colors.border : theme.colors.textSecondary}
-              />
-            ) : (
-              <ChevronRight
-                size={20}
-                color={(disabled || hasNoOptions) ? theme.colors.border : theme.colors.textSecondary}
-              />
-            )}
-          </TouchableOpacity>
+            disabled={isDisabled}
+            showArrow={!isDisabled}
+          />
         );
       })}
     </ScrollView>
@@ -593,44 +578,28 @@ export default function FiltersScreen() {
       return (
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* Min selector */}
-          <TouchableOpacity
-            style={styles.filterItem}
+          <ListItem
+            label="من"
+            endContent={minDisplay ? (
+              <Text variant="small" color="primary">
+                {isCurrency ? formatPriceDisplay(minDisplay) : minDisplay}
+              </Text>
+            ) : undefined}
             onPress={() => setScreen({ type: 'range-select', attribute, field: 'min' })}
-          >
-            <View style={styles.filterItemContent}>
-              <Text variant="body" style={styles.filterItemName}>من</Text>
-              {minDisplay && (
-                <Text variant="small" color="primary">
-                  {isCurrency ? formatPriceDisplay(minDisplay) : minDisplay}
-                </Text>
-              )}
-            </View>
-            {theme.isRTL ? (
-              <ChevronLeft size={20} color={theme.colors.textSecondary} />
-            ) : (
-              <ChevronRight size={20} color={theme.colors.textSecondary} />
-            )}
-          </TouchableOpacity>
+            showArrow={true}
+          />
 
           {/* Max selector */}
-          <TouchableOpacity
-            style={styles.filterItem}
+          <ListItem
+            label="إلى"
+            endContent={maxDisplay ? (
+              <Text variant="small" color="primary">
+                {isCurrency ? formatPriceDisplay(maxDisplay) : maxDisplay}
+              </Text>
+            ) : undefined}
             onPress={() => setScreen({ type: 'range-select', attribute, field: 'max' })}
-          >
-            <View style={styles.filterItemContent}>
-              <Text variant="body" style={styles.filterItemName}>إلى</Text>
-              {maxDisplay && (
-                <Text variant="small" color="primary">
-                  {isCurrency ? formatPriceDisplay(maxDisplay) : maxDisplay}
-                </Text>
-              )}
-            </View>
-            {theme.isRTL ? (
-              <ChevronLeft size={20} color={theme.colors.textSecondary} />
-            ) : (
-              <ChevronRight size={20} color={theme.colors.textSecondary} />
-            )}
-          </TouchableOpacity>
+            showArrow={true}
+          />
         </ScrollView>
       );
     }
@@ -729,9 +698,12 @@ export default function FiltersScreen() {
                 {variants.map((option) => {
                   const isSelected = currentValue === option.key;
                   return (
-                    <TouchableOpacity
+                    <ListItem
                       key={option.key}
-                      style={[styles.optionItem, isSelected && styles.optionItemSelected]}
+                      label={option.value}
+                      endContent={
+                        <Text variant="small" color="secondary">{option.count}</Text>
+                      }
                       onPress={() => {
                         if (isSelected) {
                           removeFilter(attribute.key);
@@ -740,15 +712,9 @@ export default function FiltersScreen() {
                         }
                         setScreen({ type: 'list' });
                       }}
-                    >
-                      <View style={styles.optionContent}>
-                        <Text variant="body" style={isSelected && styles.optionTextSelected}>
-                          {option.value}
-                        </Text>
-                        <Text variant="small" color="secondary" style={styles.optionCount}>{option.count}</Text>
-                      </View>
-                      {isSelected && <Check size={20} color={theme.colors.primary} />}
-                    </TouchableOpacity>
+                      selected={isSelected}
+                      showArrow={false}
+                    />
                   );
                 })}
               </View>
@@ -767,9 +733,12 @@ export default function FiltersScreen() {
               {modelsWithoutVariants.map((model) => {
                 const isSelected = currentModelValue === model.key;
                 return (
-                  <TouchableOpacity
+                  <ListItem
                     key={model.key}
-                    style={[styles.optionItem, isSelected && styles.optionItemSelected]}
+                    label={model.value}
+                    endContent={
+                      <Text variant="small" color="secondary">{model.count}</Text>
+                    }
                     onPress={() => {
                       if (isSelected) {
                         removeFilter('modelId');
@@ -779,15 +748,9 @@ export default function FiltersScreen() {
                       }
                       setScreen({ type: 'list' });
                     }}
-                  >
-                    <View style={styles.optionContent}>
-                      <Text variant="body" style={isSelected && styles.optionTextSelected}>
-                        {model.value}
-                      </Text>
-                      <Text variant="small" color="secondary" style={styles.optionCount}>{model.count}</Text>
-                    </View>
-                    {isSelected && <Check size={20} color={theme.colors.primary} />}
-                  </TouchableOpacity>
+                    selected={isSelected}
+                    showArrow={false}
+                  />
                 );
               })}
             </View>
@@ -813,9 +776,12 @@ export default function FiltersScreen() {
           if (!shouldShow) return null;
 
           return (
-            <TouchableOpacity
+            <ListItem
               key={option.key}
-              style={[styles.optionItem, isSelected && styles.optionItemSelected]}
+              label={option.value}
+              endContent={
+                <Text variant="small" color="secondary">{option.count}</Text>
+              }
               onPress={() => {
                 if (isSelected) {
                   removeFilter(attribute.key);
@@ -824,15 +790,9 @@ export default function FiltersScreen() {
                 }
                 setScreen({ type: 'list' });
               }}
-            >
-              <View style={styles.optionContent}>
-                <Text variant="body" style={isSelected && styles.optionTextSelected}>
-                  {option.value}
-                </Text>
-                <Text variant="small" color="secondary" style={styles.optionCount}>{option.count}</Text>
-              </View>
-              {isSelected && <Check size={20} color={theme.colors.primary} />}
-            </TouchableOpacity>
+              selected={isSelected}
+              showArrow={false}
+            />
           );
         })}
       </ScrollView>
@@ -859,40 +819,30 @@ export default function FiltersScreen() {
     return (
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Clear option */}
-        <TouchableOpacity
-          style={[styles.optionItem, !currentValue && styles.optionItemSelected]}
+        <ListItem
+          label="الكل"
           onPress={() => {
             setRangeValue(attrKey, attribute.name, field, undefined);
             setScreen({ type: 'detail', attribute });
           }}
-        >
-          <View style={styles.optionContent}>
-            <Text variant="body" style={!currentValue && styles.optionTextSelected}>
-              الكل
-            </Text>
-          </View>
-          {!currentValue && <Check size={20} color={theme.colors.primary} />}
-        </TouchableOpacity>
+          selected={!currentValue}
+          showArrow={false}
+        />
 
         {/* Options - no counts for range min/max values */}
         {options.map((option) => {
           const isSelected = currentValue === option.key;
           return (
-            <TouchableOpacity
+            <ListItem
               key={option.key}
-              style={[styles.optionItem, isSelected && styles.optionItemSelected]}
+              label={option.value}
               onPress={() => {
                 setRangeValue(attrKey, attribute.name, field, option.key);
                 setScreen({ type: 'detail', attribute });
               }}
-            >
-              <View style={styles.optionContent}>
-                <Text variant="body" style={isSelected && styles.optionTextSelected}>
-                  {option.value}
-                </Text>
-              </View>
-              {isSelected && <Check size={20} color={theme.colors.primary} />}
-            </TouchableOpacity>
+              selected={isSelected}
+              showArrow={false}
+            />
           );
         })}
       </ScrollView>
@@ -1042,66 +992,16 @@ const createStyles = (theme: Theme) =>
       flex: 1,
     },
 
-    // Filter list items
-    filterItem: {
-      alignItems: 'center',
-      paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
-      paddingVertical: theme.spacing.lg,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    filterItemDisabled: {
-      opacity: 0.5,
-    },
-    filterItemContent: {
-      flex: 1,
-      alignItems: theme.isRTL ? 'flex-end' : 'flex-start',
-    },
-    filterItemName: {
-      fontWeight: '500',
-    },
-
     // Icon grid
     iconGridContainer: {
       padding: theme.spacing.md,
-    },
-
-    // Options list
-    optionItem: {
-      alignItems: 'center',
-      paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
-      paddingVertical: theme.spacing.lg,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    optionItemSelected: {
-      backgroundColor: theme.colors.primaryLight || `${theme.colors.primary}10`,
-    },
-    optionContent: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    optionTextSelected: {
-      fontWeight: '600',
-      color: theme.colors.primary,
-    },
-    optionCount: {
-      paddingStart: theme.spacing.sm,
-        paddingEnd: theme.spacing.sm,
-      paddingVertical: theme.spacing.xs,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderRadius: theme.radius.md,
     },
 
     // Section headers (for grouped variants by model)
     sectionHeader: {
       backgroundColor: theme.colors.surface,
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
@@ -1117,7 +1017,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       paddingVertical: theme.spacing.sm,
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       backgroundColor: theme.colors.bg,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
@@ -1132,14 +1032,14 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       paddingVertical: theme.spacing.xl,
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
     },
 
     // Footer
     footer: {
       flexDirection: 'row',
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.md,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
@@ -1151,7 +1051,7 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       paddingStart: theme.spacing.lg,
-        paddingEnd: theme.spacing.lg,
+      paddingEnd: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
       borderRadius: theme.radius.full,
       borderWidth: 1,
@@ -1170,7 +1070,7 @@ const createStyles = (theme: Theme) =>
       flex: 1,
     },
     showResultsText: {
-      color: '#FFF',
+      color: theme.colors.textLight,
       fontWeight: '600',
     },
   });

@@ -99,8 +99,8 @@ export function PromoBanner({
 
         {/* Content - in middle */}
         <View style={[styles.content, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
-          <Text variant="h3" style={theme.rtl.textAlign.start()}>{title}</Text>
-          {subtitle && <Text variant="paragraph" color="secondary" style={theme.rtl.textAlign.start()}>{subtitle}</Text>}
+          <Text variant="h3" >{title}</Text>
+          {subtitle && <Text variant="paragraph" color="secondary" >{subtitle}</Text>}
         </View>
 
         {/* Button - separate section */}

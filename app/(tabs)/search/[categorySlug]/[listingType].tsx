@@ -390,20 +390,27 @@ export default function CategoryListingsScreen() {
 
   // Compute filter chips from local state
   const filterChips = useMemo((): FilterChip[] => {
+    console.log('🟢 [filterChips:useMemo] Recomputing chips...');
+    console.log('🟢 [filterChips:useMemo] activeFilters:', JSON.stringify(activeFilters));
+    console.log('🟢 [filterChips:useMemo] appliedFilters:', JSON.stringify(appliedFilters));
+
     const chips: FilterChip[] = [];
     // Special keys that are handled separately (not shown as individual chips)
     const specialKeys = ['search', 'province', 'priceMinMinor', 'priceMaxMinor', 'priceCurrency'];
 
     if (activeFilters.search) {
+      console.log('🟢 [filterChips:useMemo] Adding search chip');
       chips.push({ key: 'search', value: activeFilters.search, label: `"${activeFilters.search}"` });
     }
 
     if (activeFilters.province) {
+      console.log('🟢 [filterChips:useMemo] Adding province chip');
       chips.push({ key: 'province', value: activeFilters.province, label: getProvinceArabicName(activeFilters.province) });
     }
 
     // Price chip with currency symbol
     if (activeFilters.priceMinMinor || activeFilters.priceMaxMinor) {
+      console.log('🟢 [filterChips:useMemo] Adding price chip');
       const min = activeFilters.priceMinMinor ? Number(activeFilters.priceMinMinor).toLocaleString('en-US') : '';
       const max = activeFilters.priceMaxMinor ? Number(activeFilters.priceMaxMinor).toLocaleString('en-US') : '';
       // Get currency symbol from stored priceCurrency or fallback to current
@@ -424,14 +431,16 @@ export default function CategoryListingsScreen() {
     // Add attribute filters (brandId, modelId, fuel_type, etc.)
     Object.entries(activeFilters).forEach(([key, value]) => {
       if (value && !specialKeys.includes(key)) {
+        console.log('🟢 [filterChips:useMemo] Adding attribute chip:', key, value);
         // Look up Arabic label from filtersStore
         const label = getAttributeValueLabel(key, String(value));
         chips.push({ key, value: String(value), label });
       }
     });
 
+    console.log('🟢 [filterChips:useMemo] Final chips:', JSON.stringify(chips));
     return chips;
-  }, [activeFilters, getProvinceArabicName, getAttributeValueLabel, preferredCurrency]);
+  }, [activeFilters, getProvinceArabicName, getAttributeValueLabel, preferredCurrency, appliedFilters]);
 
   // Check if there are any active filters (including search)
   const hasActiveFilters = useMemo(() => {
@@ -442,38 +451,76 @@ export default function CategoryListingsScreen() {
 
   // Remove a single filter - handles both store filters and URL params
   const removeFilter = useCallback((filterKey: string) => {
+    console.log('🔴 [removeFilter] Called with filterKey:', filterKey);
+    console.log('🔴 [removeFilter] Current appliedFilters:', JSON.stringify(appliedFilters));
+
     if (filterKey === 'search') {
+      console.log('🔴 [removeFilter] Removing search filter');
       setSearchQuery('');
+      // Also clear from URL
+      router.setParams({ search: undefined });
+      return;
     }
 
     // Check if this is a URL param filter (brandId, modelId, variantId)
     if (filterKey === 'brandId' || filterKey === 'modelId' || filterKey === 'variantId') {
-      // Use replace to avoid animation - just update URL params in place
-      router.replace(`/search/${categorySlug}/${listingType}?showListings=true`);
+      console.log('🔴 [removeFilter] Removing URL param filter:', filterKey);
+
+      // CRITICAL FIX: Remove from BOTH store AND URL
+      // First, remove from store
+      const updated = appliedFilters.filter(f => f.key !== filterKey);
+      console.log('🔴 [removeFilter] Removing from store, updated filters:', JSON.stringify(updated));
+      setAppliedFilters(updated);
+
+      // Then, remove from URL
+      const newParams: Record<string, string | undefined> = {
+        showListings: 'true',
+        [filterKey]: undefined, // Remove this param
+      };
+      console.log('🔴 [removeFilter] Setting params:', newParams);
+      router.setParams(newParams);
       return;
     }
 
-    let updated = appliedFilters.filter(f => f.key !== filterKey);
-    // When removing price chip, also remove all price-related filters
+    // For store filters, just update the store
+    // Don't update URL here to avoid race condition with useEffect that reads from URL
+    // URL will be updated when user navigates to filters screen
     if (filterKey === 'price') {
-      updated = updated.filter(f =>
+      console.log('🔴 [removeFilter] Removing price filters');
+      // Remove all price-related filters from store
+      const updated = appliedFilters.filter(f =>
         f.key !== 'priceMinMinor' &&
         f.key !== 'priceMaxMinor' &&
         f.key !== 'priceCurrency'
       );
+      console.log('🔴 [removeFilter] Updated filters (price removed):', JSON.stringify(updated));
+      setAppliedFilters(updated);
+    } else {
+      console.log('🔴 [removeFilter] Removing single store filter:', filterKey);
+      // Remove single filter from store
+      const updated = appliedFilters.filter(f => f.key !== filterKey);
+      console.log('🔴 [removeFilter] Updated filters (single removed):', JSON.stringify(updated));
+      console.log('🔴 [removeFilter] Calling setAppliedFilters...');
+      setAppliedFilters(updated);
     }
-    setAppliedFilters(updated);
-  }, [appliedFilters, setAppliedFilters, categorySlug, listingType, router]);
+  }, [appliedFilters, setAppliedFilters, router]);
 
   // Clear all filters - clears both store filters and URL params
   const clearAllFilters = useCallback(() => {
+    console.log('🟡 [clearAllFilters] Clearing all filters');
+    console.log('🟡 [clearAllFilters] Current appliedFilters:', JSON.stringify(appliedFilters));
     storeClearFilters();
     setSearchQuery('');
-    // If we have URL params (brandId, modelId, variantId), use replace to avoid animation
-    if (brandId || modelId || variantId) {
-      router.replace(`/search/${categorySlug}/${listingType}?showListings=true`);
-    }
-  }, [storeClearFilters, brandId, modelId, variantId, categorySlug, listingType, router]);
+    // Clear URL params for catalog and search (but not appliedFilters to avoid race condition)
+    router.setParams({
+      showListings: 'true',
+      brandId: undefined,
+      modelId: undefined,
+      variantId: undefined,
+      search: undefined,
+    });
+    console.log('🟡 [clearAllFilters] Filters cleared');
+  }, [storeClearFilters, router, appliedFilters]);
 
   // Navigate to filters screen - pass current appliedFilters from store + URL params
   const openFilters = () => {
@@ -835,7 +882,7 @@ export default function CategoryListingsScreen() {
           onPress={openFilters}
           style={styles.filterButton}
         >
-          <SlidersHorizontal size={16} color="#FFF" />
+          <SlidersHorizontal size={16} color={theme.colors.textLight} />
           <Text variant="small" style={styles.filterButtonText}>الفلاتر</Text>
           {filterChips.length > 0 && (
             <View style={styles.filterBadge}>
@@ -866,7 +913,7 @@ export default function CategoryListingsScreen() {
       </View>
 
       {/* Toolbar: Sort + View Toggle + Clear All (RTL order) */}
-      <View style={styles.toolbar}>
+      <View style={[styles.toolbar]}>
         {/* Sort Dropdown - appears on right in RTL */}
         <TouchableOpacity
           onPress={() => setShowSortMenu(!showSortMenu)}
@@ -1107,12 +1154,13 @@ const createStyles = (
 
     // Chips Row - container with filter button fixed, chips scrollable
     chipsRow: {
-      alignItems: 'center',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       backgroundColor: theme.colors.bg,
       paddingHorizontal: horizontalPadding,
       paddingTop: theme.spacing.sm,
       paddingBottom: theme.spacing.sm,
       gap: theme.spacing.sm,
+      alignItems: theme.isRTL ? 'flex-end' : 'flex-start',
     },
     chipsScroll: {
       flex: 1,
@@ -1124,19 +1172,20 @@ const createStyles = (
       gap: theme.spacing.sm,
     },
     filterButton: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.primary,
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.full,
       gap: theme.spacing.xs,
     },
     filterButtonText: {
-      color: '#FFF',
+      color: theme.colors.textLight,
     },
     filterBadge: {
-      backgroundColor: '#FFF',
+      backgroundColor: theme.colors.textLight,
       borderRadius: theme.radius.full,
       minWidth: 20,
       height: 20,
@@ -1151,9 +1200,10 @@ const createStyles = (
     },
     filterChip: {
       alignItems: 'center',
+      flexDirection: 'row',
       backgroundColor: theme.colors.surface,
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.full,
       borderWidth: 1,
@@ -1163,6 +1213,7 @@ const createStyles = (
 
     // Toolbar Row
     toolbar: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: horizontalPadding,
@@ -1172,6 +1223,7 @@ const createStyles = (
       borderBottomColor: theme.colors.border,
     },
     sortButton: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -1180,19 +1232,20 @@ const createStyles = (
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
     },
     sortMenuItem: {
       paddingVertical: theme.spacing.sm,
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       borderRadius: theme.radius.md,
     },
     sortMenuItemActive: {
       backgroundColor: theme.colors.surface,
     },
     viewToggle: {
+      flexDirection: 'row',
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.lg,
       borderWidth: 1,

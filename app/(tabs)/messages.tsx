@@ -176,7 +176,7 @@ export default function MessagesScreen() {
           {/* Unread badge */}
           {hasUnread && (
             <View style={styles.unreadBadge}>
-              <Text variant="small" style={styles.unreadText}>
+              <Text variant="small" center style={styles.unreadText}>
                 {thread.unreadCount}
               </Text>
             </View>
@@ -333,6 +333,8 @@ const createStyles = (theme: Theme) =>
       color: '#FFFFFF',
       fontSize: 11,
       fontWeight: '600',
+      textAlign: 'center',
+      lineHeight: 20, // Match badge height for vertical centering
     },
     threadInfo: {
       flex: 1,

@@ -90,7 +90,6 @@ export function Slider<T>({
         <View style={[
           styles.header,
           { paddingStart: theme.spacing.md, paddingEnd: theme.spacing.md },
-          theme.rtl.flexDirection.row(),
         ]}>
           {title && <Text variant="h3">{title}</Text>}
           {onViewAll && (
@@ -140,6 +139,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: theme.spacing.md,
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
     },
     loading: {
       paddingVertical: theme.spacing.xl,

@@ -590,9 +590,9 @@ export default function ChatScreen() {
           <ChevronLeft size={28} color={theme.colors.text} />
         </TouchableOpacity>
 
-        {/* Listing Info - Clickable, image always on left */}
+        {/* Listing Info - Clickable */}
         <TouchableOpacity
-          style={styles.headerInfo}
+          style={[styles.headerInfo, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}
           onPress={() => {
             if (thread.listing?.id) {
               router.push(`/listing/${thread.listing.id}`);
@@ -606,10 +606,10 @@ export default function ChatScreen() {
             />
           )}
           <View style={[styles.headerText, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
-            <Text variant="body" weight="semibold" numberOfLines={1} style={theme.rtl.textAlign.start()}>
+            <Text variant="body" weight="semibold" numberOfLines={1}>
               {thread.listing?.title || 'إعلان محذوف'}
             </Text>
-            <Text variant="small" color="secondary" numberOfLines={1} style={theme.rtl.textAlign.start()}>
+            <Text variant="small" color="secondary" numberOfLines={1}>
               {otherUserName}
             </Text>
           </View>

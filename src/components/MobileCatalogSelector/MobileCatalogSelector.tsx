@@ -243,7 +243,7 @@ export const MobileCatalogSelector: React.FC<MobileCatalogSelectorProps> = ({
               <View key={group.modelName}>
                 {/* Model Section Header */}
                 <View style={styles.sectionHeader}>
-                  <Text variant="h4" style={[styles.sectionHeaderText, theme.rtl.textAlign.start()]}>
+                  <Text variant="h4" style={styles.sectionHeaderText}>
                     {group.modelName}
                   </Text>
                 </View>

@@ -29,7 +29,7 @@ import {
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, Theme } from '../../src/theme';
-import { Text, Button, Loading, Collapsible } from '../../src/components/slices';
+import { Text, Button, Loading, Collapsible, MetaItem, StatItem } from '../../src/components/slices';
 import { useListingsStore } from '../../src/stores/listingsStore';
 import { useCurrencyStore } from '../../src/stores/currencyStore';
 import { useRelatedListingsStore } from '../../src/stores/relatedListingsStore';
@@ -188,7 +188,7 @@ export default function ListingDetailScreen() {
         />
       </View>
     );
-  }, [currentListing?.id, currentListing?.userId, shareMetadata, styles]);
+  }, [currentListing?.id, currentListing?.user, shareMetadata, styles]);
 
   // Build media items array: VIDEO FIRST (if exists), then images
   // IMPORTANT: Must be defined before early returns to follow React hooks rules
@@ -439,50 +439,50 @@ export default function ListingDetailScreen() {
           {/* Meta info */}
           <View style={styles.metaRow}>
             {location && (
-              <View style={[styles.metaItem, theme.rtl.flexDirection.row()]}>
-                <Text variant="small" color="secondary" style={styles.metaText}>
-                  {location}
-                </Text>
-                <MapPin size={16} color={theme.colors.textMuted} />
-              </View>
+              <MetaItem
+                icon={<MapPin size={16} color={theme.colors.textMuted} />}
+                text={location}
+              />
             )}
             {currentListing.createdAt && (
-              <View style={[styles.metaItem, theme.rtl.flexDirection.row()]}>
-                <Text variant="small" color="secondary" style={styles.metaText}>
-                  {formatDate(currentListing.createdAt)}
-                </Text>
-                <Calendar size={16} color={theme.colors.textMuted} />
-              </View>
+              <MetaItem
+                icon={<Calendar size={16} color={theme.colors.textMuted} />}
+                text={formatDate(currentListing.createdAt)}
+              />
             )}
           </View>
 
           {/* Stats */}
           <View style={styles.statsRow}>
-            <View style={[styles.statItem, theme.rtl.flexDirection.row()]}>
-              <Text variant="small" color="muted">
-                {currentListing.viewCount || 0} مشاهدة
-              </Text>
-              <Eye size={16} color={theme.colors.textMuted} />
-            </View>
-            <View style={[styles.statItem, theme.rtl.flexDirection.row()]}>
-              <Text variant="small" color="muted">
-                {currentListing.wishlistCount || 0} مفضلة
-              </Text>
-              <Heart size={16} color={theme.colors.textMuted} />
-            </View>
+            <StatItem
+              icon={<Eye size={16} color={theme.colors.textMuted} />}
+              count={currentListing.viewCount || 0}
+              label="مشاهدة"
+            />
+            <StatItem
+              icon={<Heart size={16} color={theme.colors.textMuted} />}
+              count={currentListing.wishlistCount || 0}
+              label="مفضلة"
+            />
           </View>
 
           {/* Specifications - Collapsible */}
           {specsList.length > 0 && (
             <View style={styles.collapsibleContainer}>
               <Collapsible title="المواصفات" defaultOpen variant="bordered">
-                <View style={[styles.specsGrid, theme.rtl.flexDirection.row()]}>
+                <View style={[
+                  styles.specsGrid,
+                  theme.rtl.flexDirection.row(),
+                ]}>
                   {specsList.map((spec) => (
-                    <View key={spec.key} style={[styles.specItem, theme.rtl.alignItems.start()]}>
-                      <Text variant="small" color="muted">
+                    <View key={spec.key} style={[
+                      styles.specItem,
+                      { alignItems: theme.isRTL ? "flex-end" : 'flex-start' },
+                    ]}>
+                      <Text variant="small" color="muted" style={{ textAlign: theme.isRTL ? 'right' : 'left' }}>
                         {spec.label}
                       </Text>
-                      <Text variant="body" bold>
+                      <Text variant="body" bold style={{ textAlign: theme.isRTL ? 'right' : 'left' }}>
                         {spec.value}
                       </Text>
                     </View>
@@ -505,7 +505,7 @@ export default function ListingDetailScreen() {
           {currentListing.description && (
             <View style={styles.collapsibleContainer}>
               <Collapsible title="الوصف" defaultOpen variant="bordered">
-                <Text variant="paragraph" color="secondary" style={styles.description}>
+                <Text variant="paragraph" color="secondary" style={[styles.description, { textAlign: theme.isRTL ? 'right' : 'left' }]}>
                   {currentListing.description}
                 </Text>
               </Collapsible>
@@ -731,7 +731,7 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
       backgroundColor: 'rgba(0,0,0,0.7)',
       paddingStart: theme.spacing.sm,
-        paddingEnd: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
       borderRadius: theme.radius.md,
     },
@@ -767,7 +767,7 @@ const createStyles = (theme: Theme) =>
       left: theme.spacing.md,
       backgroundColor: 'rgba(0,0,0,0.6)',
       paddingStart: theme.spacing.sm,
-        paddingEnd: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
       borderRadius: theme.radius.md,
     },
@@ -786,25 +786,20 @@ const createStyles = (theme: Theme) =>
       marginTop: theme.spacing.sm,
     },
     metaRow: {
+      flexDirection: 'row',
       flexWrap: 'wrap',
       marginTop: theme.spacing.md,
       gap: theme.spacing.md,
+      justifyContent: 'space-between',
     },
-    metaItem: {
-      alignItems: 'center',
-      gap: theme.spacing.xs,
-    },
-    metaText: {},
     statsRow: {
+      flexDirection: 'row',
       marginTop: theme.spacing.md,
       paddingTop: theme.spacing.md,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
       gap: theme.spacing.lg,
-    },
-    statItem: {
-      alignItems: 'center',
-      gap: theme.spacing.xs,
+      justifyContent: 'space-between',
     },
 
     // Section
@@ -825,6 +820,7 @@ const createStyles = (theme: Theme) =>
     specsGrid: {
       flexWrap: 'wrap',
       gap: theme.spacing.sm,
+      width: '100%',
     },
     specItem: {
       width: '48%',

@@ -3,24 +3,45 @@
  * Matching web frontend pattern
  */
 
-import { create } from 'zustand';
-import { cachedGraphqlRequest } from '../../services/graphql/client';
-import { CATEGORIES_QUERY } from './categoriesStore.gql';
+import { create } from "zustand";
+import { cachedGraphqlRequest } from "../../services/graphql/client";
+import { CATEGORIES_QUERY } from "./categoriesStore.gql";
 
 // ============================================================
 // TYPES
 // ============================================================
-
+export enum ListingType {
+  SALE = "SALE",
+  RENT = "RENT",
+}
 export interface Category {
   id: string;
   name: string;
   nameAr: string;
   slug: string;
+  description?: string;
+  descriptionAr?: string;
+  parentId?: string | null;
+  level: number;
+  imageUrl?: string | null;
+  icon: string; // SVG icon code - now required
   isActive: boolean;
-  icon?: string;
-  supportedListingTypes: string[];
+  supportedListingTypes: ListingType[]; // [ListingType.SALE], [ListingType.RENT], or both
+  // Collection system fields
+  isCollection?: boolean; // True if this is a collection (parent of child categories)
+  parentCollectionId?: string | null; // ID of parent collection (if this is a child category)
+  createdAt: string;
+  updatedAt: string;
+  // Relations
+  parent?: Category | null;
+  children?: Category[];
+  // Counts for admin
+  _count?: {
+    children: number;
+    listings: number;
+    attributes: number;
+  };
 }
-
 interface CategoriesState {
   categories: Category[];
   selectedCategory: Category | null;
@@ -73,8 +94,14 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
           nameAr: cat.nameAr || cat.name,
           slug: cat.slug,
           isActive: cat.isActive,
-          icon: cat.icon,
-          supportedListingTypes: cat.supportedListingTypes || ['sale'],
+          icon: cat.icon || "", // Provide default empty string if icon is missing
+          isCollection: cat.isCollection || false,
+          parentId: cat.parentCollectionId || null, // Map parentCollectionId to parentId
+          parentCollectionId: cat.parentCollectionId || null,
+          level: 0, // Default level for all categories
+          supportedListingTypes: cat.supportedListingTypes || ["sale"],
+          createdAt: new Date().toISOString(), // Default createdAt
+          updatedAt: new Date().toISOString(), // Default updatedAt
         }));
 
       set({
@@ -86,7 +113,7 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
     } catch (error: any) {
       set({
         isLoading: false,
-        error: error.message || 'Failed to load categories',
+        error: error.message || "Failed to load categories",
         isInitialized: false,
       });
     }
@@ -113,8 +140,11 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
 // SELECTORS
 // ============================================================
 
-export const useCategories = () => useCategoriesStore((state) => state.categories);
-export const useSelectedCategory = () => useCategoriesStore((state) => state.selectedCategory);
-export const useCategoriesLoading = () => useCategoriesStore((state) => state.isLoading);
+export const useCategories = () =>
+  useCategoriesStore((state) => state.categories);
+export const useSelectedCategory = () =>
+  useCategoriesStore((state) => state.selectedCategory);
+export const useCategoriesLoading = () =>
+  useCategoriesStore((state) => state.isLoading);
 
 export default useCategoriesStore;

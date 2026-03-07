@@ -179,7 +179,7 @@ export default function MenuScreen() {
     <View style={styles.settingsSection}>
       {/* Theme Toggle */}
       <View style={styles.settingRow}>
-        <Text style={[styles.settingLabel, theme.rtl.textAlign.start()]}>
+        <Text style={styles.settingLabel}>
           {t('menu.theme')}
         </Text>
         <View style={styles.toggleGroup}>
@@ -208,7 +208,7 @@ export default function MenuScreen() {
 
       {/* Currency Selector */}
       <View style={styles.settingRow}>
-        <Text style={[styles.settingLabel, theme.rtl.textAlign.start()]}>
+        <Text style={styles.settingLabel}>
           {t('menu.currency')}
         </Text>
         <View style={styles.toggleGroup}>
@@ -258,18 +258,29 @@ export default function MenuScreen() {
       <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Guest Header */}
-          <View style={styles.guestHeader}>
-            <View style={styles.guestInfo}>
-              <Text style={[styles.guestTitle, theme.rtl.textAlign.start()]}>
+          <View style={[styles.guestHeader, { flexDirection: 'row' }]}>
+            {/* Avatar - FIRST in LTR, LAST in RTL */}
+            {!theme.isRTL && (
+              <View style={styles.avatar}>
+                <User size={40} color={theme.colors.textMuted} />
+              </View>
+            )}
+
+            <View style={[styles.guestInfo, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
+              <Text style={styles.guestTitle}>
                 {t('menu.welcome')}
               </Text>
-              <Text style={[styles.guestSubtitle, theme.rtl.textAlign.start()]}>
+              <Text style={styles.guestSubtitle}>
                 {t('menu.loginPrompt')}
               </Text>
             </View>
-            <View style={styles.avatar}>
-              <User size={40} color={theme.colors.textMuted} />
-            </View>
+
+            {/* Avatar - LAST in RTL, FIRST in LTR */}
+            {theme.isRTL && (
+              <View style={styles.avatar}>
+                <User size={40} color={theme.colors.textMuted} />
+              </View>
+            )}
           </View>
 
           {/* Login Button */}
@@ -288,7 +299,7 @@ export default function MenuScreen() {
 
           {/* Support & Info Menu */}
           <View style={styles.menuSection}>
-            <Text style={[styles.sectionTitle, theme.rtl.textAlign.start()]}>
+            <Text style={styles.sectionTitle}>
               {t('menu.helpAndSettings')}
             </Text>
             <View style={styles.menu}>
@@ -305,12 +316,39 @@ export default function MenuScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* User Profile Header - Display only (no navigation) */}
-        <View style={styles.header}>
-          <View style={styles.userInfo}>
-            <Text style={[styles.userName, theme.rtl.textAlign.start()]}>
+        <View style={[styles.header, { flexDirection: 'row' }]}>
+          {/* Avatar - FIRST in LTR, LAST in RTL */}
+          {!theme.isRTL && (
+            <View style={styles.avatar}>
+              {profile?.avatar ? (
+                <Image
+                  src={profile.avatar}
+                  variant="card"
+                  width={80}
+                  height={80}
+                  borderRadius={40}
+                  resizeMode="cover"
+                />
+              ) : user?.user_metadata?.avatar_url ? (
+                <Image
+                  src={user.user_metadata.avatar_url}
+                  variant="card"
+                  width={80}
+                  height={80}
+                  borderRadius={40}
+                  resizeMode="cover"
+                />
+              ) : (
+                <User size={40} color={theme.colors.primary} />
+              )}
+            </View>
+          )}
+
+          <View style={[styles.userInfo, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
+            <Text style={styles.userName}>
               {profile?.name || user?.user_metadata?.full_name || t('chat.user')}
             </Text>
-            <Text style={[styles.userEmail, theme.rtl.textAlign.start()]}>
+            <Text style={styles.userEmail}>
               {profile?.email || user?.email}
             </Text>
             {/* Subscription title */}
@@ -323,29 +361,33 @@ export default function MenuScreen() {
               </View>
             )}
           </View>
-          <View style={styles.avatar}>
-            {profile?.avatar ? (
-              <Image
-                src={profile.avatar}
-                variant="card"
-                width={80}
-                height={80}
-                borderRadius={40}
-                resizeMode="cover"
-              />
-            ) : user?.user_metadata?.avatar_url ? (
-              <Image
-                src={user.user_metadata.avatar_url}
-                variant="card"
-                width={80}
-                height={80}
-                borderRadius={40}
-                resizeMode="cover"
-              />
-            ) : (
-              <User size={40} color={theme.colors.primary} />
-            )}
-          </View>
+
+          {/* Avatar - LAST in RTL, FIRST in LTR */}
+          {theme.isRTL && (
+            <View style={styles.avatar}>
+              {profile?.avatar ? (
+                <Image
+                  src={profile.avatar}
+                  variant="card"
+                  width={80}
+                  height={80}
+                  borderRadius={40}
+                  resizeMode="cover"
+                />
+              ) : user?.user_metadata?.avatar_url ? (
+                <Image
+                  src={user.user_metadata.avatar_url}
+                  variant="card"
+                  width={80}
+                  height={80}
+                  borderRadius={40}
+                  resizeMode="cover"
+                />
+              ) : (
+                <User size={40} color={theme.colors.primary} />
+              )}
+            </View>
+          )}
         </View>
 
         {/* Theme & Currency Settings */}
@@ -353,7 +395,7 @@ export default function MenuScreen() {
 
         {/* Account Menu */}
         <View style={styles.menuSection}>
-          <Text style={[styles.sectionTitle, theme.rtl.textAlign.start()]}>
+          <Text style={styles.sectionTitle}>
             {t('menu.myAccount')}
           </Text>
           <View style={styles.menu}>
@@ -363,7 +405,7 @@ export default function MenuScreen() {
 
         {/* Subscriptions & Advertising Menu */}
         <View style={styles.menuSection}>
-          <Text style={[styles.sectionTitle, theme.rtl.textAlign.start()]}>
+          <Text style={styles.sectionTitle}>
             {t('menu.packagesAndAds')}
           </Text>
           <View style={styles.menu}>
@@ -373,7 +415,7 @@ export default function MenuScreen() {
 
         {/* Support & Settings Menu */}
         <View style={styles.menuSection}>
-          <Text style={[styles.sectionTitle, theme.rtl.textAlign.start()]}>
+          <Text style={styles.sectionTitle}>
             {t('menu.helpAndSettings')}
           </Text>
           <View style={styles.menu}>

@@ -14,6 +14,7 @@ import {
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text } from './Text';
+import { FlipInEasyX } from 'react-native-reanimated';
 
 export type ListItemSize = 'sm' | 'md' | 'lg';
 
@@ -59,16 +60,15 @@ export function ListItem({
   const styles = useMemo(() => createStyles(theme, size), [theme, size]);
 
   // Use RTL utility for flex direction
-  const containerDirection = theme.rtl.flexDirection.row();
 
   // Arrow icon using RTL utility
-  const ArrowIcon = theme.rtl.getChevronDirection('forward') === 'right' ? ChevronRight : ChevronLeft;
+  const ArrowIcon = theme.isRTL ? ChevronLeft : ChevronRight;
 
   return (
     <TouchableOpacity
       style={[
         styles.container,
-        containerDirection,
+
         showBorder && styles.withBorder,
         selected && styles.selected,
         disabled && styles.disabled,
@@ -88,13 +88,12 @@ export function ListItem({
       {/* Middle section: Label and subtitle */}
       <View style={[
         styles.content,
-        theme.rtl.alignItems.start(),
+
       ]}>
         <Text
           variant="body"
           style={[
             styles.label,
-            theme.rtl.textAlign.start(),
             selected && { color: theme.colors.primary },
           ]}
         >
@@ -104,7 +103,6 @@ export function ListItem({
           <Text
             variant="small"
             color="secondary"
-            style={theme.rtl.textAlign.start()}
           >
             {subtitle}
           </Text>
@@ -145,6 +143,7 @@ const createStyles = (theme: Theme, size: ListItemSize) => {
       paddingStart: theme.spacing.md,
       paddingEnd: theme.spacing.md,
       backgroundColor: theme.colors.bg,
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       gap: sizeConfig.gap,
     },
     withBorder: {
@@ -166,6 +165,7 @@ const createStyles = (theme: Theme, size: ListItemSize) => {
     content: {
       flex: 1,
       gap: theme.spacing.xs,
+
     },
     label: {
       fontWeight: '500',

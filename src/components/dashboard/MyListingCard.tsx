@@ -112,10 +112,10 @@ export const MyListingCard = memo(function MyListingCard({
             </Text>
           </View>
 
-          <Text variant="small" numberOfLines={2} style={[styles.title, theme.rtl.textAlign.start()]}>
+          <Text variant="small" numberOfLines={2} style={styles.title}>
             {listing.title}
           </Text>
-          <Text variant="h4" color="primary" style={[styles.price, theme.rtl.textAlign.start()]}>
+          <Text variant="h4" color="primary" style={styles.price}>
             {priceFormatted}
           </Text>
         </View>
@@ -130,7 +130,7 @@ export const MyListingCard = memo(function MyListingCard({
             )}
             <Text
               variant="xs"
-              style={[styles.warningText, theme.rtl.textAlign.start(), isRejected && { color: theme.colors.error }]}
+              style={[styles.warningText, isRejected && { color: theme.colors.error }]}
               numberOfLines={2}
             >
               {isRejected

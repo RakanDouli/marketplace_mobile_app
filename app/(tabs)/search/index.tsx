@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
 import { LayoutGrid, Package } from 'lucide-react-native';
 import { useTheme } from '../../../src/theme';
-import { Text, Loading } from '../../../src/components/slices';
+import { Text, Loading, Grid } from '../../../src/components/slices';
 import { SearchBar } from '../../../src/components/search';
 import { useCategoriesStore } from '../../../src/stores/categoriesStore';
 
@@ -37,7 +37,7 @@ export default function SearchScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const activeCategories = useMemo(() => categories.filter(cat => cat.isActive), [categories]);
+  const activeCategories = useMemo(() => categories.filter(cat => !cat.parentCollectionId && cat.isActive), [categories]);
 
   const styles = useMemo(() => createStyles(theme, screenWidth, isTablet, isDesktop), [theme, screenWidth, isTablet, isDesktop]);
 
@@ -111,23 +111,16 @@ export default function SearchScreen() {
           />
         }
       >
-        {/* Section Title */}
-        <View style={styles.sectionHeader}>
-          <Text variant="h4" style={styles.sectionTitle}>
-            جميع الأقسام
-          </Text>
-        </View>
-
         {/* Categories Grid - Icons only, no background images */}
-        {isLoading && categories.length === 0 ? (
-          <View style={styles.loadingContainer}>
-            <Loading type="svg" size="lg" />
-            <Text variant="small" color="muted" style={{ marginTop: 12 }}>
-              جاري تحميل الأقسام...
-            </Text>
-          </View>
-        ) : categories.length > 0 ? (
-          <View style={styles.categoriesGrid}>
+        {categories.length > 0 ? (
+          <Grid
+            title='جميع الأقسام'
+            mobileColumns={2}
+            gap="md"
+            paddingY='xxl'
+            isLoading={isLoading}
+          >
+            {/* <View style={styles.categoriesGrid}> */}
             {activeCategories.map((category) => (
               <TouchableOpacity
                 key={category.id}
@@ -141,7 +134,8 @@ export default function SearchScreen() {
                 <Text variant="h4">{category.nameAr}</Text>
               </TouchableOpacity>
             ))}
-          </View>
+
+          </Grid>
         ) : (
           <View style={styles.emptyState}>
             <Package size={64} color={theme.colors.textMuted} strokeWidth={1} />

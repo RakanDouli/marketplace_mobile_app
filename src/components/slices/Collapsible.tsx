@@ -116,19 +116,29 @@ export function Collapsible({
       <TouchableOpacity
         style={[
           styles.trigger,
-          theme.rtl.flexDirection.row(),
+          { flexDirection: 'row' },  // Always row, no reverse
           variant === 'form' && styles.formTrigger,
         ]}
         onPress={handleToggle}
         activeOpacity={0.7}
       >
+        {/* Toggle Icon - FIRST in RTL, LAST in LTR */}
+        {theme.isRTL && (
+          <View style={[
+            styles.toggleIcon,
+            showIconBackground && { backgroundColor: theme.colors.primaryLight }
+          ]}>
+            <IconComponent size={18} color={iconColor} />
+          </View>
+        )}
+
         {/* Title - either string Text or custom ReactNode */}
         <View style={styles.titleContainer}>
           {isStringTitle ? (
             <Text
               variant="body"
               bold
-              style={[styles.title, theme.rtl.textAlign.start()]}
+              style={[styles.title, { textAlign: theme.isRTL ? 'right' : 'left' }]}
             >
               {title}
             </Text>
@@ -137,13 +147,15 @@ export function Collapsible({
           )}
         </View>
 
-        {/* Toggle Icon */}
-        <View style={[
-          styles.toggleIcon,
-          showIconBackground && { backgroundColor: theme.colors.primaryLight }
-        ]}>
-          <IconComponent size={18} color={iconColor} />
-        </View>
+        {/* Toggle Icon - LAST in LTR */}
+        {!theme.isRTL && (
+          <View style={[
+            styles.toggleIcon,
+            showIconBackground && { backgroundColor: theme.colors.primaryLight }
+          ]}>
+            <IconComponent size={18} color={iconColor} />
+          </View>
+        )}
       </TouchableOpacity>
 
       {isOpen && (
@@ -151,6 +163,7 @@ export function Collapsible({
           styles.content,
           getContentPadding(),
           variant === 'form' && styles.formContent,
+          { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' },
         ]}>
           {children}
         </View>

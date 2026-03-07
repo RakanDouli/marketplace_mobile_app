@@ -129,8 +129,6 @@ export function Grid({
         <View
           style={[
             styles.header,
-            theme.rtl.flexDirection.row(),
-            titleAlign === 'center' && styles.headerCenter,
           ]}
         >
           {title && <Text variant="h3">{title}</Text>}
@@ -164,9 +162,7 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: theme.spacing.md,
-    },
-    headerCenter: {
-      justifyContent: 'center',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
     },
     loading: {
       paddingVertical: theme.spacing.xl,
