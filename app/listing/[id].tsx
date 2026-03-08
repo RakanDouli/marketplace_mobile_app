@@ -843,6 +843,7 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.bg,
     },
     bottomActions: {
+      flexDirection: 'row',
       padding: theme.spacing.md,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
