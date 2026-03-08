@@ -110,7 +110,8 @@ export function LocationMap({ location, title }: LocationMapProps) {
     return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.01},${lat - 0.01},${lng + 0.01},${lat + 0.01}&layer=mapnik&marker=${lat},${lng}`;
   };
 
-  // Alternative: Use tile-based static image URL
+  // Use static map image from OpenStreetMap tiles
+  // Requires attribution as per OSM tile usage policy
   const getStaticTileUrl = () => {
     if (!hasCoordinates || !coords) return null;
     const { lat, lng } = coords;
@@ -119,7 +120,7 @@ export function LocationMap({ location, title }: LocationMapProps) {
     const n = Math.pow(2, zoom);
     const x = Math.floor((lng + 180) / 360 * n);
     const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n);
-    // Return tile URL from OSM
+    // Return tile URL from OSM (with attribution displayed below)
     return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
   };
 
@@ -225,6 +226,12 @@ export function LocationMap({ location, title }: LocationMapProps) {
             <View style={styles.markerContainer}>
               <MapPin size={32} color={theme.colors.primary} fill={theme.colors.primary} />
             </View>
+            {/* OSM Attribution (required by tile usage policy) */}
+            <View style={styles.attribution}>
+              <Text variant="xs" style={styles.attributionText}>
+                © OpenStreetMap
+              </Text>
+            </View>
           </>
         ) : (
           <View style={styles.mapPlaceholder}>
@@ -311,6 +318,19 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       alignItems: 'center',
       ...theme.shadows.sm,
+    },
+    attribution: {
+      position: 'absolute',
+      bottom: theme.spacing.xs,
+      end: theme.spacing.xs,
+      backgroundColor: 'rgba(255, 255, 255, 0.7)',
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: 2,
+      borderRadius: theme.radius.sm,
+    },
+    attributionText: {
+      fontSize: 10,
+      color: '#000',
     },
 
     // Info

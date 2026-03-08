@@ -90,11 +90,12 @@ export default function CreateListingScreen() {
     const store = useCreateListingStore.getState();
     const hasBrands = store.attributes.some(attr => attr.key === 'brandId');
 
-    if (hasBrands && store.brands.length > 0) {
+    // Only show brand helper if category has brandId attribute AND brands exist
+    if (hasBrands && store.brands && store.brands.length > 0) {
       // Go to brand selection pre-step
       router.push('/create/brand');
     } else {
-      // No brands for this category, go directly to wizard
+      // No brands for this category (or 0 brands), go directly to wizard
       router.push('/create/wizard');
     }
   };
