@@ -70,15 +70,19 @@ export default function MessagesScreen() {
     let isMounted = true;
 
     const fetchListingsForThreads = async () => {
-      const threadsWithData: ThreadWithListing[] = [];
+      // Fetch all listings in parallel for better performance
+      const listingPromises = threads.map(async (thread) => {
+        try {
+          await fetchListingById(thread.listingId);
+          const listing = useListingsStore.getState().currentListing;
+          return { ...thread, fetchedListing: listing };
+        } catch (error) {
+          // If listing fetch fails, return thread with null listing
+          return { ...thread, fetchedListing: null };
+        }
+      });
 
-      for (const thread of threads) {
-        // Try to fetch listing - may not exist (deleted/archived)
-        await fetchListingById(thread.listingId);
-        const listing = useListingsStore.getState().currentListing;
-        // Always add thread, listing will be null if not found
-        threadsWithData.push({ ...thread, fetchedListing: listing });
-      }
+      const threadsWithData = await Promise.all(listingPromises);
 
       if (isMounted) {
         setThreadsWithListings(threadsWithData);
