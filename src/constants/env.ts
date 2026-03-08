@@ -36,10 +36,11 @@ const environments: Record<string, EnvironmentConfig> = {
   },
 
   // Production: Used for release builds (app store)
+  // Points to Hetzner production server (port 4000)
   production: {
-    API_URL: 'https://api.shambay.com',
-    GRAPHQL_URL: 'https://api.shambay.com/graphql',
-    WS_URL: 'wss://api.shambay.com/ws',
+    API_URL: 'http://46.224.146.155:4000',
+    GRAPHQL_URL: 'http://46.224.146.155:4000/graphql',
+    WS_URL: 'ws://46.224.146.155:4000/ws',
     WEB_URL: 'https://shambay.com',
     SUPABASE_URL: 'https://vmnpvmsbmmjeiseowpju.supabase.co',
     // Updated to match frontend .env.production
