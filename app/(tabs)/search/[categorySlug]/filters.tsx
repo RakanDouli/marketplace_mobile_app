@@ -15,6 +15,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -781,10 +782,20 @@ export default function FiltersScreen() {
           const shouldShow = attribute.key === 'brandId' || option.count > 0 || isSelected;
           if (!shouldShow) return null;
 
+          // For brands, show logo if available (no icon if no logo)
+          const brandIcon = attribute.key === 'brandId' && option.logoUrl ? (
+            <Image
+              source={{ uri: option.logoUrl }}
+              style={{ width: 24, height: 24, borderRadius: 4 }}
+              resizeMode="contain"
+            />
+          ) : undefined;
+
           return (
             <ListItem
               key={option.key}
-              label={option.value}
+              label={option.nameAr || option.value}
+              icon={brandIcon}
               endContent={
                 <Text variant="small" color="secondary">{option.count}</Text>
               }
@@ -792,7 +803,7 @@ export default function FiltersScreen() {
                 if (isSelected) {
                   removeFilter(attribute.key);
                 } else {
-                  addFilter(attribute.key, attribute.name, option.key, option.value);
+                  addFilter(attribute.key, attribute.name, option.key, option.nameAr || option.value);
                 }
                 setScreen({ type: 'list' });
               }}

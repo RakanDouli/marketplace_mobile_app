@@ -129,32 +129,20 @@ export default function CategorySelectionScreen() {
           }}
         />
         <SafeAreaView style={styles.container} edges={['bottom']}>
-          <View style={styles.content}>
-            {/* Header */}
-            <View style={styles.header}>
-              <Text variant="h2" style={styles.headerTitle}>
-                {category.nameAr}
-              </Text>
-              <Text variant="paragraph" color="secondary" style={styles.headerSubtitle}>
-                اختر القسم الذي تبحث عنه
-              </Text>
-            </View>
-
-            {/* Child Categories List */}
-            <ScrollView style={styles.childCategoriesList}>
-              {childCategories.map((child, index) => (
-                <ListItem
-                  key={child.id}
-                  label={child.nameAr || child.name}
-                  icon={renderCategoryIcon(child.icon, 24, theme.colors.primary)}
-                  onPress={() => handleChildCategoryPress(child.slug)}
-                  showArrow
-                  showBorder={index < childCategories.length - 1}
-                  size="lg"
-                />
-              ))}
-            </ScrollView>
-          </View>
+          {/* Child Categories List */}
+          <ScrollView style={styles.childCategoriesList} contentContainerStyle={styles.childCategoriesContent}>
+            {childCategories.map((child, index) => (
+              <ListItem
+                key={child.id}
+                label={child.nameAr || child.name}
+                icon={renderCategoryIcon(child.icon, 24, theme.colors.primary)}
+                onPress={() => handleChildCategoryPress(child.slug)}
+                showArrow
+                showBorder={index < childCategories.length - 1}
+                size="lg"
+              />
+            ))}
+          </ScrollView>
         </SafeAreaView>
       </>
     );
@@ -261,7 +249,9 @@ const createStyles = (theme: Theme) =>
     },
     childCategoriesList: {
       flex: 1,
-      marginHorizontal: -theme.spacing.lg,
+    },
+    childCategoriesContent: {
+      paddingBottom: 120, // Extra padding to account for tab bar
     },
     optionsContainer: {
       gap: theme.spacing.md,

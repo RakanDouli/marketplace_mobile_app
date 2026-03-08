@@ -65,24 +65,15 @@ export default function SettingsScreen() {
               ]}
               onPress={() => handleLanguageChange(lang)}
             >
-              <View style={[styles.optionContent, theme.rtl.flexDirection.row()]}>
-                <Text
-                  variant="body"
-                  style={[
-                    styles.optionLabel,
-                    language === lang && styles.optionLabelSelected,
-                  ]}
-                >
-                  {LANGUAGES[lang].nativeName}
-                </Text>
-                <Text
-                  variant="small"
-                  color="secondary"
-                  style={language === lang ? styles.optionLabelSelected : undefined}
-                >
-                  {LANGUAGES[lang].name}
-                </Text>
-              </View>
+              <Text
+                variant="body"
+                style={[
+                  styles.optionLabel,
+                  language === lang && styles.optionLabelSelected,
+                ]}
+              >
+                {LANGUAGES[lang].nativeName}
+              </Text>
               {language === lang && (
                 <Check size={20} color={theme.colors.primary} />
               )}
@@ -153,6 +144,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       overflow: 'hidden',
     },
     sectionHeader: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       padding: theme.spacing.md,
       borderBottomWidth: 1,
@@ -175,24 +167,21 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     optionSelected: {
       backgroundColor: theme.colors.primaryLight,
     },
-    optionContent: {
-      alignItems: 'center',
-      gap: theme.spacing.sm,
-    },
     optionLabel: {
       fontWeight: '600',
-      minWidth: 70,
     },
     optionLabelSelected: {
       color: theme.colors.primary,
     },
     // Settings Row
     row: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: theme.spacing.md,
     },
     rowLeft: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -202,10 +191,11 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Restart Notice
     restartNotice: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       padding: theme.spacing.sm,
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       backgroundColor: theme.colors.warningLight || 'rgba(255, 193, 7, 0.1)',
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,

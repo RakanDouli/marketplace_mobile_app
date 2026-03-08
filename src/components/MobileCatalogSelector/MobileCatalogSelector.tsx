@@ -13,7 +13,6 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Car } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text, Loading, ListItem } from '../slices';
 
@@ -182,7 +181,7 @@ export const MobileCatalogSelector: React.FC<MobileCatalogSelectorProps> = ({
     );
   };
 
-  // Render brand icon with logo
+  // Render brand icon with logo (or undefined if no logo)
   const renderBrandIcon = (option: CatalogOption) => {
     if (option.logoUrl) {
       return (
@@ -195,11 +194,7 @@ export const MobileCatalogSelector: React.FC<MobileCatalogSelectorProps> = ({
         </View>
       );
     }
-    return (
-      <View style={styles.brandLogoContainer}>
-        <Car size={24} color={theme.colors.textMuted} />
-      </View>
-    );
+    return undefined;
   };
 
   // Loading state
