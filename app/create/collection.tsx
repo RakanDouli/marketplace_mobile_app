@@ -106,12 +106,6 @@ export default function CollectionScreen() {
         }}
       />
       <SafeAreaView style={styles.container} edges={['bottom']}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text variant="h2">{collectionName || 'اختر الفئة'}</Text>
-          <Text variant="paragraph" color="secondary">اختر الفئة الفرعية</Text>
-        </View>
-
         {/* Loading State */}
         {showLoading && (
           <View style={styles.loadingContainer}>
@@ -158,18 +152,11 @@ const createStyles = (theme: Theme) =>
       flex: 1,
       backgroundColor: theme.colors.surface,
     },
-    header: {
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      backgroundColor: theme.colors.bg,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
     categories: {
       flex: 1,
     },
     categoriesContent: {
-      paddingBottom: 100,
+      paddingBottom: 120, // Extra padding to account for tab bar
     },
     loadingContainer: {
       flex: 1,
