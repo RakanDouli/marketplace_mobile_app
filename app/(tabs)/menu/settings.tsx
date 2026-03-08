@@ -4,7 +4,7 @@
  * Note: Currency selector is in the Menu page (menu/index.tsx)
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
 import { Bell, Check, Globe, RefreshCw } from 'lucide-react-native';
 import { useTheme, Theme } from '../../../src/theme';
@@ -15,14 +15,38 @@ import {
   type Language,
 } from '../../../src/stores/languageStore';
 import { useTranslation } from '../../../src/hooks/useTranslation';
+import { useNotificationPreferencesStore } from '../../../src/stores/notificationPreferencesStore';
+import { useUserAuthStore } from '../../../src/stores/userAuthStore';
 
 export default function SettingsScreen() {
   const theme = useTheme();
   const isRTL = theme.isRTL;
   const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
-  const [notifications, setNotifications] = useState(true);
   const [showRestartModal, setShowRestartModal] = useState(false);
   const { t } = useTranslation();
+
+  // Auth state
+  const { isAuthenticated } = useUserAuthStore();
+
+  // Notification preferences from backend
+  const {
+    preferences,
+    isLoading: prefsLoading,
+    fetchPreferences,
+    updatePushEnabled,
+  } = useNotificationPreferencesStore();
+
+  // Fetch preferences on mount (only if authenticated)
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPreferences();
+    }
+  }, [isAuthenticated]);
+
+  // Handle notification toggle
+  const handleNotificationToggle = async (enabled: boolean) => {
+    await updatePushEnabled(enabled);
+  };
 
   const {
     language,
@@ -90,22 +114,25 @@ export default function SettingsScreen() {
         )}
       </View>
 
-      {/* Notifications */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <View style={styles.rowLeft}>
-            <Bell size={22} color={theme.colors.text} />
-            <Text variant="body" style={styles.rowLabel}>
-              {t('settings.notifications')}
-            </Text>
+      {/* Notifications - Only show if authenticated */}
+      {isAuthenticated && (
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Bell size={22} color={theme.colors.text} />
+              <Text variant="body" style={styles.rowLabel}>
+                {t('settings.notifications')}
+              </Text>
+            </View>
+            <Switch
+              value={preferences?.pushEnabled ?? true}
+              onValueChange={handleNotificationToggle}
+              disabled={prefsLoading}
+              trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+            />
           </View>
-          <Switch
-            value={notifications}
-            onValueChange={setNotifications}
-            trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-          />
         </View>
-      </View>
+      )}
 
       <Text variant="small" color="muted" center style={styles.versionText}>
         {t('settings.version')} 1.0.0

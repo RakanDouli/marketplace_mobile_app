@@ -5,11 +5,11 @@
     "version": "1.0.0",
     "scheme": "shambay",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/app-icon/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/images/app-icon/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,13 +17,14 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.shambay.marketplace",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك لإنشاء رابط خريطة Google لإعلانك"
+        "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك لإنشاء رابط خريطة Google لإعلانك",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/app-icon/splash-icon.png",
+        "backgroundColor": "#3D5CB6"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -37,7 +38,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/images/app-icon/favicon.png"
     },
     "plugins": [
       "expo-font",
@@ -53,7 +54,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
+          "icon": "./assets/images/app-icon/icon.png",
           "color": "#3D5CB6",
           "defaultChannel": "default"
         }
@@ -65,6 +66,8 @@
         "projectId": "6babae83-7ed7-4851-8a06-eed41d07b0d5"
       }
     },
-    "owner": "rakandouli"
+    "owner": "rakandouli",
+    "privacyUrl": "https://shambay.com/privacy",
+    "termsUrl": "https://shambay.com/terms"
   }
 }

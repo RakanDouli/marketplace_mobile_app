@@ -17,6 +17,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "APP_ENV": "staging"
+      },
       "android": {
         "buildType": "apk"
       }
