@@ -53,10 +53,21 @@ const environments: Record<string, EnvironmentConfig> = {
 // Environment type
 type Environment = 'staging' | 'production';
 
-// Select environment based on __DEV__ flag
-// - __DEV__ = true (development/staging builds) → staging
-// - __DEV__ = false (production builds) → production
-const CURRENT_ENV: Environment = __DEV__ ? 'staging' : 'production';
+// Determine environment:
+// 1. Check APP_ENV from EAS build (set in eas.json)
+// 2. Fall back to __DEV__ flag
+const getEnvironment = (): Environment => {
+  // @ts-ignore - APP_ENV is injected by EAS build
+  const appEnv = process.env.EXPO_PUBLIC_APP_ENV || process.env.APP_ENV;
+
+  if (appEnv === 'staging') return 'staging';
+  if (appEnv === 'production') return 'production';
+
+  // Default: __DEV__ true = staging, false = production
+  return __DEV__ ? 'staging' : 'production';
+};
+
+const CURRENT_ENV: Environment = getEnvironment();
 
 export const ENV = environments[CURRENT_ENV];
 
