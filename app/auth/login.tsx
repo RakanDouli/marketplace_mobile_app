@@ -137,7 +137,10 @@ export default function LoginScreen() {
 
   const handleGoogleLogin = async () => {
     clearError();
-    await signInWithGoogle();
+    const result = await signInWithGoogle();
+    if (result.success) {
+      router.replace('/(tabs)');
+    }
   };
 
   // Form validation
