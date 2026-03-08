@@ -251,6 +251,15 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
                 modelName: option.modelName,
               }));
             }
+          } else if (attr.key === 'location') {
+            // Location attribute - get counts from aggregations.provinces (not aggregations.attributes)
+            // The options come from the backend attribute, but counts come from provinces aggregation
+            processedOptions = (attr.options || [])
+              .filter(opt => opt.showInFilter !== false)
+              .map((opt) => ({
+                ...opt,
+                count: aggregations.provinces?.[opt.key] || 0,
+              }));
           } else {
             // Regular attributes - use existing options with counts
             processedOptions = (attr.options || [])
@@ -410,8 +419,8 @@ export const useFiltersStore = create<FiltersStore>((set, get) => ({
             // No options available for this filter combination
             processedOptions = [];
           }
-        } else if (attr.key === 'province') {
-          // Update province counts
+        } else if (attr.key === 'province' || attr.key === 'location') {
+          // Update province/location counts from aggregations.provinces
           processedOptions = attr.processedOptions.map((opt) => ({
             ...opt,
             count: aggregations.provinces?.[opt.key] || 0,

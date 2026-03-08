@@ -521,17 +521,23 @@ export default function FiltersScreen() {
         const valueDisplay = getValueDisplay(attr);
         const disabled = isAttributeDisabled(attr.key);
         const isRange = isRangeAttribute(attr.type);
+
+        // Check if attribute has no options OR all options have zero count
         const hasNoOptions = !isRange && (!attr.processedOptions || attr.processedOptions.length === 0);
+        const allOptionsEmpty = !isRange &&
+          attr.processedOptions &&
+          attr.processedOptions.length > 0 &&
+          attr.processedOptions.every(opt => opt.count === 0);
 
         // Determine subtitle for disabled/empty filters
         let subtitle: string | undefined;
         if (disabled && attr.key === 'variantId') {
           subtitle = 'اختر العلامة أولاً';
-        } else if (hasNoOptions) {
+        } else if (hasNoOptions || allOptionsEmpty) {
           subtitle = 'لا توجد خيارات متاحة';
         }
 
-        const isDisabled = disabled || hasNoOptions;
+        const isDisabled = disabled || hasNoOptions || allOptionsEmpty;
 
         // Handle press - only create handler if not disabled
         const handlePress = isDisabled ? undefined : () => {
