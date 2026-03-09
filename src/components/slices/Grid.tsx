@@ -113,8 +113,10 @@ export function Grid({
   const gridElement = (
     <View style={[
       styles.grid,
-      { gap: gapValue },
-      theme.rtl.flexDirection.row(),
+      {
+        gap: gapValue,
+        flexDirection: theme.isRTL ? 'row-reverse' : 'row',
+      },
     ]}>
       {gridItems}
     </View>
