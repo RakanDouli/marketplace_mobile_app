@@ -7,12 +7,14 @@
  * Tab order (visual, right to left for RTL): Search, Home, Add, Messages, More
  */
 
-import React from 'react';
-import { Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { Platform, View, Text, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
-import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
+import { NativeTabs, Icon, Label, VectorIcon, Badge } from 'expo-router/unstable-native-tabs';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../src/theme';
+import { useChatStore } from '../../src/stores/chatStore';
+import { useUserAuthStore } from '../../src/stores/userAuthStore';
 
 // Define tabs in visual order (RIGHT to LEFT for RTL)
 const TAB_CONFIG = [
@@ -60,6 +62,23 @@ const TAB_CONFIG = [
 function IOSTabs() {
   const theme = useTheme();
   const tabs = [...TAB_CONFIG].reverse();
+  const { unreadCount, fetchUnreadCount, fetchMyThreads, subscribeGlobal, unsubscribeGlobal } = useChatStore();
+  const { user } = useUserAuthStore();
+
+  // Subscribe to global realtime for instant unread count updates
+  useEffect(() => {
+    if (user?.id) {
+      // Fetch threads first, then subscribe
+      fetchMyThreads().then(() => {
+        fetchUnreadCount();
+        subscribeGlobal(user.id);
+      });
+
+      return () => {
+        unsubscribeGlobal();
+      };
+    }
+  }, [user?.id]);
 
   return (
     <NativeTabs tintColor={theme.colors.primary}>
@@ -74,6 +93,9 @@ function IOSTabs() {
             androidSrc={<VectorIcon family={Ionicons} name={tab.icon} />}
           />
           <Label>{tab.label}</Label>
+          {tab.name === 'messages' && unreadCount > 0 && (
+            <Badge>{unreadCount > 99 ? '99+' : unreadCount.toString()}</Badge>
+          )}
         </NativeTabs.Trigger>
       ))}
     </NativeTabs>
@@ -86,6 +108,23 @@ function IOSTabs() {
 function AndroidTabs() {
   const theme = useTheme();
   const tabs = [...TAB_CONFIG].reverse();
+  const { unreadCount, fetchUnreadCount, fetchMyThreads, subscribeGlobal, unsubscribeGlobal } = useChatStore();
+  const { user } = useUserAuthStore();
+
+  // Subscribe to global realtime for instant unread count updates
+  useEffect(() => {
+    if (user?.id) {
+      // Fetch threads first, then subscribe
+      fetchMyThreads().then(() => {
+        fetchUnreadCount();
+        subscribeGlobal(user.id);
+      });
+
+      return () => {
+        unsubscribeGlobal();
+      };
+    }
+  }, [user?.id]);
 
   return (
     <Tabs
@@ -111,11 +150,20 @@ function AndroidTabs() {
           options={{
             title: tab.label,
             tabBarIcon: ({ focused, color, size }) => (
-              <Ionicons
-                name={focused ? tab.icon : tab.iconOutline}
-                size={size}
-                color={color}
-              />
+              <View>
+                <Ionicons
+                  name={focused ? tab.icon : tab.iconOutline}
+                  size={size}
+                  color={color}
+                />
+                {tab.name === 'messages' && unreadCount > 0 && (
+                  <View style={[styles.badge, { backgroundColor: theme.colors.primary, borderColor: theme.colors.bg }]}>
+                    <Text style={[styles.badgeText, { color: theme.colors.textLight }]}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
             ),
           }}
         />
@@ -123,6 +171,25 @@ function AndroidTabs() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -10,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+});
 
 export default function TabsLayout() {
   // iOS: Use native tabs (RTL works fine)

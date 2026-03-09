@@ -36,6 +36,7 @@ interface ChatState {
   blockedUserIds: Set<string>;
   blockedUsers: BlockedUser[];
   realtimeChannel: RealtimeChannel | null;
+  globalRealtimeChannel: RealtimeChannel | null;
   typingUsers: Record<string, string>;
 
   // Actions
@@ -60,6 +61,8 @@ interface ChatState {
   subscribeToThread: (threadId: string, userId: string) => void;
   unsubscribeFromThread: () => void;
   broadcastTyping: (threadId: string, userName: string) => void;
+  subscribeGlobal: (userId: string) => void;
+  unsubscribeGlobal: () => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -68,6 +71,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: {},
   unreadCount: 0,
   isLoading: false,
+  globalRealtimeChannel: null,
   error: null,
   blockedUserIds: new Set<string>(),
   blockedUsers: [],
@@ -505,6 +509,91 @@ export const useChatStore = create<ChatState>((set, get) => ({
           realtimeChannel.track({ typing: false });
         }
       }, 2000);
+    }
+  },
+
+  // Global realtime subscription (listens to ALL threads for this user)
+  subscribeGlobal: (userId: string) => {
+    const { globalRealtimeChannel, threads } = get();
+
+    // Don't subscribe if already subscribed
+    if (globalRealtimeChannel) {
+      return;
+    }
+
+    // Create global channel that listens to ALL chat messages
+    const channel = supabase
+      .channel(`global:${userId}`)
+      // Listen for ALL new messages
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+        },
+        (payload) => {
+          const newMessage = payload.new as ChatMessage;
+
+          // Only process if message is in one of user's threads
+          const thread = threads.find(t => t.id === newMessage.threadId);
+          if (!thread) return;
+
+          // If message is from another user (not current user)
+          if (newMessage.senderId !== userId) {
+            // Update threads state and add message
+            set((state) => ({
+              threads: state.threads.map(t =>
+                t.id === newMessage.threadId
+                  ? {
+                      ...t,
+                      lastMessageAt: newMessage.createdAt,
+                      unreadCount: (t.unreadCount || 0) + 1,
+                    }
+                  : t
+              ),
+              messages: {
+                ...state.messages,
+                [newMessage.threadId]: [
+                  ...(state.messages[newMessage.threadId] || []),
+                  newMessage
+                ],
+              },
+              // Increment unread count immediately
+              unreadCount: state.unreadCount + 1,
+            }));
+          }
+        }
+      )
+      // Listen for participant updates (when messages are read)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_participants',
+        },
+        (payload) => {
+          const participant = payload.new as any;
+
+          // Only process if participant is in one of user's threads
+          const thread = threads.find(t => t.id === participant.threadId);
+          if (!thread) return;
+
+          // Refresh unread count when anyone reads
+          get().fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    set({ globalRealtimeChannel: channel });
+  },
+
+  unsubscribeGlobal: () => {
+    const { globalRealtimeChannel } = get();
+    if (globalRealtimeChannel) {
+      supabase.removeChannel(globalRealtimeChannel);
+      set({ globalRealtimeChannel: null });
     }
   },
 }));
