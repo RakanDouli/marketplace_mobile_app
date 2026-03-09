@@ -279,7 +279,8 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
     },
     listContent: {
-      paddingVertical: theme.spacing.sm,
+      paddingTop: theme.spacing.sm,
+      paddingBottom: 100, // Extra padding to prevent tab bar overlap
     },
     emptyList: {
       flex: 1,

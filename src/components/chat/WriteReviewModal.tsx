@@ -183,7 +183,7 @@ export function WriteReviewModal({
         <View style={styles.tagsContainer}>
           {POSITIVE_REVIEW_TAGS.map((tag) => (
             <TouchableOpacity
-              key={tag}
+              key={`positive-${tag}`}
               onPress={() => togglePositiveTag(tag)}
               style={[
                 styles.tag,
@@ -218,7 +218,7 @@ export function WriteReviewModal({
         <View style={styles.tagsContainer}>
           {NEGATIVE_REVIEW_TAGS.map((tag) => (
             <TouchableOpacity
-              key={tag}
+              key={`negative-${tag}`}
               onPress={() => toggleNegativeTag(tag)}
               style={[
                 styles.tag,
@@ -272,6 +272,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       padding: theme.spacing.xs,
     },
     tagsContainer: {
+      flexDirection: 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.sm,
       marginBottom: theme.spacing.sm,
@@ -310,6 +311,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginTop: theme.spacing.xs,
     },
     actions: {
+      flexDirection: 'row',
       gap: theme.spacing.sm,
     },
     actionButton: {

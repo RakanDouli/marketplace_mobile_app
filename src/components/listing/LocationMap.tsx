@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { MapPin, Navigation, ExternalLink } from 'lucide-react-native';
-import { Text, Image } from '../slices';
+import { Text, Image, IconText } from '../slices';
 import { useTheme, Theme } from '../../theme';
 import { formatLocation as formatLocationUtil } from '../../utils';
 
@@ -250,12 +250,13 @@ export function LocationMap({ location, title }: LocationMapProps) {
 
       {/* Location Info */}
       <View style={styles.info}>
-        <View style={styles.locationRow}>
-          <MapPin size={18} color={theme.colors.primary} />
-          <Text variant="body" style={styles.locationText}>
-            {formatLocation()}
-          </Text>
-        </View>
+        <IconText
+          icon={<MapPin size={18} color={theme.colors.primary} />}
+          text={formatLocation()}
+          variant="body"
+          gap="sm"
+          style={styles.locationRow}
+        />
 
         {/* Actions - show directions if we have link or coordinates */}
         {(hasLink || hasCoordinates) && (
@@ -263,10 +264,12 @@ export function LocationMap({ location, title }: LocationMapProps) {
             style={styles.directionsButton}
             onPress={openDirections}
           >
-            <Navigation size={16} color={theme.colors.textInverse} />
-            <Text variant="small" style={styles.directionsText}>
-              الاتجاهات
-            </Text>
+            <IconText
+              icon={<Navigation size={16} color={theme.colors.textInverse} />}
+              text="الاتجاهات"
+              variant="small"
+              textStyle={styles.directionsText}
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -342,23 +345,15 @@ const createStyles = (theme: Theme) =>
     },
     locationRow: {
       flex: 1,
-      alignItems: 'center',
-      gap: theme.spacing.sm,
-    },
-    locationText: {
-      flex: 1,
     },
 
     // Directions Button
     directionsButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
       backgroundColor: theme.colors.primary,
       paddingVertical: theme.spacing.sm,
       paddingStart: theme.spacing.md,
       paddingEnd: theme.spacing.md,
       borderRadius: theme.radius.full,
-      gap: theme.spacing.xs,
     },
     directionsText: {
       color: theme.colors.textInverse,

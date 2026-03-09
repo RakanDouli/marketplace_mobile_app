@@ -110,3 +110,6 @@ export type { MetaItemProps } from './MetaItem';
 
 export { StatItem } from './StatItem';
 export type { StatItemProps } from './StatItem';
+
+export { IconText } from './IconText';
+export type { IconTextProps } from './IconText';

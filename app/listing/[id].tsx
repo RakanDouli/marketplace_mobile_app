@@ -29,7 +29,7 @@ import {
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, Theme } from '../../src/theme';
-import { Text, Button, Loading, Collapsible, MetaItem, StatItem } from '../../src/components/slices';
+import { Text, Button, Loading, Collapsible, IconText } from '../../src/components/slices';
 import { useListingsStore } from '../../src/stores/listingsStore';
 import { useCurrencyStore } from '../../src/stores/currencyStore';
 import { useRelatedListingsStore } from '../../src/stores/relatedListingsStore';
@@ -304,7 +304,15 @@ export default function ListingDetailScreen() {
 
   // Prepare location for LocationMap
   // Priority: link → coordinates → address → province only
-  const locationForMap = currentListing.location ? {
+  // Check if we have ANY location data to display (match web frontend logic)
+  const hasLocation = currentListing.location && (
+    currentListing.location.city ||
+    currentListing.location.province ||
+    currentListing.location.coordinates?.lat ||
+    currentListing.location.link
+  );
+
+  const locationForMap = hasLocation && currentListing.location ? {
     province: currentListing.location.province,
     city: currentListing.location.city,
     area: currentListing.location.area,
@@ -439,30 +447,36 @@ export default function ListingDetailScreen() {
           {/* Meta info */}
           <View style={styles.metaRow}>
             {location && (
-              <MetaItem
+              <IconText
                 icon={<MapPin size={16} color={theme.colors.textMuted} />}
                 text={location}
+                variant="small"
+                color="muted"
               />
             )}
             {currentListing.createdAt && (
-              <MetaItem
+              <IconText
                 icon={<Calendar size={16} color={theme.colors.textMuted} />}
                 text={formatDate(currentListing.createdAt)}
+                variant="small"
+                color="muted"
               />
             )}
           </View>
 
           {/* Stats */}
           <View style={styles.statsRow}>
-            <StatItem
+            <IconText
               icon={<Eye size={16} color={theme.colors.textMuted} />}
-              count={currentListing.viewCount || 0}
-              label="مشاهدة"
+              text={`${currentListing.viewCount || 0} مشاهدة`}
+              variant="small"
+              color="muted"
             />
-            <StatItem
+            <IconText
               icon={<Heart size={16} color={theme.colors.textMuted} />}
-              count={currentListing.wishlistCount || 0}
-              label="مفضلة"
+              text={`${currentListing.wishlistCount || 0} مفضلة`}
+              variant="small"
+              color="muted"
             />
           </View>
 

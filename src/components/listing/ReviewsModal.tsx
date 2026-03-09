@@ -142,58 +142,58 @@ export function ReviewsModal({
         {/* Tag Summary */}
         {(Object.keys(tagCounts.positive).length > 0 ||
           Object.keys(tagCounts.negative).length > 0) && (
-          <View style={styles.tagSummary}>
-            {/* Positive Tags */}
-            {Object.keys(tagCounts.positive).length > 0 && (
-              <View style={styles.tagSection}>
-                <View style={styles.tagHeader}>
-                  <ThumbsUp size={14} color={theme.colors.success} />
-                  <Text variant="small" weight="bold" style={{ color: theme.colors.success }}>
-                    إيجابي
-                  </Text>
+            <View style={styles.tagSummary}>
+              {/* Positive Tags */}
+              {Object.keys(tagCounts.positive).length > 0 && (
+                <View style={styles.tagSection}>
+                  <View style={styles.tagHeader}>
+                    <ThumbsUp size={14} color={theme.colors.success} />
+                    <Text variant="small" style={{ color: theme.colors.success }}>
+                      إيجابي
+                    </Text>
+                  </View>
+                  <View style={styles.tags}>
+                    {Object.entries(tagCounts.positive)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([tag, count]) => (
+                        <View key={tag} style={styles.tagPositive}>
+                          <Text variant="xs" style={{ color: theme.colors.success }}>
+                            {tag} ({count})
+                          </Text>
+                        </View>
+                      ))}
+                  </View>
                 </View>
-                <View style={styles.tags}>
-                  {Object.entries(tagCounts.positive)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([tag, count]) => (
-                      <View key={tag} style={styles.tagPositive}>
-                        <Text variant="xs" style={{ color: theme.colors.success }}>
-                          {tag} ({count})
-                        </Text>
-                      </View>
-                    ))}
-                </View>
-              </View>
-            )}
+              )}
 
-            {/* Negative Tags */}
-            {Object.keys(tagCounts.negative).length > 0 && (
-              <View style={styles.tagSection}>
-                <View style={styles.tagHeader}>
-                  <ThumbsDown size={14} color={theme.colors.error} />
-                  <Text variant="small" weight="bold" style={{ color: theme.colors.error }}>
-                    سلبي
-                  </Text>
+              {/* Negative Tags */}
+              {Object.keys(tagCounts.negative).length > 0 && (
+                <View style={styles.tagSection}>
+                  <View style={styles.tagHeader}>
+                    <ThumbsDown size={14} color={theme.colors.error} />
+                    <Text variant="small" style={{ color: theme.colors.error }}>
+                      سلبي
+                    </Text>
+                  </View>
+                  <View style={styles.tags}>
+                    {Object.entries(tagCounts.negative)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([tag, count]) => (
+                        <View key={tag} style={styles.tagNegative}>
+                          <Text variant="xs" style={{ color: theme.colors.error }}>
+                            {tag} ({count})
+                          </Text>
+                        </View>
+                      ))}
+                  </View>
                 </View>
-                <View style={styles.tags}>
-                  {Object.entries(tagCounts.negative)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([tag, count]) => (
-                      <View key={tag} style={styles.tagNegative}>
-                        <Text variant="xs" style={{ color: theme.colors.error }}>
-                          {tag} ({count})
-                        </Text>
-                      </View>
-                    ))}
-                </View>
-              </View>
-            )}
-          </View>
-        )}
+              )}
+            </View>
+          )}
 
         {/* Reviews List */}
         <View style={styles.reviewsList}>
-          <Text variant="body" weight="bold" style={styles.reviewsTitle}>
+          <Text variant="body" style={styles.reviewsTitle}>
             جميع التقييمات
           </Text>
           {reviews.map((review) => (
@@ -213,7 +213,7 @@ export function ReviewsModal({
                   </View>
                 )}
                 <View style={styles.reviewerInfo}>
-                  <Text variant="small" weight="bold">
+                  <Text variant="small" >
                     {review.reviewerName || 'مستخدم'}
                   </Text>
                   <Text variant="xs" color="muted">
@@ -228,25 +228,25 @@ export function ReviewsModal({
               {/* Tags */}
               {((review.positiveTags && review.positiveTags.length > 0) ||
                 (review.negativeTags && review.negativeTags.length > 0)) && (
-                <View style={styles.reviewTags}>
-                  {review.positiveTags?.map((tag) => (
-                    <View key={tag} style={styles.reviewTagPositive}>
-                      <ThumbsUp size={10} color={theme.colors.success} />
-                      <Text variant="xs" style={{ color: theme.colors.success }}>
-                        {tag}
-                      </Text>
-                    </View>
-                  ))}
-                  {review.negativeTags?.map((tag) => (
-                    <View key={tag} style={styles.reviewTagNegative}>
-                      <ThumbsDown size={10} color={theme.colors.error} />
-                      <Text variant="xs" style={{ color: theme.colors.error }}>
-                        {tag}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+                  <View style={styles.reviewTags}>
+                    {review.positiveTags?.map((tag) => (
+                      <View key={tag} style={styles.reviewTagPositive}>
+                        <ThumbsUp size={10} color={theme.colors.success} />
+                        <Text variant="xs" style={{ color: theme.colors.success }}>
+                          {tag}
+                        </Text>
+                      </View>
+                    ))}
+                    {review.negativeTags?.map((tag) => (
+                      <View key={tag} style={styles.reviewTagNegative}>
+                        <ThumbsDown size={10} color={theme.colors.error} />
+                        <Text variant="xs" style={{ color: theme.colors.error }}>
+                          {tag}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
             </View>
           ))}
         </View>
@@ -314,6 +314,7 @@ const createStyles = (theme: Theme) =>
 
     // Rating Bar
     ratingBar: {
+      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -340,7 +341,7 @@ const createStyles = (theme: Theme) =>
     },
     ratingBarCount: {
       width: 24,
-      
+
     },
 
     // Tag Summary
@@ -355,10 +356,12 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.sm,
     },
     tagHeader: {
+      flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
     tags: {
+      flexDirection: 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.xs,
     },
@@ -393,6 +396,7 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.sm,
     },
     reviewerRow: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -417,6 +421,7 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
     },
     reviewTags: {
+      flexDirection: 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.xs,
       marginTop: theme.spacing.sm,

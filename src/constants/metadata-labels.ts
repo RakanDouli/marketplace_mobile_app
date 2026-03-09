@@ -269,17 +269,17 @@ export const REPORT_REASON_LABELS: Record<string, string> = {
 
 export const PROVINCE_LABELS: Record<string, string> = {
   damascus: "دمشق",
-  rif_dimashq: "ريف دمشق",
+  rif_damascus: "ريف دمشق",
   aleppo: "حلب",
   homs: "حمص",
   hama: "حماة",
   latakia: "اللاذقية",
-  tartus: "طرطوس",
+  tartous: "طرطوس",
   idlib: "إدلب",
   deir_ez_zor: "دير الزور",
-  al_hasakah: "الحسكة",
-  ar_raqqah: "الرقة",
-  as_suwayda: "السويداء",
+  hasakah: "الحسكة",
+  raqqa: "الرقة",
+  sweida: "السويداء",
   daraa: "درعا",
   quneitra: "القنيطرة",
 };

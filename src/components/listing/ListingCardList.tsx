@@ -12,8 +12,7 @@ import {
 } from 'react-native';
 import { MapPin } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
-import { Text } from '../slices/Text';
-import { Image } from '../slices/Image';
+import { Text, IconText, Image } from '../slices';
 import { FavoriteButton } from './FavoriteButton';
 
 interface ListingCardListProps {
@@ -131,12 +130,12 @@ export const ListingCardList = memo(function ListingCardList({
 
         {/* Location - icon position based on direction */}
         {location && (
-          <View style={[styles.location, theme.rtl.flexDirection.row()]}>
-            <MapPin size={12} color={theme.colors.textMuted} />
-            <Text variant="xs" color="muted" numberOfLines={1}>
-              {location}
-            </Text>
-          </View>
+          <IconText
+            icon={<MapPin size={12} color={theme.colors.textMuted} />}
+            text={location}
+            variant="xs"
+            color="muted"
+          />
         )}
       </View>
     </TouchableOpacity>
@@ -196,10 +195,6 @@ const createStyles = (theme: Theme) =>
     specs: {
       marginBottom: theme.spacing.xs,
       opacity: 0.7,
-    },
-    location: {
-      alignItems: 'center',
-      gap: theme.spacing.xs,
     },
     favoriteButtonWrapper: {
       position: 'absolute',

@@ -902,8 +902,9 @@ const createStyles = (theme: Theme) =>
     },
     messagesList: {
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
+      paddingTop: theme.spacing.md,
+      paddingBottom: 100, // Extra padding to prevent tab bar overlap
     },
     emptyMessages: {
       flex: 1,

@@ -12,8 +12,7 @@ import {
 } from 'react-native';
 import { MapPin, Star } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
-import { Text } from '../slices/Text';
-import { Image } from '../slices/Image';
+import { Text, IconText, Image } from '../slices';
 import { ShareButton } from './ShareButton';
 import { FavoriteButton } from './FavoriteButton';
 
@@ -112,12 +111,12 @@ export const ListingCardGrid = memo(function ListingCardGrid({
           </Text>
         )}
         {location && (
-          <View style={[styles.location, theme.rtl.flexDirection.row()]}>
-            <MapPin size={14} color={theme.colors.textSecondary} />
-            <Text variant="xs" color="secondary" style={styles.locationText}>
-              {location}
-            </Text>
-          </View>
+          <IconText
+            icon={<MapPin size={14} color={theme.colors.textSecondary} />}
+            text={location}
+            variant="xs"
+            color="secondary"
+          />
         )}
       </View>
     </TouchableOpacity>
@@ -174,13 +173,6 @@ const createStyles = (theme: Theme) =>
     },
     price: {
       marginBottom: theme.spacing.xs,
-    },
-    location: {
-      alignItems: 'center',
-      gap: theme.spacing.xs,
-    },
-    locationText: {
-      flex: 0,
     },
     specs: {
       marginBottom: theme.spacing.xs,

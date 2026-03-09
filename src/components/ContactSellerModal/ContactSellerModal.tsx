@@ -170,6 +170,7 @@ export function ContactSellerModal({
         multiline
         numberOfLines={4}
         textAlignVertical="top"
+        textAlign={isRTL ? 'right' : 'left'}
         editable={!isSubmitting}
       />
 
@@ -241,6 +242,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
 
     // Actions (footer)
     actions: {
+      flexDirection: 'row',
       gap: theme.spacing.sm,
     },
     cancelButton: {
