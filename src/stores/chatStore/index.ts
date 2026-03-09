@@ -380,12 +380,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
           event: 'INSERT',
           schema: 'public',
           table: 'chat_messages',
-          filter: `threadId=eq.${threadId}`,
+          // Removed filter - camelCase columns don't work with Supabase Realtime filters
+          // Client-side filtering below
         },
         (payload) => {
           console.log('[Realtime Mobile] INSERT event received:', JSON.stringify(payload));
           const newMessage = payload.new as ChatMessage;
-          console.log('[Realtime Mobile] New message details:', { id: newMessage.id, senderId: newMessage.senderId, currentUserId: userId });
+          console.log('[Realtime Mobile] New message details:', { id: newMessage.id, senderId: newMessage.senderId, threadId: newMessage.threadId, currentUserId: userId });
+
+          // Client-side filter: only process messages for this thread
+          if (newMessage.threadId !== threadId) {
+            console.log('[Realtime Mobile] Message not for this thread, ignoring');
+            return;
+          }
 
           // Add message if not from current user AND not already in state
           if (newMessage.senderId !== userId) {
@@ -432,10 +439,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
           event: 'UPDATE',
           schema: 'public',
           table: 'chat_messages',
-          filter: `threadId=eq.${threadId}`,
+          // Removed filter - camelCase columns don't work with Supabase Realtime filters
         },
         (payload) => {
           const updatedMessage = payload.new as ChatMessage;
+
+          // Client-side filter: only process messages for this thread
+          if (updatedMessage.threadId !== threadId) {
+            return;
+          }
 
           set((state) => ({
             messages: {
