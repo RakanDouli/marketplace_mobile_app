@@ -30,7 +30,6 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.shambay.marketplace",
       "googleServicesFile": "./google-services.json",
-      "useNextNotificationsApi": true,
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
@@ -58,7 +57,8 @@
         {
           "icon": "./assets/images/app-icon/icon.png",
           "color": "#3D5CB6",
-          "defaultChannel": "default"
+          "defaultChannel": "default",
+          "useNextNotificationsApi": true
         }
       ]
     ],
@@ -66,10 +66,10 @@
       "router": {},
       "eas": {
         "projectId": "6babae83-7ed7-4851-8a06-eed41d07b0d5"
-      }
+      },
+      "privacyUrl": "https://shambay.com/privacy",
+      "termsUrl": "https://shambay.com/terms"
     },
-    "owner": "rakandouli",
-    "privacyUrl": "https://shambay.com/privacy",
-    "termsUrl": "https://shambay.com/terms"
+    "owner": "rakandouli"
   }
 }
