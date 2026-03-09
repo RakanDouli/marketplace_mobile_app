@@ -362,8 +362,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   subscribeToThread: (threadId: string, userId: string) => {
     const { realtimeChannel } = get();
 
+    console.log('[REALTIME] subscribeToThread called:', { threadId, userId });
+
     // Unsubscribe from previous channel
     if (realtimeChannel) {
+      console.log('[REALTIME] Removing previous channel');
       supabase.removeChannel(realtimeChannel);
     }
 
@@ -380,29 +383,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
           filter: `threadId=eq.${threadId}`,
         },
         (payload) => {
-          const newMessage = payload.new as any;
-          const mappedMessage: ChatMessage = {
-            id: newMessage.id,
-            threadId: newMessage.thread_id,
-            senderId: newMessage.sender_id,
-            text: newMessage.text,
-            imageKeys: newMessage.image_keys,
-            status: newMessage.status,
-            createdAt: newMessage.created_at,
-          };
+          console.log('[REALTIME] INSERT event received:', payload);
+          const newMessage = payload.new as ChatMessage;
+          console.log('[REALTIME] Raw payload.new:', newMessage);
+          console.log('[REALTIME] Current userId:', userId, 'Sender ID:', newMessage.senderId);
 
           // Add message if not from current user
-          if (mappedMessage.senderId !== userId) {
+          if (newMessage.senderId !== userId) {
+            console.log('[REALTIME] Adding message to store (not from current user)');
             set((state) => ({
               messages: {
                 ...state.messages,
-                [threadId]: [...(state.messages[threadId] || []), mappedMessage],
+                [threadId]: [...(state.messages[threadId] || []), newMessage],
               },
               threads: state.threads.map((thread) =>
                 thread.id === threadId
                   ? {
                       ...thread,
-                      lastMessageAt: mappedMessage.createdAt,
+                      lastMessageAt: newMessage.createdAt,
                       unreadCount: (thread.unreadCount || 0) + 1,
                     }
                   : thread
@@ -411,10 +409,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
             // Auto-mark as read if thread is active
             if (get().activeThreadId === threadId) {
-              get().markThreadRead(threadId, mappedMessage.id);
+              get().markThreadRead(threadId, newMessage.id);
             }
 
             get().fetchUnreadCount();
+          } else {
+            console.log('[REALTIME] Skipping message (from current user)');
           }
         }
       )
@@ -428,22 +428,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
           filter: `threadId=eq.${threadId}`,
         },
         (payload) => {
-          const updated = payload.new as any;
-          const mappedMessage: ChatMessage = {
-            id: updated.id,
-            threadId: updated.thread_id,
-            senderId: updated.sender_id,
-            text: updated.text,
-            imageKeys: updated.image_keys,
-            status: updated.status,
-            createdAt: updated.created_at,
-          };
+          console.log('[REALTIME] UPDATE event received:', payload);
+          const updatedMessage = payload.new as ChatMessage;
+          console.log('[REALTIME] Updated message:', updatedMessage);
 
           set((state) => ({
             messages: {
               ...state.messages,
               [threadId]: (state.messages[threadId] || []).map((msg) =>
-                msg.id === mappedMessage.id ? mappedMessage : msg
+                msg.id === updatedMessage.id ? updatedMessage : msg
               ),
             },
           }));
@@ -478,8 +471,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
           });
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[REALTIME] Subscription status:', status);
+      });
 
+    console.log('[REALTIME] Channel created and subscribed');
     set({ realtimeChannel: channel });
   },
 
