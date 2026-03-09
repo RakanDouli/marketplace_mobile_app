@@ -65,11 +65,11 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "6babae83-7ed7-4851-8a06-eed41d07b0d5"
+        "projectId": "a79aa2ea-7a71-4cc2-8295-d2e4f525d9f4"
       },
       "privacyUrl": "https://shambay.com/privacy",
       "termsUrl": "https://shambay.com/terms"
     },
-    "owner": "rakandouli"
+    "owner": "shambay"
   }
 }
