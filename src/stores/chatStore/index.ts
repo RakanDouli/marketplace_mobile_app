@@ -362,11 +362,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   subscribeToThread: (threadId: string, userId: string) => {
     const { realtimeChannel } = get();
 
-    console.log('[REALTIME] subscribeToThread called:', { threadId, userId });
-
     // Unsubscribe from previous channel
     if (realtimeChannel) {
-      console.log('[REALTIME] Removing previous channel');
       supabase.removeChannel(realtimeChannel);
     }
 
@@ -383,14 +380,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
           filter: `threadId=eq.${threadId}`,
         },
         (payload) => {
-          console.log('[REALTIME] INSERT event received:', payload);
           const newMessage = payload.new as ChatMessage;
-          console.log('[REALTIME] Raw payload.new:', newMessage);
-          console.log('[REALTIME] Current userId:', userId, 'Sender ID:', newMessage.senderId);
 
           // Add message if not from current user
           if (newMessage.senderId !== userId) {
-            console.log('[REALTIME] Adding message to store (not from current user)');
             set((state) => ({
               messages: {
                 ...state.messages,
@@ -413,8 +406,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }
 
             get().fetchUnreadCount();
-          } else {
-            console.log('[REALTIME] Skipping message (from current user)');
           }
         }
       )
@@ -428,9 +419,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           filter: `threadId=eq.${threadId}`,
         },
         (payload) => {
-          console.log('[REALTIME] UPDATE event received:', payload);
           const updatedMessage = payload.new as ChatMessage;
-          console.log('[REALTIME] Updated message:', updatedMessage);
 
           set((state) => ({
             messages: {
@@ -471,11 +460,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
           });
         }
       })
-      .subscribe((status) => {
-        console.log('[REALTIME] Subscription status:', status);
-      });
+      .subscribe();
 
-    console.log('[REALTIME] Channel created and subscribed');
     set({ realtimeChannel: channel });
   },
 
