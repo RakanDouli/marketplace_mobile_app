@@ -360,14 +360,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // Realtime Subscriptions
   subscribeToThread: (threadId: string, userId: string) => {
+    console.log('[Realtime Mobile] subscribeToThread called:', { threadId, userId });
     const { realtimeChannel } = get();
 
     // Unsubscribe from previous channel
     if (realtimeChannel) {
+      console.log('[Realtime Mobile] Removing previous channel');
       supabase.removeChannel(realtimeChannel);
     }
 
     // Create new channel for this thread
+    console.log('[Realtime Mobile] Creating channel for thread:', threadId);
     const channel = supabase
       .channel(`thread:${threadId}`)
       // Listen for new messages
@@ -380,10 +383,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
           filter: `threadId=eq.${threadId}`,
         },
         (payload) => {
+          console.log('[Realtime Mobile] INSERT event received:', JSON.stringify(payload));
           const newMessage = payload.new as ChatMessage;
+          console.log('[Realtime Mobile] New message details:', { id: newMessage.id, senderId: newMessage.senderId, currentUserId: userId });
 
           // Add message if not from current user AND not already in state
           if (newMessage.senderId !== userId) {
+            console.log('[Realtime Mobile] Adding message from other user to state');
             set((state) => {
               // Check if message already exists
               const existingMessages = state.messages[threadId] || [];
@@ -470,8 +476,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
           });
         }
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        console.log('[Realtime Mobile] Subscription status:', status, err ? `Error: ${err.message}` : '');
+        if (status === 'SUBSCRIBED') {
+          console.log('[Realtime Mobile] Successfully subscribed to thread:', threadId);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('[Realtime Mobile] Channel error:', err);
+        } else if (status === 'TIMED_OUT') {
+          console.error('[Realtime Mobile] Subscription timed out');
+        } else if (status === 'CLOSED') {
+          console.warn('[Realtime Mobile] Channel closed');
+        }
+      });
 
+    console.log('[Realtime Mobile] Channel created, waiting for subscription...');
     set({ realtimeChannel: channel });
   },
 

@@ -42,6 +42,10 @@ const ExpoSecureStoreAdapter = {
   },
 };
 
+// Log the Supabase configuration for debugging
+console.log('[Supabase Mobile] Initializing with URL:', ENV.SUPABASE_URL);
+console.log('[Supabase Mobile] Environment:', __DEV__ ? 'development' : 'production');
+
 // Create Supabase client with custom storage
 export const supabase: SupabaseClient = createClient(
   ENV.SUPABASE_URL,
@@ -60,6 +64,8 @@ export const supabase: SupabaseClient = createClient(
     },
   }
 );
+
+console.log('[Supabase Mobile] Client created successfully');
 
 /**
  * Get current session
