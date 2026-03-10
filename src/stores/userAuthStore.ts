@@ -611,28 +611,67 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
       }
 
       if (session && user) {
-        set({
-          session,
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-
-        // Fetch user profile from backend
+        // Fetch user profile from backend BEFORE setting authenticated
+        // This ensures profile is loaded and user status is validated
         try {
-          const profileData = await graphqlRequest<{ me: any }>(
-            ME_QUERY,
-            {},
-            false,
-            session.access_token
-          );
-          if (profileData?.me) {
-            set({ profile: profileData.me });
-          }
-        } catch (profileError) {
-        }
+          const data = await graphqlRequest<{
+            me: { user: UserProfile };
+            myPackage: UserPackage | null;
+          }>(ME_QUERY, {}, false, session.access_token);
 
-        return { success: true };
+          if (data?.me?.user) {
+            // Validate user status (banned/suspended check)
+            await validateUserStatus(data.me.user, supabaseSignOut);
+
+            // User is allowed - set all state
+            set({
+              session,
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+              profile: data.me.user,
+              userPackage: data.myPackage || null,
+            });
+
+            // Show warning notification if user has warnings
+            showWarningNotificationIfNeeded(data.me.user);
+
+            return { success: true };
+          } else {
+            // No profile - sign out
+            await supabaseSignOut();
+            set({
+              session: null,
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: 'فشل في تحميل بيانات المستخدم',
+            });
+            return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
+          }
+        } catch (profileError: any) {
+          // If validation throws (banned/suspended), handle the error
+          if (profileError?.message?.includes('حسابك')) {
+            set({
+              session: null,
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: profileError.message,
+            });
+            return { success: false, error: profileError.message };
+          }
+          // Other profile errors - sign out
+          await supabaseSignOut();
+          set({
+            session: null,
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: 'فشل في تحميل بيانات المستخدم',
+          });
+          return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
+        }
       }
 
       set({ isLoading: false });
