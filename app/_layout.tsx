@@ -82,9 +82,15 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
     const inAuthGroup = segments[0] === 'auth';
     const onSignupSuccess = (segments as string[])[1] === 'signup-success';
+    const onCallback = (segments as string[])[1] === 'callback';
 
     // Don't redirect if on signup-success page
     if (onSignupSuccess) {
+      return;
+    }
+
+    // Don't redirect if on callback page - let it handle its own navigation
+    if (onCallback) {
       return;
     }
 

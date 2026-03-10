@@ -4,7 +4,7 @@
  * This screen receives the tokens from the URL and completes the authentication
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../../src/theme';
@@ -16,36 +16,48 @@ export default function AuthCallbackScreen() {
   const theme = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { initialize } = useUserAuthStore();
+  const { initialize, isAuthenticated } = useUserAuthStore();
+  const [status, setStatus] = useState('جاري تسجيل الدخول...');
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // The tokens should already be set by the WebBrowser.openAuthSessionAsync
-        // but we can also check URL params if needed
+        setStatus('جاري التحقق من الجلسة...');
+
+        // Small delay to ensure Supabase has processed the tokens
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Get current session (should be set by Supabase after OAuth)
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
           console.error('Auth callback error:', error);
-          router.replace('/auth/login');
+          setStatus('حدث خطأ في المصادقة');
+          setTimeout(() => router.replace('/auth/login'), 1500);
           return;
         }
 
         if (session) {
+          setStatus('جاري تحميل بيانات المستخدم...');
           // Session exists - reinitialize auth state
           await initialize();
-          // Navigate to home
-          router.replace('/');
+
+          setStatus('تم تسجيل الدخول بنجاح!');
+          // Small delay so user sees success message
+          setTimeout(() => {
+            // Navigate to tabs
+            router.replace('/(tabs)');
+          }, 500);
         } else {
           // No session - something went wrong
           console.error('No session after OAuth callback');
-          router.replace('/auth/login');
+          setStatus('لم يتم العثور على جلسة');
+          setTimeout(() => router.replace('/auth/login'), 1500);
         }
       } catch (error) {
         console.error('Auth callback error:', error);
-        router.replace('/auth/login');
+        setStatus('حدث خطأ غير متوقع');
+        setTimeout(() => router.replace('/auth/login'), 1500);
       }
     };
 
@@ -56,7 +68,7 @@ export default function AuthCallbackScreen() {
     <View style={[styles.container, { backgroundColor: theme.colors.bg }]}>
       <ActivityIndicator size="large" color={theme.colors.primary} />
       <Text variant="body" style={styles.text}>
-        جاري تسجيل الدخول...
+        {status}
       </Text>
     </View>
   );
