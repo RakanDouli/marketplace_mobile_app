@@ -368,7 +368,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     },
     // Features Grid
     featuresGrid: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       paddingHorizontal: 12,
       gap: 8,

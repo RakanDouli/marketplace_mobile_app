@@ -17,6 +17,9 @@ interface EnvironmentConfig {
   CLOUDFLARE_ACCOUNT_HASH: string;
   APP_NAME: string;
   APP_VERSION: string;
+  // Google Sign-In - Web Client ID (NOT Android Client ID!)
+  // Get from: Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs > Web application
+  GOOGLE_WEB_CLIENT_ID: string;
 }
 
 const environments: Record<string, EnvironmentConfig> = {
@@ -33,6 +36,9 @@ const environments: Record<string, EnvironmentConfig> = {
     CLOUDFLARE_ACCOUNT_HASH: 'yvE6_nYkmBMTwQORcLcTkA',
     APP_NAME: 'Shambay',
     APP_VERSION: '1.0.0',
+    // Web Client ID from Google Cloud Console (Firebase project: marketplace-9be9d)
+    // Must match the Client ID configured in Supabase Auth > Google provider
+    GOOGLE_WEB_CLIENT_ID: '136245589649-82tp841sq0teh958ilqem9e09nivhcf0.apps.googleusercontent.com',
   },
 
   // Production: Used for release builds (app store)
@@ -49,6 +55,9 @@ const environments: Record<string, EnvironmentConfig> = {
     CLOUDFLARE_ACCOUNT_HASH: 'yvE6_nYkmBMTwQORcLcTkA',
     APP_NAME: 'Shambay',
     APP_VERSION: '1.0.0',
+    // Web Client ID from Google Cloud Console (Firebase project: marketplace-9be9d)
+    // Must match the Client ID configured in Supabase Auth > Google provider
+    GOOGLE_WEB_CLIENT_ID: '136245589649-82tp841sq0teh958ilqem9e09nivhcf0.apps.googleusercontent.com',
   },
 };
 

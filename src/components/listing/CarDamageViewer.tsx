@@ -325,7 +325,7 @@ const createStyles = (theme: Theme) =>
 
     // Legend
     legend: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'center',
       gap: theme.spacing.lg,
       marginTop: theme.spacing.md,
@@ -334,7 +334,7 @@ const createStyles = (theme: Theme) =>
       borderTopColor: theme.colors.border,
     },
     legendItem: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
@@ -360,12 +360,12 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.text,
     },
     summaryItems: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.xs,
     },
     summaryItem: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.bg,
       paddingVertical: theme.spacing.xs,

@@ -509,7 +509,7 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.md,
     },
     statsGrid: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.md,
     },

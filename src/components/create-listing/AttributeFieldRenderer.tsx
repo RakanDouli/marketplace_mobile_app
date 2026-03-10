@@ -294,6 +294,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     label: {},
     labelRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
     },
@@ -308,6 +309,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Auto-fill badge
     autoFillBadge: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: 4,
       paddingStart: theme.spacing.sm,
@@ -321,14 +323,17 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginBottom: theme.spacing.sm,
     },
     suggestionHeader: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
     suggestionChipsContainer: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.sm,
     },
     suggestionChip: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: 4,
       paddingStart: theme.spacing.md,

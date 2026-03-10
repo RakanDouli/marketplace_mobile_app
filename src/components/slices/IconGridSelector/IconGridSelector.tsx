@@ -144,7 +144,7 @@ const createStyles = (theme: Theme) =>
       width: '100%',
     },
     grid: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       justifyContent: 'flex-start',
       gap: theme.spacing.sm,

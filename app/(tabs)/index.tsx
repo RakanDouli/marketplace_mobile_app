@@ -31,6 +31,7 @@ import {
   PromoCard,
   PromoBanner,
   Image,
+  Grid,
 } from '../../src/components/slices';
 import { ENV } from '../../src/constants/env';
 
@@ -234,24 +235,28 @@ export default function HomeTab() {
         </Container>
 
         {/* Features */}
-        <Container paddingY="lg" background="transparent">
-          <Text variant="h3" center style={{ marginBottom: theme.spacing.lg }}>لماذا تختارنا؟</Text>
-          <View style={styles.featuresGrid}>
-            {FEATURES.map((feature) => {
-              const IconComponent = feature.icon;
-              return (
-                <FeatureCard
-                  key={feature.id}
-                  icon={<IconComponent size={24} color={theme.colors.primary} />}
-                  title={feature.title}
-                  description={feature.description}
-                  variant="card"
-                  style={styles.featureCard}
-                />
-              );
-            })}
-          </View>
-        </Container>
+        <Grid
+          title="لماذا تختارنا؟"
+          titleAlign="center"
+          columns={4}
+          mobileColumns={2}
+          gap="md"
+          paddingY="lg"
+          background="transparent"
+        >
+          {FEATURES.map((feature) => {
+            const IconComponent = feature.icon;
+            return (
+              <FeatureCard
+                key={feature.id}
+                icon={<IconComponent size={24} color={theme.colors.primary} />}
+                title={feature.title}
+                description={feature.description}
+                variant="card"
+              />
+            );
+          })}
+        </Grid>
 
         {/* Footer */}
         <View style={styles.footer}>
@@ -280,8 +285,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, i
   const gridColumns = isDesktop ? 4 : isTablet ? 3 : 2;
   const gridGap = theme.spacing.sm;
   const gridCardWidth = (screenWidth - horizontalPadding * 2 - gridGap * (gridColumns - 1)) / gridColumns;
-  const featureColumns = isDesktop ? 4 : 2;
-  const featureCardWidth = (screenWidth - horizontalPadding * 2 - theme.spacing.md * (featureColumns - 1)) / featureColumns;
 
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.surface },
@@ -295,8 +298,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, i
     listingsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: horizontalPadding, gap: gridGap },
     gridCard: { width: gridCardWidth, backgroundColor: theme.colors.bg, borderRadius: theme.radius.lg, borderWidth: 1, borderColor: theme.colors.border, overflow: 'hidden', marginBottom: theme.spacing.sm },
     promoCardsGrid: { gap: theme.spacing.md },
-    featuresGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.md, justifyContent: 'center' },
-    featureCard: { width: featureCardWidth, minWidth: 150 },
     footer: { backgroundColor: theme.colors.surface, paddingHorizontal: horizontalPadding, paddingVertical: theme.spacing.xl, paddingBottom: theme.spacing.xl + 88, marginTop: theme.spacing.md, borderTopWidth: 1, borderTopColor: theme.colors.border, alignItems: 'center', gap: theme.spacing.lg },
     footerBrand: { alignItems: 'center', gap: theme.spacing.sm },
     footerLogoIcon: { padding: theme.spacing.sm, borderRadius: theme.radius.md, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' },

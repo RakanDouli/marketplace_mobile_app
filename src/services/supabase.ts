@@ -6,12 +6,24 @@
 import { createClient, SupabaseClient, Session, User } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import * as WebBrowser from 'expo-web-browser';
-import * as AuthSession from 'expo-auth-session';
+import {
+  GoogleSignin,
+  statusCodes,
+  isErrorWithCode,
+} from '@react-native-google-signin/google-signin';
 import { ENV } from '../constants/env';
 
-// Required for expo-auth-session to work properly
-WebBrowser.maybeCompleteAuthSession();
+// Configure Google Sign-In with Web Client ID
+// IMPORTANT: Must use Web Client ID, not Android Client ID!
+// The Web Client ID is configured in ENV.GOOGLE_WEB_CLIENT_ID
+if (ENV.GOOGLE_WEB_CLIENT_ID) {
+  GoogleSignin.configure({
+    webClientId: ENV.GOOGLE_WEB_CLIENT_ID,
+    offlineAccess: true,
+  });
+} else {
+  console.warn('[Google Sign-In] GOOGLE_WEB_CLIENT_ID is not configured. Google Sign-In will not work.');
+}
 
 // Custom storage adapter for Supabase using SecureStore for sensitive data
 const ExpoSecureStoreAdapter = {
@@ -218,8 +230,13 @@ export const onAuthStateChange = (
 };
 
 /**
- * Sign in with Google OAuth using expo-auth-session
- * This works in Expo Go and development builds
+ * Sign in with Google using native @react-native-google-signin
+ * Uses signInWithIdToken to authenticate with Supabase
+ *
+ * IMPORTANT: This requires:
+ * 1. Web Client ID from Google Cloud Console (used in GoogleSignin.configure)
+ * 2. Android Client ID with SHA-1 fingerprint (in google-services.json oauth_client)
+ * 3. Google provider enabled in Supabase with Web Client ID
  */
 export const signInWithGoogle = async (): Promise<{
   session: Session | null;
@@ -227,64 +244,30 @@ export const signInWithGoogle = async (): Promise<{
   error: Error | null;
 }> => {
   try {
-    // Create redirect URL for Expo
-    const redirectUrl = AuthSession.makeRedirectUri({
-      // Use native scheme in production builds
-      // Use Expo proxy in development (Expo Go)
-      native: 'shambay://auth/callback',
-    });
+    // Check if Google Play Services are available (Android only)
+    await GoogleSignin.hasPlayServices();
 
-    // Construct the OAuth URL with Supabase
-    const authUrl = `${ENV.SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
+    // Trigger native Google Sign-In
+    const response = await GoogleSignin.signIn();
 
-    // Open browser for OAuth
-    const result = await WebBrowser.openAuthSessionAsync(
-      authUrl,
-      redirectUrl
-    );
+    // Check if sign-in was successful and we have idToken
+    if (response.type === 'success' && response.data?.idToken) {
+      // Use Supabase signInWithIdToken to exchange Google ID token for Supabase session
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: response.data.idToken,
+      });
 
-    if (result.type === 'success' && result.url) {
-      // Extract the tokens from the URL
-      const url = new URL(result.url);
-
-      // Check for hash fragment (Supabase returns tokens in hash)
-      const hashParams = new URLSearchParams(url.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-
-      if (accessToken && refreshToken) {
-        // Set the session in Supabase
-        const { data, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-
-        if (error) {
-          return { session: null, user: null, error };
-        }
-
-        return { session: data.session, user: data.user, error: null };
+      if (error) {
+        console.error('[Google Sign-In] Supabase error:', error);
+        return { session: null, user: null, error };
       }
 
-      // Check for error in URL
-      const errorCode = hashParams.get('error');
-      const errorDescription = hashParams.get('error_description');
-      if (errorCode) {
-        return {
-          session: null,
-          user: null,
-          error: new Error(errorDescription || errorCode),
-        };
-      }
-
-      return {
-        session: null,
-        user: null,
-        error: new Error('لم يتم استلام بيانات المصادقة'),
-      };
+      return { session: data.session, user: data.user, error: null };
     }
 
-    if (result.type === 'cancel' || result.type === 'dismiss') {
+    // User cancelled the sign-in
+    if (response.type === 'cancelled') {
       return {
         session: null,
         user: null,
@@ -292,12 +275,45 @@ export const signInWithGoogle = async (): Promise<{
       };
     }
 
+    // No idToken received
     return {
       session: null,
       user: null,
-      error: new Error('فشل تسجيل الدخول بجوجل'),
+      error: new Error('لم يتم استلام بيانات المصادقة من جوجل'),
     };
   } catch (error: any) {
+    console.error('[Google Sign-In] Error:', error);
+
+    // Handle specific Google Sign-In errors
+    if (isErrorWithCode(error)) {
+      switch (error.code) {
+        case statusCodes.SIGN_IN_CANCELLED:
+          return {
+            session: null,
+            user: null,
+            error: new Error('تم إلغاء تسجيل الدخول'),
+          };
+        case statusCodes.IN_PROGRESS:
+          return {
+            session: null,
+            user: null,
+            error: new Error('عملية تسجيل الدخول جارية بالفعل'),
+          };
+        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+          return {
+            session: null,
+            user: null,
+            error: new Error('خدمات Google Play غير متوفرة'),
+          };
+        default:
+          return {
+            session: null,
+            user: null,
+            error: new Error(error.message || 'فشل تسجيل الدخول بجوجل'),
+          };
+      }
+    }
+
     return {
       session: null,
       user: null,

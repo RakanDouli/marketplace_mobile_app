@@ -61,7 +61,8 @@
           "defaultChannel": "default",
           "useNextNotificationsApi": true
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "router": {},

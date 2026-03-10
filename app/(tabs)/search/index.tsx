@@ -186,11 +186,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, i
       alignItems: 'center',
       padding: 60,
     },
-    categoriesGrid: {
-      flexWrap: 'wrap',
-      paddingHorizontal: horizontalPadding,
-      gap: gridGap,
-    },
     categoryCard: {
       width: cardWidth,
       flexDirection: 'column',

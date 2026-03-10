@@ -800,14 +800,14 @@ const createStyles = (theme: Theme) =>
       marginTop: theme.spacing.sm,
     },
     metaRow: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       marginTop: theme.spacing.md,
       gap: theme.spacing.md,
       justifyContent: 'space-between',
     },
     statsRow: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       marginTop: theme.spacing.md,
       paddingTop: theme.spacing.md,
       borderTopWidth: 1,

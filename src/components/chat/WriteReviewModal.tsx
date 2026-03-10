@@ -263,7 +263,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       fontWeight: '600',
     },
     starsContainer: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       justifyContent: 'center',
       gap: theme.spacing.sm,
       marginBottom: theme.spacing.sm,
@@ -272,7 +272,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       padding: theme.spacing.xs,
     },
     tagsContainer: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.sm,
       marginBottom: theme.spacing.sm,
@@ -311,7 +311,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       marginTop: theme.spacing.xs,
     },
     actions: {
-      flexDirection: 'row',
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
     },
     actionButton: {

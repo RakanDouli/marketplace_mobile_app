@@ -397,6 +397,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       textAlign: 'center',
     },
     grid: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.sm,
     },

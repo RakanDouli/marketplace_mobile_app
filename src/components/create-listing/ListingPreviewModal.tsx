@@ -558,17 +558,19 @@ const createStyles = (theme: Theme) =>
       marginTop: theme.spacing.sm,
     },
     metaRow: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       marginTop: theme.spacing.md,
       gap: theme.spacing.md,
     },
     metaItem: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
     },
     metaText: {},
     tagsRow: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       marginTop: theme.spacing.md,
       gap: theme.spacing.sm,
@@ -590,7 +592,7 @@ const createStyles = (theme: Theme) =>
 
     // Specs
     specsGrid: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.sm,
     },

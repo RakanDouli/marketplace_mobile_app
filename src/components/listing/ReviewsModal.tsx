@@ -361,7 +361,7 @@ const createStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
     },
     tags: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.xs,
     },
@@ -421,7 +421,7 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
     },
     reviewTags: {
-      flexDirection: 'row',
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       flexWrap: 'wrap',
       gap: theme.spacing.xs,
       marginTop: theme.spacing.sm,
