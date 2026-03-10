@@ -64,7 +64,7 @@ export const ListingCardList = memo(function ListingCardList({
 
   return (
     <TouchableOpacity
-      style={[styles.card, theme.rtl.flexDirection.row()]}
+      style={[styles.card, theme.isRTL ? { flexDirection: 'row-reverse' } : { flexDirection: 'row' }]}
       onPress={onPress}
       activeOpacity={0.9}
     >

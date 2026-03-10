@@ -6,23 +6,34 @@
 import { createClient, SupabaseClient, Session, User } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import {
-  GoogleSignin,
-  statusCodes,
-  isErrorWithCode,
-} from '@react-native-google-signin/google-signin';
+import Constants from 'expo-constants';
 import { ENV } from '../constants/env';
 
-// Configure Google Sign-In with Web Client ID
-// IMPORTANT: Must use Web Client ID, not Android Client ID!
-// The Web Client ID is configured in ENV.GOOGLE_WEB_CLIENT_ID
-if (ENV.GOOGLE_WEB_CLIENT_ID) {
-  GoogleSignin.configure({
-    webClientId: ENV.GOOGLE_WEB_CLIENT_ID,
-    offlineAccess: true,
-  });
-} else {
-  console.warn('[Google Sign-In] GOOGLE_WEB_CLIENT_ID is not configured. Google Sign-In will not work.');
+// Check if we're running in Expo Go (native modules not available)
+const isExpoGo = Constants.appOwnership === 'expo';
+
+// Dynamically import Google Sign-In only in development builds (not Expo Go)
+let GoogleSignin: any = null;
+let statusCodes: any = null;
+let isErrorWithCode: any = null;
+
+if (!isExpoGo) {
+  try {
+    const googleSignIn = require('@react-native-google-signin/google-signin');
+    GoogleSignin = googleSignIn.GoogleSignin;
+    statusCodes = googleSignIn.statusCodes;
+    isErrorWithCode = googleSignIn.isErrorWithCode;
+
+    // Configure Google Sign-In with Web Client ID
+    if (ENV.GOOGLE_WEB_CLIENT_ID && GoogleSignin) {
+      GoogleSignin.configure({
+        webClientId: ENV.GOOGLE_WEB_CLIENT_ID,
+        offlineAccess: true,
+      });
+    }
+  } catch (e) {
+    console.warn('[Google Sign-In] Native module not available (running in Expo Go?)');
+  }
 }
 
 // Custom storage adapter for Supabase using SecureStore for sensitive data
@@ -243,6 +254,15 @@ export const signInWithGoogle = async (): Promise<{
   user: User | null;
   error: Error | null;
 }> => {
+  // Check if Google Sign-In is available (not in Expo Go)
+  if (!GoogleSignin) {
+    return {
+      session: null,
+      user: null,
+      error: new Error('تسجيل الدخول بجوجل غير متاح في Expo Go. يرجى استخدام تطبيق التطوير.'),
+    };
+  }
+
   try {
     // Check if Google Play Services are available (Android only)
     await GoogleSignin.hasPlayServices();

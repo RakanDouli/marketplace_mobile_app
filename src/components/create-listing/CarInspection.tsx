@@ -5,7 +5,7 @@
  * 13 parts with 3 damage types: spot_paint, paint, replaced
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,7 +15,9 @@ import {
   Modal,
   Pressable,
   Dimensions,
+  ImageSourcePropType,
 } from 'react-native';
+import { Asset } from 'expo-asset';
 import { Plus, AlertTriangle, X, Check } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text } from '../slices';
@@ -63,13 +65,24 @@ export interface DamageReport {
 }
 
 // Images - require() for React Native bundler
-const CAR_IMAGES = {
+const CAR_IMAGE_MODULES = {
   front: require('../../../assets/images/car-inspection/front.png'),
   back: require('../../../assets/images/car-inspection/back.png'),
   left: require('../../../assets/images/car-inspection/left.png'),
   right: require('../../../assets/images/car-inspection/right.png'),
   top: require('../../../assets/images/car-inspection/top.png'),
 };
+
+// Preload images on module load for production builds
+Asset.loadAsync([
+  CAR_IMAGE_MODULES.front,
+  CAR_IMAGE_MODULES.back,
+  CAR_IMAGE_MODULES.left,
+  CAR_IMAGE_MODULES.right,
+  CAR_IMAGE_MODULES.top,
+]).catch(() => {
+  // Silent fail - images will still load on demand
+});
 
 /**
  * Convert backend format (string array) to frontend format (DamageReport array)
@@ -181,7 +194,7 @@ export const CarInspection: React.FC<CarInspectionProps> = ({
       <View style={styles.viewCard}>
         <Text variant="small" style={styles.viewLabel}>{view.label}</Text>
         <View style={styles.viewImageContainer}>
-          <Image source={CAR_IMAGES[viewId]} style={styles.viewImage} resizeMode="contain" />
+          <Image source={CAR_IMAGE_MODULES[viewId]} style={styles.viewImage} resizeMode="contain" />
           {getPartsForView(viewId).map(part => {
             const damage = getDamageForPart(part.key);
             const damageColor = damage ? getDamageColor(damage.damageType) : undefined;

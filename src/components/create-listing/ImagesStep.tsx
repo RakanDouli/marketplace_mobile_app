@@ -408,6 +408,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       gap: theme.spacing.md,
     },
     sectionHeader: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
     },
@@ -431,6 +432,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
       borderRadius: theme.radius.sm,
     },
     infoNote: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.md,
       padding: theme.spacing.md,
@@ -441,6 +443,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Error styles
     errorContainer: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
       justifyContent: isRTL ? 'flex-end' : 'flex-start',
@@ -449,6 +452,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Toggle row styles
     toggleRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: theme.spacing.md,

@@ -18,7 +18,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
-import { Check } from 'lucide-react-native';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme, Theme } from '../../src/theme';
 import { Text, Button, Form } from '../../src/components/slices';
 import { useCreateListingStore } from '../../src/stores/createListingStore';
@@ -118,11 +118,7 @@ export default function WizardScreen() {
         scrollViewRef.current?.scrollTo({ y: 0, animated: true });
       }
     } else {
-      const success = nextStep();
-      if (!success) {
-        // Validation failed - scroll to top to show errors
-        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-      }
+      nextStep();
     }
   };
 
@@ -270,8 +266,8 @@ export default function WizardScreen() {
                         backgroundColor: isCompleted
                           ? theme.colors.success
                           : isCurrent
-                          ? theme.colors.primary
-                          : theme.colors.border,
+                            ? theme.colors.primary
+                            : theme.colors.border,
                       },
                     ]}
                   >
@@ -303,7 +299,7 @@ export default function WizardScreen() {
         <KeyboardAvoidingView
           style={styles.keyboardAvoidingView}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 140 : 0}
         >
           <ScrollView
             ref={scrollViewRef}
@@ -312,7 +308,7 @@ export default function WizardScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <Form error={error}>
+            <Form error={error || undefined}>
               {renderStepContent()}
             </Form>
           </ScrollView>
@@ -325,10 +321,14 @@ export default function WizardScreen() {
             variant="outline"
             size="lg"
             onPress={handleBack}
-            arrowBack
             style={styles.navButton}
           >
-            رجوع
+            <View style={styles.buttonContent}>
+              {!theme.isRTL && <ChevronLeft size={16} color={theme.colors.text} />}
+              <Text variant="body" bold style={styles.buttonText}>رجوع</Text>
+              {theme.isRTL && <ChevronRight size={16} color={theme.colors.text} />}
+
+            </View>
           </Button>
 
           {/* Cancel Button - deletes draft and goes home */}
@@ -348,10 +348,17 @@ export default function WizardScreen() {
             onPress={handleNext}
             loading={isSubmitting}
             disabled={isSubmitting}
-            arrowForward={!isLastStep}
             style={styles.navButton}
           >
-            {isLastStep ? 'نشر الإعلان' : 'التالي'}
+            {isLastStep ? (
+              'نشر الإعلان'
+            ) : (
+              <View style={styles.buttonContent}>
+                {theme.isRTL && <ChevronLeft size={16} color={theme.colors.textLight} />}
+                <Text variant="body" bold style={[styles.buttonText, { color: theme.colors.textLight }]}>التالي</Text>
+                {!theme.isRTL && <ChevronRight size={16} color={theme.colors.textLight} />}
+              </View>
+            )}
           </Button>
         </View>
       </SafeAreaView>
@@ -421,5 +428,14 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     navButton: {
       flex: 1,
+    },
+    buttonContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    buttonText: {
+      textTransform: 'uppercase',
+      letterSpacing: 1,
     },
   });

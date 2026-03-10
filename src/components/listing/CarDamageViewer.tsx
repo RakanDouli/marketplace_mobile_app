@@ -13,6 +13,7 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
+import { Asset } from 'expo-asset';
 import { AlertTriangle, Check } from 'lucide-react-native';
 import { Text } from '../slices/Text';
 import { useTheme, Theme } from '../../theme';
@@ -25,6 +26,17 @@ const carImages = {
   right: require('../../../assets/images/car-inspection/right.png'),
   top: require('../../../assets/images/car-inspection/top.png'),
 };
+
+// Preload images on module load for production builds
+Asset.loadAsync([
+  carImages.front,
+  carImages.back,
+  carImages.left,
+  carImages.right,
+  carImages.top,
+]).catch(() => {
+  // Silent fail - images will still load on demand
+});
 
 type ViewType = 'front' | 'back' | 'left' | 'right' | 'top';
 
