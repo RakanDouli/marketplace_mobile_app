@@ -148,17 +148,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       const newMessage = data.sendMessage;
 
-      // Add message to local state
-      set((state) => ({
-        messages: {
-          ...state.messages,
-          [threadId]: [...(state.messages[threadId] || []), newMessage],
-        },
-        // Update thread's lastMessageAt
-        threads: state.threads.map((t) =>
-          t.id === threadId ? { ...t, lastMessageAt: newMessage.createdAt } : t
-        ),
-      }));
+      // Add message to local state (with duplicate check)
+      set((state) => {
+        const existingMessages = state.messages[threadId] || [];
+        // Check if message already exists (could be added by realtime subscription)
+        const messageExists = existingMessages.some(msg => msg.id === newMessage.id);
+
+        if (messageExists) {
+          return state; // Don't add duplicate
+        }
+
+        return {
+          messages: {
+            ...state.messages,
+            [threadId]: [...existingMessages, newMessage],
+          },
+          // Update thread's lastMessageAt
+          threads: state.threads.map((t) =>
+            t.id === threadId ? { ...t, lastMessageAt: newMessage.createdAt } : t
+          ),
+        };
+      });
     } catch (error) {
       set({ error: 'فشل في إرسال الرسالة' });
       throw error;
@@ -541,27 +551,46 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
           // If message is from another user (not current user)
           if (newMessage.senderId !== userId) {
-            // Update threads state and add message
-            set((state) => ({
-              threads: state.threads.map(t =>
-                t.id === newMessage.threadId
-                  ? {
-                      ...t,
-                      lastMessageAt: newMessage.createdAt,
-                      unreadCount: (t.unreadCount || 0) + 1,
-                    }
-                  : t
-              ),
-              messages: {
-                ...state.messages,
-                [newMessage.threadId]: [
-                  ...(state.messages[newMessage.threadId] || []),
-                  newMessage
-                ],
-              },
-              // Increment unread count immediately
-              unreadCount: state.unreadCount + 1,
-            }));
+            // Update threads state and add message (with duplicate check)
+            set((state) => {
+              const existingMessages = state.messages[newMessage.threadId] || [];
+              // Check if message already exists (could be added by thread subscription)
+              const messageExists = existingMessages.some(msg => msg.id === newMessage.id);
+
+              if (messageExists) {
+                // Just update unread count, don't add duplicate message
+                return {
+                  threads: state.threads.map(t =>
+                    t.id === newMessage.threadId
+                      ? {
+                          ...t,
+                          lastMessageAt: newMessage.createdAt,
+                          unreadCount: (t.unreadCount || 0) + 1,
+                        }
+                      : t
+                  ),
+                  unreadCount: state.unreadCount + 1,
+                };
+              }
+
+              return {
+                threads: state.threads.map(t =>
+                  t.id === newMessage.threadId
+                    ? {
+                        ...t,
+                        lastMessageAt: newMessage.createdAt,
+                        unreadCount: (t.unreadCount || 0) + 1,
+                      }
+                    : t
+                ),
+                messages: {
+                  ...state.messages,
+                  [newMessage.threadId]: [...existingMessages, newMessage],
+                },
+                // Increment unread count immediately
+                unreadCount: state.unreadCount + 1,
+              };
+            });
           }
         }
       )
