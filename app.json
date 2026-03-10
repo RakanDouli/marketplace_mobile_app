@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.shambay.marketplace",
+      "appleTeamId": "M425KFPB9Z",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك لإنشاء رابط خريطة Google لإعلانك",
         "ITSAppUsesNonExemptEncryption": false
