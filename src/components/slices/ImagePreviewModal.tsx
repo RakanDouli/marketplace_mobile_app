@@ -110,12 +110,12 @@ export function ImagePreviewModal({
     if (mediaItems && mediaItems.length > 0) {
       return mediaItems;
     }
-    // Fallback to legacy images prop
+    // Fallback to legacy images prop (these are Cloudflare image keys)
     if (images && images.length > 0) {
-      return images.map((img, idx) => ({
+      return images.map((imageKey) => ({
         type: 'image' as const,
-        url: img,
-        id: `img-${idx}`,
+        url: imageKey,  // Keep original key for URL generation
+        id: imageKey,   // Use the image key as ID for getResponsiveImageUrl
       }));
     }
     return [];
