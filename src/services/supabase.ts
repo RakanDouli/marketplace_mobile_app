@@ -24,10 +24,11 @@ if (!isExpoGo) {
     statusCodes = googleSignIn.statusCodes;
     isErrorWithCode = googleSignIn.isErrorWithCode;
 
-    // Configure Google Sign-In with Web Client ID
+    // Configure Google Sign-In with Web Client ID and iOS Client ID
     if (ENV.GOOGLE_WEB_CLIENT_ID && GoogleSignin) {
       GoogleSignin.configure({
         webClientId: ENV.GOOGLE_WEB_CLIENT_ID,
+        iosClientId: ENV.GOOGLE_IOS_CLIENT_ID,
         offlineAccess: true,
       });
     }

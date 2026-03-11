@@ -20,6 +20,9 @@ interface EnvironmentConfig {
   // Google Sign-In - Web Client ID (NOT Android Client ID!)
   // Get from: Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs > Web application
   GOOGLE_WEB_CLIENT_ID: string;
+  // Google Sign-In - iOS Client ID
+  // Get from: Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs > iOS
+  GOOGLE_IOS_CLIENT_ID: string;
 }
 
 const environments: Record<string, EnvironmentConfig> = {
@@ -39,6 +42,8 @@ const environments: Record<string, EnvironmentConfig> = {
     // Web Client ID from Google Cloud Console (Firebase project: marketplace-9be9d)
     // Must match the Client ID configured in Supabase Auth > Google provider
     GOOGLE_WEB_CLIENT_ID: '136245589649-82tp841sq0teh958ilqem9e09nivhcf0.apps.googleusercontent.com',
+    // iOS Client ID from Google Cloud Console
+    GOOGLE_IOS_CLIENT_ID: '136245589649-r2ldnafr0kodcgq9fhj8g3e7ivoae7ml.apps.googleusercontent.com',
   },
 
   // Production: Used for release builds (app store)
@@ -58,6 +63,8 @@ const environments: Record<string, EnvironmentConfig> = {
     // Web Client ID from Google Cloud Console (Firebase project: marketplace-9be9d)
     // Must match the Client ID configured in Supabase Auth > Google provider
     GOOGLE_WEB_CLIENT_ID: '136245589649-82tp841sq0teh958ilqem9e09nivhcf0.apps.googleusercontent.com',
+    // iOS Client ID from Google Cloud Console
+    GOOGLE_IOS_CLIENT_ID: '136245589649-r2ldnafr0kodcgq9fhj8g3e7ivoae7ml.apps.googleusercontent.com',
   },
 };
 

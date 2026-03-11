@@ -7,12 +7,25 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:136245589649:android:3513b7caed5ea8cdd53130",
+        "mobilesdk_app_id": "1:136245589649:android:59d5e5f2bbeb594ed53130",
         "android_client_info": {
           "package_name": "com.shambay.marketplace"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "136245589649-pr78q6ggsjc1e71ub7fvrmb5mjr59962.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shambay.marketplace",
+            "certificate_hash": "1c78e6d6f993f942b8e884f4e721441885b11be3"
+          }
+        },
+        {
+          "client_id": "136245589649-82tp841sq0teh958ilqem9e09nivhcf0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCwhC4CAtfwpLGKxAdry3gzr3AUS_GOT0E"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "136245589649-82tp841sq0teh958ilqem9e09nivhcf0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
