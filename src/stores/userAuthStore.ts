@@ -17,6 +17,7 @@ import {
   verifyEmailOtp,
   resendEmailOtp,
   signInWithGoogle as supabaseSignInWithGoogle,
+  signInWithApple as supabaseSignInWithApple,
 } from '../services/supabase';
 import { graphqlRequest } from '../services/graphql/client';
 import { ENV } from '../constants/env';
@@ -290,6 +291,7 @@ interface UserAuthState {
   initialize: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  signInWithApple: () => Promise<{ success: boolean; error?: string }>;
   signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
@@ -676,6 +678,95 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
 
       set({ isLoading: false });
       return { success: false, error: 'فشل تسجيل الدخول بجوجل' };
+    } catch (error: any) {
+      const arabicError = translateAuthError(error);
+      set({ isLoading: false, error: arabicError });
+      return { success: false, error: arabicError };
+    }
+  },
+
+  /**
+   * Sign in with Apple OAuth (iOS only)
+   * Uses native Apple Sign-In via expo-apple-authentication
+   */
+  signInWithApple: async () => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const { session, user, error } = await supabaseSignInWithApple();
+
+      if (error) {
+        const arabicError = translateAuthError(error);
+        set({ isLoading: false, error: arabicError });
+        return { success: false, error: arabicError };
+      }
+
+      if (session && user) {
+        // Fetch user profile from backend BEFORE setting authenticated
+        // This ensures profile is loaded and user status is validated
+        try {
+          const data = await graphqlRequest<{
+            me: { user: UserProfile };
+            myPackage: UserPackage | null;
+          }>(ME_QUERY, {}, false, session.access_token);
+
+          if (data?.me?.user) {
+            // Validate user status (banned/suspended check)
+            await validateUserStatus(data.me.user, supabaseSignOut);
+
+            // User is allowed - set all state
+            set({
+              session,
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+              profile: data.me.user,
+              userPackage: data.myPackage || null,
+            });
+
+            // Show warning notification if user has warnings
+            showWarningNotificationIfNeeded(data.me.user);
+
+            return { success: true };
+          } else {
+            // No profile - sign out
+            await supabaseSignOut();
+            set({
+              session: null,
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: 'فشل في تحميل بيانات المستخدم',
+            });
+            return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
+          }
+        } catch (profileError: any) {
+          // If validation throws (banned/suspended), handle the error
+          if (profileError?.message?.includes('حسابك')) {
+            set({
+              session: null,
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: profileError.message,
+            });
+            return { success: false, error: profileError.message };
+          }
+          // Other profile errors - sign out
+          await supabaseSignOut();
+          set({
+            session: null,
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: 'فشل في تحميل بيانات المستخدم',
+          });
+          return { success: false, error: 'فشل في تحميل بيانات المستخدم' };
+        }
+      }
+
+      set({ isLoading: false });
+      return { success: false, error: 'فشل تسجيل الدخول بـ Apple' };
     } catch (error: any) {
       const arabicError = translateAuthError(error);
       set({ isLoading: false, error: arabicError });

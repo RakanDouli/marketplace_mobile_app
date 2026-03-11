@@ -40,3 +40,7 @@ yarn-error.*
 /ios
 /android
 credentials.json
+
+# Apple Sign-In secret generator
+generate-apple-secret.js
+AuthKey_*.p8

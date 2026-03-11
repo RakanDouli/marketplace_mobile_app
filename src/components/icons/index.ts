@@ -5,3 +5,4 @@
 
 export { LogoIcon } from './LogoIcon';
 export { GoogleIcon } from './GoogleIcon';
+export { AppleIcon } from './AppleIcon';

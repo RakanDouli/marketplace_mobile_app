@@ -17,8 +17,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.shambay.marketplace",
       "appleTeamId": "M425KFPB9Z",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "googleServicesFile": "./GoogleService-Info.plist",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك لإنشاء رابط خريطة Google لإعلانك",
         "ITSAppUsesNonExemptEncryption": false

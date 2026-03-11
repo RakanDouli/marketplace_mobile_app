@@ -242,6 +242,84 @@ export const onAuthStateChange = (
 };
 
 /**
+ * Sign in with Apple using expo-apple-authentication
+ * iOS only - uses native Apple Sign-In
+ */
+export const signInWithApple = async (): Promise<{
+  session: Session | null;
+  user: User | null;
+  error: Error | null;
+}> => {
+  try {
+    // Dynamically import to avoid issues on Android
+    const AppleAuthentication = require('expo-apple-authentication');
+    const { createHash, randomBytes } = require('crypto');
+
+    // Check if Apple Sign-In is available
+    const isAvailable = await AppleAuthentication.isAvailableAsync();
+    if (!isAvailable) {
+      return {
+        session: null,
+        user: null,
+        error: new Error('تسجيل الدخول بـ Apple غير متاح على هذا الجهاز'),
+      };
+    }
+
+    // Generate nonce for security
+    const rawNonce = randomBytes(32).toString('hex');
+    const hashedNonce = createHash('sha256').update(rawNonce).digest('hex');
+
+    // Request Apple Sign-In
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+      nonce: hashedNonce,
+    });
+
+    if (!credential.identityToken) {
+      return {
+        session: null,
+        user: null,
+        error: new Error('لم يتم استلام بيانات المصادقة من Apple'),
+      };
+    }
+
+    // Sign in with Supabase using the Apple ID token
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'apple',
+      token: credential.identityToken,
+      nonce: rawNonce,
+    });
+
+    if (error) {
+      console.error('[Apple Sign-In] Supabase error:', error);
+      return { session: null, user: null, error };
+    }
+
+    return { session: data.session, user: data.user, error: null };
+  } catch (error: any) {
+    console.error('[Apple Sign-In] Error:', error);
+
+    // Handle user cancellation
+    if (error.code === 'ERR_REQUEST_CANCELED') {
+      return {
+        session: null,
+        user: null,
+        error: new Error('تم إلغاء تسجيل الدخول'),
+      };
+    }
+
+    return {
+      session: null,
+      user: null,
+      error: error instanceof Error ? error : new Error('فشل تسجيل الدخول بـ Apple'),
+    };
+  }
+};
+
+/**
  * Sign in with Google using native @react-native-google-signin
  * Uses signInWithIdToken to authenticate with Supabase
  *
@@ -274,6 +352,7 @@ export const signInWithGoogle = async (): Promise<{
     // Check if sign-in was successful and we have idToken
     if (response.type === 'success' && response.data?.idToken) {
       // Use Supabase signInWithIdToken to exchange Google ID token for Supabase session
+      // Google mobile SDK doesn't use nonce - token is verified by Google's signature
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: 'google',
         token: response.data.idToken,

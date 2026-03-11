@@ -18,8 +18,11 @@ import { useRouter } from 'expo-router';
 import { ChevronDown } from 'lucide-react-native';
 import { useTheme } from '../../src/theme';
 import { Text, Button, Input, Form } from '../../src/components/slices';
-import { LogoIcon, GoogleIcon } from '../../src/components/icons';
+import { LogoIcon, GoogleIcon, AppleIcon } from '../../src/components/icons';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
+
+// Check if running on iOS for Apple Sign-In
+const isIOS = Platform.OS === 'ios';
 
 // Development credentials from backend seed
 const DEV_CREDENTIALS = [
@@ -80,6 +83,7 @@ export default function LoginScreen() {
   const {
     signIn,
     signInWithGoogle,
+    signInWithApple,
     isLoading,
     error,
     clearError,
@@ -138,6 +142,14 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     clearError();
     const result = await signInWithGoogle();
+    if (result.success) {
+      router.replace('/(tabs)');
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    clearError();
+    const result = await signInWithApple();
     if (result.success) {
       router.replace('/(tabs)');
     }
@@ -250,10 +262,23 @@ export default function LoginScreen() {
               onPress={handleGoogleLogin}
               disabled={isLoading}
               icon={<GoogleIcon width={20} height={20} />}
-              style={styles.googleButton}
+              style={styles.socialButton}
             >
               تسجيل الدخول بجوجل
             </Button>
+
+            {/* Apple Sign In Button - iOS only */}
+            {isIOS && (
+              <Button
+                variant="outline"
+                onPress={handleAppleLogin}
+                disabled={isLoading}
+                icon={<AppleIcon width={20} height={20} color={theme.colors.text} />}
+                style={styles.socialButton}
+              >
+                تسجيل الدخول بـ Apple
+              </Button>
+            )}
 
             {/* Register Link */}
             <TouchableOpacity
@@ -382,8 +407,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>, isRTL: boolean) =>
       borderRadius: theme.radius.md,
       padding: theme.spacing.sm,
     },
-    // Google button
-    googleButton: {
+    // Social login buttons
+    socialButton: {
       marginBottom: theme.spacing.sm,
     },
     // Divider

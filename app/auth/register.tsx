@@ -17,8 +17,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme';
 import { Text, Button, Input, Form } from '../../src/components/slices';
-import { LogoIcon, GoogleIcon } from '../../src/components/icons';
+import { LogoIcon, GoogleIcon, AppleIcon } from '../../src/components/icons';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
+
+// Check if running on iOS for Apple Sign-In
+const isIOS = Platform.OS === 'ios';
 
 // Validation functions
 const validateName = (name: string): string | undefined => {
@@ -52,6 +55,7 @@ export default function RegisterScreen() {
   const {
     signUp,
     signInWithGoogle,
+    signInWithApple,
     isLoading,
     error,
     clearError,
@@ -90,6 +94,12 @@ export default function RegisterScreen() {
   const handleGoogleSignUp = async () => {
     clearError();
     await signInWithGoogle();
+  };
+
+  // Handle Apple Sign Up (iOS only)
+  const handleAppleSignUp = async () => {
+    clearError();
+    await signInWithApple();
   };
 
   // Validation
@@ -219,10 +229,23 @@ export default function RegisterScreen() {
               onPress={handleGoogleSignUp}
               disabled={isLoading}
               icon={<GoogleIcon width={20} height={20} />}
-              style={styles.googleButton}
+              style={styles.socialButton}
             >
               التسجيل بجوجل
             </Button>
+
+            {/* Apple Sign Up Button - iOS only */}
+            {isIOS && (
+              <Button
+                variant="outline"
+                onPress={handleAppleSignUp}
+                disabled={isLoading}
+                icon={<AppleIcon width={20} height={20} color={theme.colors.text} />}
+                style={styles.socialButton}
+              >
+                التسجيل بـ Apple
+              </Button>
+            )}
 
             {/* Login Link */}
             <TouchableOpacity
@@ -290,8 +313,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>, isRTL: boolean) =>
     subtitle: {
       marginBottom: theme.spacing.lg,
     },
-    // Google button
-    googleButton: {
+    // Social login buttons
+    socialButton: {
       marginBottom: theme.spacing.sm,
     },
     // Divider
