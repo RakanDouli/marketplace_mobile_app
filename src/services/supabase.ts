@@ -6,6 +6,7 @@
 import { createClient, SupabaseClient, Session, User } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
+import * as Crypto from 'expo-crypto';
 import Constants from 'expo-constants';
 import { ENV } from '../constants/env';
 
@@ -253,7 +254,6 @@ export const signInWithApple = async (): Promise<{
   try {
     // Dynamically import to avoid issues on Android
     const AppleAuthentication = require('expo-apple-authentication');
-    const { createHash, randomBytes } = require('crypto');
 
     // Check if Apple Sign-In is available
     const isAvailable = await AppleAuthentication.isAvailableAsync();
@@ -265,11 +265,15 @@ export const signInWithApple = async (): Promise<{
       };
     }
 
-    // Generate nonce for security
-    const rawNonce = randomBytes(32).toString('hex');
-    const hashedNonce = createHash('sha256').update(rawNonce).digest('hex');
+    // Generate nonce for security using expo-crypto (React Native compatible)
+    // Raw nonce goes to Supabase, hashed nonce goes to Apple
+    const rawNonce = Crypto.randomUUID();
+    const hashedNonce = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      rawNonce
+    );
 
-    // Request Apple Sign-In
+    // Request Apple Sign-In with hashed nonce
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [
         AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -286,7 +290,8 @@ export const signInWithApple = async (): Promise<{
       };
     }
 
-    // Sign in with Supabase using the Apple ID token
+    // Sign in with Supabase using the Apple ID token and raw nonce
+    // Supabase will hash the raw nonce and compare it to the one in the token
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
       token: credential.identityToken,

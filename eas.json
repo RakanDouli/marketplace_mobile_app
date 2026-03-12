@@ -6,6 +6,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "staging"
+      },
       "android": {
         "gradleCommand": ":app:assembleDebug",
         "buildType": "apk",
@@ -19,6 +22,9 @@
     "development-device": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "staging"
+      },
       "android": {
         "gradleCommand": ":app:assembleDebug",
         "buildType": "apk",

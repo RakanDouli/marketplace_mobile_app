@@ -524,7 +524,7 @@ export default function EditProfileScreen() {
 
           {/* Email */}
           <View style={styles.securityRow}>
-            <View style={[styles.securityInfo, theme.rtl.flexDirection.row()]}>
+            <View style={[styles.securityInfo]}>
               <Mail size={20} color={theme.colors.textSecondary} />
               <View style={[styles.securityTexts, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
                 <Text variant="small" color="secondary">البريد الإلكتروني</Text>
@@ -533,16 +533,15 @@ export default function EditProfileScreen() {
             </View>
             <Button
               variant="outline"
-              size="small"
               onPress={() => setShowEmailModal(true)}
             >
-              تغيير
+              تغيير البريد
             </Button>
           </View>
 
           {/* Password */}
           <View style={styles.securityRow}>
-            <View style={[styles.securityInfo, theme.rtl.flexDirection.row()]}>
+            <View style={[styles.securityInfo]}>
               <Lock size={20} color={theme.colors.textSecondary} />
               <View style={[styles.securityTexts, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
                 <Text variant="small" color="secondary">كلمة المرور</Text>
@@ -551,7 +550,6 @@ export default function EditProfileScreen() {
             </View>
             <Button
               variant="outline"
-              size="small"
               onPress={handleSendPasswordReset}
               loading={isSendingPasswordReset}
               disabled={isSendingPasswordReset || passwordResetSuccess}
@@ -759,7 +757,7 @@ const createStyles = (theme: Theme) =>
     },
     content: {
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       gap: 0,
     },
     // Avatar Section
@@ -823,11 +821,13 @@ const createStyles = (theme: Theme) =>
     },
     // Section Title
     sectionTitle: {
+
       marginBottom: theme.spacing.md,
       fontWeight: '600',
     },
     // Security
     securityRow: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingVertical: theme.spacing.sm,
@@ -836,7 +836,7 @@ const createStyles = (theme: Theme) =>
     },
     securityInfo: {
       alignItems: 'center',
-      flex: 1,
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.sm,
     },
     securityTexts: {

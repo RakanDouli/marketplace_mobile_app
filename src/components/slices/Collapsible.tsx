@@ -163,7 +163,6 @@ export function Collapsible({
           styles.content,
           getContentPadding(),
           variant === 'form' && styles.formContent,
-          { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' },
         ]}>
           {children}
         </View>

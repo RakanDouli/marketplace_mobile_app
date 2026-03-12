@@ -10,7 +10,6 @@ import {
   FlatList,
   RefreshControl,
   Pressable,
-  Modal,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -26,6 +25,7 @@ import { Text } from '../../../src/components/slices/Text';
 import { Button } from '../../../src/components/slices/Button';
 import { Input } from '../../../src/components/slices/Input';
 import { Loading } from '../../../src/components/slices/Loading';
+import { BaseModal } from '../../../src/components/slices/BaseModal';
 import { MyListingCard } from '../../../src/components/dashboard/MyListingCard';
 import { WarningBanner } from '../../../src/components/dashboard/WarningBanner';
 import { LimitProgressBar } from '../../../src/components/dashboard/LimitProgressBar';
@@ -143,7 +143,7 @@ export default function MyListingsScreen() {
     if (isSuspended) {
       Alert.alert(
         'الحساب موقوف مؤقتاً',
-        `حسابك موقوف حتى ${formatBanDate(bannedUntil)} ولا يمكنك إضافة إعلانات جديدة خلال فترة الإيقاف.${banReason ? `\n\nالسبب: ${banReason}` : ''}`,
+        `حسابك موقوف حتى ${formatBanDate(bannedUntil!)} ولا يمكنك إضافة إعلانات جديدة خلال فترة الإيقاف.${banReason ? `\n\nالسبب: ${banReason}` : ''}`,
         [
           { text: 'حسناً', style: 'cancel' },
           { text: 'تواصل معنا', onPress: () => router.push('/(tabs)/menu/contact') },
@@ -182,7 +182,7 @@ export default function MyListingsScreen() {
         isBanned ? 'الحساب محظور' : 'الحساب موقوف مؤقتاً',
         isBanned
           ? 'لا يمكنك تعديل الإعلانات أثناء حظر حسابك.'
-          : `لا يمكنك تعديل الإعلانات حتى ${formatBanDate(bannedUntil)}.`,
+          : `لا يمكنك تعديل الإعلانات حتى ${formatBanDate(bannedUntil!)}.`,
         [{ text: 'حسناً' }]
       );
       return;
@@ -235,7 +235,7 @@ export default function MyListingsScreen() {
         isBanned ? 'الحساب محظور' : 'الحساب موقوف مؤقتاً',
         isBanned
           ? 'لا يمكنك إكمال الإعلانات أثناء حظر حسابك.'
-          : `لا يمكنك إكمال الإعلانات حتى ${formatBanDate(bannedUntil)}.`,
+          : `لا يمكنك إكمال الإعلانات حتى ${formatBanDate(bannedUntil!)}.`,
         [{ text: 'حسناً' }]
       );
       return;
@@ -447,96 +447,67 @@ export default function MyListingsScreen() {
       )}
 
       {/* Status Filter Modal */}
-      <Modal
+      <BaseModal
         visible={showFilterModal}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowFilterModal(false)}
+        onClose={() => setShowFilterModal(false)}
+        title="فلترة حسب الحالة"
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowFilterModal(false)}
-        >
-          <View style={styles.filterModal}>
-            <View style={styles.filterModalHeader}>
-              <Text variant="h4">فلترة حسب الحالة</Text>
-              <Pressable onPress={() => setShowFilterModal(false)}>
-                <X size={theme.iconSize.md} color={theme.colors.text} />
-              </Pressable>
-            </View>
-            {STATUS_OPTIONS.map((option) => (
-              <Pressable
-                key={option.value}
-                style={[
-                  styles.filterOption,
-                  selectedStatus === option.value && styles.filterOptionActive,
-                ]}
-                onPress={() => handleStatusChange(option.value)}
-              >
-                <Text
-                  variant="paragraph"
-                  color={selectedStatus === option.value ? 'primary' : undefined}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
+        {STATUS_OPTIONS.map((option) => (
+          <Pressable
+            key={option.value}
+            style={[
+              styles.filterOption,
+              selectedStatus === option.value && styles.filterOptionActive,
+            ]}
+            onPress={() => handleStatusChange(option.value)}
+          >
+            <Text
+              variant="paragraph"
+              color={selectedStatus === option.value ? 'primary' : undefined}
+            >
+              {option.label}
+            </Text>
+          </Pressable>
+        ))}
+      </BaseModal>
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <BaseModal
         visible={showDeleteModal}
-        animationType="slide"
-        transparent
-        onRequestClose={() => !isDeleting && setShowDeleteModal(false)}
+        onClose={() => !isDeleting && setShowDeleteModal(false)}
+        title="حذف الإعلان"
+        closeOnBackdropPress={!isDeleting}
       >
+        <Text variant="paragraph" color="secondary" style={styles.deleteModalSubtitle}>
+          يرجى اختيار سبب الحذف:
+        </Text>
         <Pressable
-          style={styles.modalOverlay}
-          onPress={() => !isDeleting && setShowDeleteModal(false)}
+          style={styles.deleteOption}
+          onPress={() => confirmDelete('sold_via_platform')}
+          disabled={isDeleting}
         >
-          <View style={styles.deleteModal}>
-            <Text variant="h4" style={styles.deleteModalTitle}>حذف الإعلان</Text>
-            <Text variant="paragraph" color="secondary" style={styles.deleteModalSubtitle}>
-              يرجى اختيار سبب الحذف:
-            </Text>
-            <Pressable
-              style={styles.deleteOption}
-              onPress={() => confirmDelete('sold_via_platform')}
-              disabled={isDeleting}
-            >
-              <Text variant="paragraph">تم البيع عبر المنصة</Text>
-            </Pressable>
-            <Pressable
-              style={styles.deleteOption}
-              onPress={() => confirmDelete('sold_externally')}
-              disabled={isDeleting}
-            >
-              <Text variant="paragraph">تم البيع بطريقة أخرى</Text>
-            </Pressable>
-            <Pressable
-              style={styles.deleteOption}
-              onPress={() => confirmDelete('no_longer_for_sale')}
-              disabled={isDeleting}
-            >
-              <Text variant="paragraph">لم يعد للبيع</Text>
-            </Pressable>
-            <Pressable
-              style={styles.cancelButton}
-              onPress={() => setShowDeleteModal(false)}
-              disabled={isDeleting}
-            >
-              <Text variant="paragraph" color="secondary">إلغاء</Text>
-            </Pressable>
-            {isDeleting && (
-              <View style={styles.deletingOverlay}>
-                <Loading type="dots" size="sm" />
-              </View>
-            )}
-          </View>
+          <Text variant="paragraph">تم البيع عبر المنصة</Text>
         </Pressable>
-      </Modal>
+        <Pressable
+          style={styles.deleteOption}
+          onPress={() => confirmDelete('sold_externally')}
+          disabled={isDeleting}
+        >
+          <Text variant="paragraph">تم البيع بطريقة أخرى</Text>
+        </Pressable>
+        <Pressable
+          style={styles.deleteOption}
+          onPress={() => confirmDelete('no_longer_for_sale')}
+          disabled={isDeleting}
+        >
+          <Text variant="paragraph">لم يعد للبيع</Text>
+        </Pressable>
+        {isDeleting && (
+          <View style={styles.deletingOverlay}>
+            <Loading type="dots" size="sm" />
+          </View>
+        )}
+      </BaseModal>
 
       {/* Edit Listing Modal */}
       {listingToEdit && (
@@ -560,10 +531,11 @@ const createStyles = (theme: Theme) =>
       flex: 1,
     },
     stickyHeader: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
       borderBottomWidth: 1,
@@ -572,12 +544,14 @@ const createStyles = (theme: Theme) =>
     headerDescription: {
       flex: 1,
     },
+
     progressSection: {
       backgroundColor: theme.colors.surface,
       padding: theme.spacing.md,
       marginStart: theme.spacing.md,
-        marginEnd: theme.spacing.md,
-      marginTop: theme.spacing.sm,
+      marginEnd: theme.spacing.md,
+      marginTop: theme.spacing.md,
+      marginBottom: theme.spacing.md,
       borderRadius: theme.radius.lg,
       borderWidth: 1,
       borderColor: theme.colors.border,
@@ -611,11 +585,12 @@ const createStyles = (theme: Theme) =>
       marginTop: theme.spacing.md,
     },
     listContent: {
-      paddingBottom: theme.spacing.xl,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.xl * 3,
     },
     row: {
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       gap: theme.spacing.md,
     },
     cardContainer: {
@@ -640,9 +615,10 @@ const createStyles = (theme: Theme) =>
       marginTop: theme.spacing.lg,
     },
     searchContainer: {
+      flexDirection: 'row',
       gap: theme.spacing.sm,
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingTop: theme.spacing.sm,
       paddingBottom: theme.spacing.xs,
       alignItems: 'center',
@@ -652,37 +628,21 @@ const createStyles = (theme: Theme) =>
       marginBottom: 0,
     },
     resultsHeader: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
     },
     clearFilterButton: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: 4,
     },
     loadingMore: {
       padding: theme.spacing.md,
       alignItems: 'center',
-    },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'flex-end',
-    },
-    filterModal: {
-      backgroundColor: theme.colors.surface,
-      borderTopLeftRadius: theme.radius.xl,
-      borderTopRightRadius: theme.radius.xl,
-      padding: theme.spacing.lg,
-      paddingBottom: theme.spacing.xl + 20,
-    },
-    filterModalHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: theme.spacing.lg,
     },
     filterOption: {
       paddingVertical: theme.spacing.md,
@@ -693,17 +653,7 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.primary + '10',
       marginHorizontal: -theme.spacing.lg,
       paddingStart: theme.spacing.lg,
-        paddingEnd: theme.spacing.lg,
-    },
-    deleteModal: {
-      backgroundColor: theme.colors.surface,
-      borderTopLeftRadius: theme.radius.xl,
-      borderTopRightRadius: theme.radius.xl,
-      padding: theme.spacing.lg,
-      paddingBottom: theme.spacing.xl + theme.spacing.md,
-    },
-    deleteModalTitle: {
-      marginBottom: theme.spacing.md,
+      paddingEnd: theme.spacing.lg,
     },
     deleteModalSubtitle: {
       marginBottom: theme.spacing.lg,
@@ -712,11 +662,6 @@ const createStyles = (theme: Theme) =>
       paddingVertical: theme.spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
-    },
-    cancelButton: {
-      paddingVertical: theme.spacing.md,
-      alignItems: 'center',
-      marginTop: theme.spacing.sm,
     },
     deletingOverlay: {
       ...StyleSheet.absoluteFillObject,

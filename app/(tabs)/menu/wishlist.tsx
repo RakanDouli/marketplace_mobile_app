@@ -177,12 +177,14 @@ const createStyles = (theme: Theme) =>
       borderBottomColor: theme.colors.border,
     },
     headerText: {
-      textAlign: 'right',
+      textAlign: theme.isRTL ? 'right' : 'left',
     },
     listContent: {
       padding: theme.spacing.sm,
+      paddingBottom: theme.spacing.xl * 3,
     },
     columnWrapper: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'space-between',
     },
     cardWrapper: {

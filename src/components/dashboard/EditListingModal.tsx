@@ -132,8 +132,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
   onSuccess,
 }) => {
   const theme = useTheme();
-  const isRTL = theme.isRTL;
-  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const { updateMyListing, loadMyListingById, isLoading } = useUserListingsStore();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -1059,7 +1058,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 // STYLES
 // =============================================================================
 
-const createStyles = (theme: Theme, isRTL: boolean) =>
+const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,

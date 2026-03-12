@@ -1243,6 +1243,7 @@ const createStyles = (
       paddingBottom: theme.spacing.xxl + theme.spacing.xxl,
     },
     row: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       justifyContent: 'flex-start',
       marginBottom: CARD_GAP,
     },
