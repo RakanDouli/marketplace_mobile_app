@@ -40,6 +40,8 @@ export interface UserListing {
   rejectionReason?: string | null;
   rejectionMessage?: string | null;
   description?: string;
+  listingType?: string;
+  condition?: string;
   specs?: Record<string, any>;
   specsDisplay?: Record<string, any>;
   allowBidding?: boolean;

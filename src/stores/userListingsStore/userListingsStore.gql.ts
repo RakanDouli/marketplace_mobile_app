@@ -45,6 +45,8 @@ export const MY_LISTING_BY_ID_QUERY = `
       status
       imageKeys
       videoUrl
+      listingType
+      condition
       specs
       specsDisplay
       location {
@@ -74,9 +76,21 @@ export const UPDATE_MY_LISTING_MUTATION = `
     updateMyListing(id: $id, input: $input) {
       id
       title
+      description
+      priceMinor
       status
       allowBidding
       biddingStartPrice
+      listingType
+      condition
+      imageKeys
+      videoUrl
+      location {
+        province
+        city
+        area
+        link
+      }
       updatedAt
     }
   }

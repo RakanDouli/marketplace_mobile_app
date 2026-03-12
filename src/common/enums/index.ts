@@ -63,8 +63,7 @@ export enum ListingType {
 export enum Condition {
   NEW = "NEW",
   USED_LIKE_NEW = "USED_LIKE_NEW",
-  USED_GOOD = "USED_GOOD",
-  USED_FAIR = "USED_FAIR",
+  USED = "USED",
 }
 
 export enum RejectionReason {
