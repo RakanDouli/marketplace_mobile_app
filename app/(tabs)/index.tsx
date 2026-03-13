@@ -82,7 +82,7 @@ export default function HomeTab() {
 
   // Stores
   const { categories, isLoading: categoriesLoading, fetchCategories } = useCategoriesStore();
-  const { listings, isLoading: listingsLoading } = useListingsStore();
+  const { featuredListings, isLoading: listingsLoading, fetchFeaturedListings } = useListingsStore();
   const { loadMyWishlist, isInitialized: wishlistInitialized } = useWishlistStore();
   const { isAuthenticated, isLoading: authLoading } = useUserAuthStore();
   const { resetFilters } = useFiltersStore();
@@ -106,6 +106,11 @@ export default function HomeTab() {
       fetchCategories();
     }
   }, [categories.length, categoriesLoading, fetchCategories]);
+
+  // Fetch featured listings for cars category (matching web frontend behavior)
+  useEffect(() => {
+    fetchFeaturedListings('cars', 10);
+  }, [fetchFeaturedListings]);
 
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -192,27 +197,27 @@ export default function HomeTab() {
 
         {/* Listings Slider */}
         <FeaturedListings
-          listings={listings}
-          title="إعلانات جديدة"
+          listings={featuredListings}
+          title="سيارات جديدة"
           viewAllText="عرض الكل"
           onViewAll={() => goToCategory('cars', 'سيارات')}
           onListingPress={goToListing}
           variant="slider"
-          isLoading={listingsLoading && listings.length === 0}
+          isLoading={listingsLoading && featuredListings.length === 0}
           paddingY="md"
         />
 
         {/* Listings Grid */}
         <FeaturedListings
-          listings={listings}
-          title="إعلانات جديدة"
+          listings={featuredListings}
+          title="سيارات جديدة"
           viewAllText="عرض الكل"
           onViewAll={() => goToCategory('cars', 'سيارات')}
           onListingPress={goToListing}
           variant="grid"
           columns={isTablet ? 3 : 2}
           limit={isTablet ? 9 : 6}
-          isLoading={listingsLoading && listings.length === 0}
+          isLoading={listingsLoading && featuredListings.length === 0}
           paddingY="md"
         />
 
