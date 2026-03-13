@@ -174,8 +174,8 @@ export default function HomeTab() {
           />
           <View style={styles.heroOverlay} />
           <View style={styles.heroContent}>
-            <Text variant="h2" center style={{ color: theme.colors.textInverse }}>مرحباً بكم في شام باي</Text>
-            <Text variant="paragraph" center style={{ color: theme.colors.textInverse, opacity: 0.85, marginTop: theme.spacing.sm }}>منصتك الأولى للبيع والشراء في سوريا</Text>
+            <Text variant="h2" center style={{ color: theme.colors.textLight }}>مرحباً بكم في شام باي</Text>
+            <Text variant="paragraph" center style={{ color: theme.colors.textLight, opacity: 0.85, marginTop: theme.spacing.sm }}>منصتك الأولى للبيع والشراء في سوريا</Text>
           </View>
         </View>
 

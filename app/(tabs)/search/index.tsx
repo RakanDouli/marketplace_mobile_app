@@ -131,7 +131,7 @@ export default function SearchScreen() {
                 <View style={styles.categoryCardIcon}>
                   {renderCategoryIcon(category.icon, 32, theme.colors.primary)}
                 </View>
-                <Text variant="h4">{category.nameAr}</Text>
+                <Text variant="h4" center>{category.nameAr}</Text>
               </TouchableOpacity>
             ))}
 

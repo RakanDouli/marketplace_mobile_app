@@ -26,7 +26,8 @@ export type TextColor =
   | 'warning'
   | 'info'
   | 'muted'
-  | 'inverse';
+  | 'inverse'
+  | 'light';
 
 export interface TextProps {
   variant?: TextVariant;
@@ -130,6 +131,7 @@ export function Text({
     info: theme.colors.info,
     muted: theme.colors.textMuted,
     inverse: theme.colors.textInverse,
+    light: theme.colors.textLight,
   };
 
   return (

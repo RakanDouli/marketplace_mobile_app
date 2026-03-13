@@ -39,7 +39,8 @@ export function CategorySelector({
   level = 0
 }: CategorySelectorProps) {
   const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  // Use theme.isDark as explicit dependency to ensure styles update on theme change
+  const styles = useMemo(() => createStyles(theme), [theme, theme.isDark]);
 
   // Filter categories
   const visibleCategories = useMemo(() => {
@@ -94,7 +95,7 @@ export function CategorySelector({
           <View style={styles.categoryCardIcon}>
             {renderCategoryIcon(category.icon, 24, theme.colors.primary)}
           </View>
-          <Text variant="h4" center style={styles.categoryCardText}>
+          <Text variant="h4" center>
             {category.nameAr}
           </Text>
         </TouchableOpacity>
@@ -129,9 +130,6 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.primaryLight,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    categoryCardText: {
-      color: theme.colors.text,
     },
   });
 

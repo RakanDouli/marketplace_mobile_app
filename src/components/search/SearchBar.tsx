@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { Search, LayoutGrid } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import { useTheme, Theme } from '../../theme';
-import { Text, BaseModal } from '../slices';
+import { BaseModal, ListItem } from '../slices';
 
 export interface Category {
   slug: string;
@@ -56,7 +56,8 @@ export function SearchBar({
 }: SearchBarProps) {
   const theme = useTheme();
   const router = useRouter();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isRTL = theme.isRTL;
+  const styles = useMemo(() => createStyles(theme, isRTL), [theme, isRTL]);
   const [showDropdown, setShowDropdown] = useState(false);
 
   const activeCategories = useMemo(
@@ -105,7 +106,7 @@ export function SearchBar({
             style={{ marginStart: theme.spacing.xs }}
           />
           <TextInput
-            style={[styles.input, theme.rtl.textAlign.start()]}
+            style={styles.input}
             value={value}
             onChangeText={onChangeText}
             onSubmitEditing={onSubmitEditing}
@@ -153,38 +154,27 @@ export function SearchBar({
         onClose={() => setShowDropdown(false)}
         title="اختر الفئة"
         maxHeightPercent={60}
-        bodyPadding="sm"
+        bodyPadding="none"
       >
         <ScrollView style={styles.dropdownScroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.dropdownOptions}>
-            {activeCategories.map((category) => (
-              <TouchableOpacity
-                key={category.slug}
-                style={[
-                  styles.dropdownOption,
-                  selectedCategory === category.slug &&
-                  styles.dropdownOptionSelected,
-                ]}
-                onPress={() => handleCategoryPress(category.slug)}
-              >
-                <View style={styles.dropdownOptionIcon}>
-                  {renderCategoryIcon(
-                    category.icon,
-                    20,
-                    theme.colors.primary
-                  )}
-                </View>
-                <Text variant="paragraph">{category.nameAr}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {activeCategories.map((category, index) => (
+            <ListItem
+              key={category.slug}
+              label={category.nameAr}
+              icon={renderCategoryIcon(category.icon, 24, theme.colors.primary)}
+              selected={selectedCategory === category.slug}
+              onPress={() => handleCategoryPress(category.slug)}
+              showArrow={false}
+              showBorder={index < activeCategories.length - 1}
+            />
+          ))}
         </ScrollView>
       </BaseModal>
     </>
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, isRTL: boolean) =>
   StyleSheet.create({
     container: {
       backgroundColor: theme.colors.bg,
@@ -212,6 +202,7 @@ const createStyles = (theme: Theme) =>
       paddingVertical: theme.spacing.xs,
       paddingStart: theme.spacing.sm,
       paddingEnd: theme.spacing.sm,
+      textAlign: isRTL ? 'right' : 'left',
     },
     iconButton: {
       width: 40,
@@ -236,26 +227,6 @@ const createStyles = (theme: Theme) =>
     // Dropdown content styles
     dropdownScroll: {
       maxHeight: 400,
-    },
-    dropdownOptions: {
-      gap: theme.spacing.xs,
-    },
-    dropdownOption: {
-      alignItems: 'center',
-      gap: theme.spacing.md,
-      padding: theme.spacing.md,
-      borderRadius: theme.radius.lg,
-    },
-    dropdownOptionSelected: {
-      backgroundColor: theme.colors.primaryLight,
-    },
-    dropdownOptionIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: theme.radius.lg,
-      backgroundColor: theme.colors.surface,
-      justifyContent: 'center',
-      alignItems: 'center',
     },
   });
 
