@@ -155,6 +155,9 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
   // Field-level errors (for inline validation)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // Form-level error message (displayed inline above buttons)
+  const [formError, setFormError] = useState<string>('');
+
   // ==========================================================================
   // COMPUTED VALUES
   // ==========================================================================
@@ -627,11 +630,8 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
     setFieldErrors(errors);
 
     if (Object.keys(errors).length > 0) {
-      addNotification({
-        type: 'error',
-        title: 'خطأ في النموذج',
-        message: 'يرجى تصحيح الأخطاء أدناه',
-      });
+      // Show error inline above buttons (not as toast notification)
+      setFormError('يرجى تصحيح الأخطاء أدناه');
       return false;
     }
 
@@ -643,6 +643,7 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 
     setIsSaving(true);
     setFieldErrors({});
+    setFormError(''); // Clear any previous form error
 
     try {
       // Determine new status
@@ -722,12 +723,8 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      // Show error notification
-      addNotification({
-        type: 'error',
-        title: 'خطأ',
-        message: err.message || 'حدث خطأ أثناء حفظ التغييرات',
-      });
+      // Show error inline above buttons (not as toast notification)
+      setFormError(err.message || 'حدث خطأ أثناء حفظ التغييرات');
     } finally {
       setIsSaving(false);
     }
@@ -1295,25 +1292,36 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
         </ScrollView>
 
         {/* Footer */}
-        <View style={[styles.footer, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
-          <Button
-            variant="outline"
-            onPress={handleClose}
-            style={styles.footerButton}
-            disabled={isSaving}
-          >
-            إلغاء
-          </Button>
-          <Button
-            variant="primary"
-            onPress={handleSave}
-            style={styles.footerButton}
-            loading={isSaving || isUploadingImage}
-            disabled={isSaving || isUploadingImage}
-            icon={<Save size={18} color="#fff" />}
-          >
-            حفظ التغييرات
-          </Button>
+        <View style={styles.footerContainer}>
+          {/* Error message - displayed inline above buttons */}
+          {formError && (
+            <View style={styles.formErrorContainer}>
+              <AlertTriangle size={16} color={theme.colors.error} />
+              <Text variant="small" style={{ color: theme.colors.error, flex: 1 }}>
+                {formError}
+              </Text>
+            </View>
+          )}
+          <View style={[styles.footer, { flexDirection: theme.isRTL ? 'row-reverse' : 'row' }]}>
+            <Button
+              variant="outline"
+              onPress={handleClose}
+              style={styles.footerButton}
+              disabled={isSaving}
+            >
+              إلغاء
+            </Button>
+            <Button
+              variant="primary"
+              onPress={handleSave}
+              style={styles.footerButton}
+              loading={isSaving || isUploadingImage}
+              disabled={isSaving || isUploadingImage}
+              icon={<Save size={18} color="#fff" />}
+            >
+              حفظ التغييرات
+            </Button>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -1395,11 +1403,22 @@ const createStyles = (theme: Theme) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
+    footerContainer: {
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+    },
+    formErrorContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.sm,
+    },
     footer: {
       gap: theme.spacing.md,
       padding: theme.spacing.md,
-      borderTopWidth: 1,
-      borderTopColor: theme.colors.border,
       backgroundColor: theme.colors.surface,
     },
     footerButton: {
