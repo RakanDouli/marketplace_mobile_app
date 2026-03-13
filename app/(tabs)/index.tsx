@@ -291,7 +291,7 @@ export default function HomeTab() {
                 onPress={() => Linking.openURL(social.url)}
                 accessibilityLabel={social.label}
               >
-                <FontAwesome name={social.icon} size={22} color={theme.colors.text} />
+                <FontAwesome name={social.icon} size={22} color={theme.colors.textInverse} />
               </TouchableOpacity>
             ))}
           </View>
@@ -328,7 +328,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, i
     footerBrand: { alignItems: 'center', gap: theme.spacing.sm },
     footerLogoIcon: { padding: theme.spacing.sm, borderRadius: theme.radius.md, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' },
     footerSocial: { flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center' },
-    socialButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.bg, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border },
+    socialButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' },
     footerCopyright: { alignItems: 'center', gap: theme.spacing.md },
     footerDivider: { width: 60, height: 1, backgroundColor: theme.colors.border },
   });
