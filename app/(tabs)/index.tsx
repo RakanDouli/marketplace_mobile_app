@@ -9,6 +9,8 @@ import {
   StyleSheet,
   ScrollView,
   useWindowDimensions,
+  TouchableOpacity,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,6 +20,7 @@ import {
   Tag,
   Zap,
 } from 'lucide-react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useTheme } from '../../src/theme';
 import { LogoIcon } from '../../src/components/icons';
 import { Text } from '../../src/components/slices/Text';
@@ -66,6 +69,11 @@ const PROMO_CATEGORIES = [
     buttonText: 'أضف إعلانك',
     imageSrc: CMS_ASSETS.home.promoCards.electronics,
   },
+];
+
+const SOCIAL_LINKS = [
+  { url: 'https://www.instagram.com/theshambay/', icon: 'instagram' as const, label: 'Instagram' },
+  { url: 'https://www.facebook.com/profile.php?id=61584913273672', icon: 'facebook' as const, label: 'Facebook' },
 ];
 
 const FEATURES = [
@@ -274,7 +282,20 @@ export default function HomeTab() {
           </View>
           {/* Part 2: Tagline */}
           <Text variant="small" center color="secondary">منذ اليوم - منصتك الأولى لبيع وشراء في سوريا</Text>
-          {/* Part 3: Divider + Copyright */}
+          {/* Part 3: Social Media */}
+          <View style={styles.footerSocial}>
+            {SOCIAL_LINKS.map((social) => (
+              <TouchableOpacity
+                key={social.label}
+                style={styles.socialButton}
+                onPress={() => Linking.openURL(social.url)}
+                accessibilityLabel={social.label}
+              >
+                <FontAwesome name={social.icon} size={22} color={theme.colors.text} />
+              </TouchableOpacity>
+            ))}
+          </View>
+          {/* Part 4: Divider + Copyright */}
           <View style={styles.footerCopyright}>
             <View style={styles.footerDivider} />
             <Text variant="xs" center color="muted">© Shambay 2026 جميع الحقوق محفوظة</Text>
@@ -306,6 +327,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>, screenWidth: number, i
     footer: { backgroundColor: theme.colors.surface, paddingHorizontal: horizontalPadding, paddingVertical: theme.spacing.xl, paddingBottom: theme.spacing.xl + 88, marginTop: theme.spacing.md, borderTopWidth: 1, borderTopColor: theme.colors.border, alignItems: 'center', gap: theme.spacing.lg },
     footerBrand: { alignItems: 'center', gap: theme.spacing.sm },
     footerLogoIcon: { padding: theme.spacing.sm, borderRadius: theme.radius.md, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' },
+    footerSocial: { flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center' },
+    socialButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.bg, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border },
     footerCopyright: { alignItems: 'center', gap: theme.spacing.md },
     footerDivider: { width: 60, height: 1, backgroundColor: theme.colors.border },
   });
