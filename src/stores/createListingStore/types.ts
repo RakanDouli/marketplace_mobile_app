@@ -249,9 +249,9 @@ export interface CreateListingActions {
   deleteDraft: () => Promise<boolean>;
 
   // Media management
-  uploadAndAddImage: (uri: string, position?: number) => Promise<string | null>;
+  uploadAndAddImage: (uri: string, position?: number, onProgress?: (progress: number) => void) => Promise<string | null>;
   removeImage: (imageKey: string) => Promise<void>;
-  uploadAndAddVideo: (uri: string) => Promise<string | null>;
+  uploadAndAddVideo: (uri: string, onProgress?: (progress: number) => void) => Promise<string | null>;
   removeVideo: () => Promise<void>;
 
   // Submission

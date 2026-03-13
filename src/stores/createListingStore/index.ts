@@ -832,13 +832,20 @@ export const useCreateListingStore = create<CreateListingStore>((set, get) => ({
 
       onProgress?.(10);
 
-      // 2. Upload file to Cloudflare
+      // 2. Upload file to Cloudflare with metadata for future cleanup
       const formDataUpload = new FormData();
       formDataUpload.append('file', {
         uri,
         type: 'image/jpeg',
         name: `image-${Date.now()}.jpg`,
       } as any);
+
+      // Add metadata for future cleanup scripts
+      formDataUpload.append('metadata', JSON.stringify({
+        type: 'listing',
+        category: formData.categoryId,
+        uploadedAt: new Date().toISOString(),
+      }) as any);
 
       const uploadResponse = await fetch(uploadUrl, {
         method: 'POST',

@@ -462,9 +462,16 @@ export const EditListingModal: React.FC<EditListingModalProps> = ({
 
           const { uploadUrl } = uploadData.createImageUploadUrl;
 
-          // Upload to Cloudflare
+          // Upload to Cloudflare with metadata for future cleanup
           const formData = new FormData();
           formData.append('file', img.file as any);
+
+          // Add metadata for future cleanup scripts
+          formData.append('metadata', JSON.stringify({
+            type: 'listing',
+            category: listing.category?.id,
+            uploadedAt: new Date().toISOString(),
+          }));
 
           const response = await fetch(uploadUrl, {
             method: 'POST',

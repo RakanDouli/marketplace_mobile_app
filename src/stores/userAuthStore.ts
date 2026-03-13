@@ -1070,7 +1070,7 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         return { success: false, error: 'فشل في الحصول على رابط الرفع' };
       }
 
-      // Step 2: Upload image to Cloudflare
+      // Step 2: Upload image to Cloudflare with metadata for future cleanup
       const formData = new FormData();
       const filename = imageUri.split('/').pop() || 'avatar.jpg';
       const match = /\.(\w+)$/.exec(filename);
@@ -1081,6 +1081,12 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
         name: filename,
         type,
       } as any);
+
+      // Add metadata for future cleanup scripts
+      formData.append('metadata', JSON.stringify({
+        type: 'profile',
+        uploadedAt: new Date().toISOString(),
+      }));
 
       const uploadResponse = await fetch(uploadUrl, {
         method: 'POST',

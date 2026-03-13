@@ -262,6 +262,12 @@ export default function ChatScreen() {
           type: type,
         } as any);
 
+        // Add metadata for future cleanup scripts (e.g., delete message images after 30 days)
+        formData.append('metadata', JSON.stringify({
+          type: 'message',
+          uploadedAt: new Date().toISOString(),
+        }));
+
         const uploadResponse = await fetch(uploadUrl, {
           method: 'POST',
           body: formData,
