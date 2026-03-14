@@ -42,7 +42,10 @@ import { ENV } from '../../src/constants/env';
 const CMS_BASE_URL = ENV.WEB_URL;
 const CMS_ASSETS = {
   home: {
-    promoBanner: { car: `${CMS_BASE_URL}/images/cms/car.avif` },
+    promoBanner: {
+      phone: `${CMS_BASE_URL}/images/cms/phone.avif`,
+      car: `${CMS_BASE_URL}/images/cms/car.avif`,
+    },
     promoCards: {
       realEstate: `${CMS_BASE_URL}/images/cms/building.avif`,
       electronics: `${CMS_BASE_URL}/images/cms/phone.avif`,
@@ -53,7 +56,15 @@ const CMS_ASSETS = {
 
 const COMING_SOON_CATEGORIES: string[] = [];
 
+// Order: Cars first, then Real Estate (Phones is now the main banner)
 const PROMO_CATEGORIES = [
+  {
+    slug: 'cars',
+    title: 'هل لديك سيارة للبيع؟',
+    subtitle: 'أضف إعلانك الآن واوصل لآلاف المشترين',
+    buttonText: 'أضف إعلانك',
+    imageSrc: CMS_ASSETS.home.promoBanner.car,
+  },
   {
     slug: 'real-estate',
     title: 'هل لديك عقار للبيع؟',
@@ -61,13 +72,6 @@ const PROMO_CATEGORIES = [
     buttonText: 'قريباً',
     imageSrc: CMS_ASSETS.home.promoCards.realEstate,
     badge: 'جديد',
-  },
-  {
-    slug: 'electronics',
-    title: 'هل لديك جهاز للبيع؟',
-    subtitle: 'أضف إعلانك الآن واوصل لآلاف المشترين',
-    buttonText: 'أضف إعلانك',
-    imageSrc: CMS_ASSETS.home.promoCards.electronics,
   },
 ];
 
@@ -175,7 +179,7 @@ export default function HomeTab() {
           <View style={styles.heroOverlay} />
           <View style={styles.heroContent}>
             <Text variant="h2" center style={{ color: theme.colors.textLight }}>مرحباً بكم في شام باي</Text>
-            <Text variant="paragraph" center style={{ color: theme.colors.textLight, opacity: 0.85, marginTop: theme.spacing.sm }}>منصتك الأولى للبيع والشراء في سوريا</Text>
+            <Text variant="h4" center style={{ color: theme.colors.textLight, marginTop: theme.spacing.sm }}>بيع بذكاء. اشترِ بثقة.</Text>
           </View>
         </View>
 
@@ -191,13 +195,13 @@ export default function HomeTab() {
           />
         </Container>
 
-        {/* CTA Banner - Use PromoBanner component for consistency */}
+        {/* CTA Banner - Phones first (phones-first strategy) */}
         <PromoBanner
-          title="هل لديك سيارة للبيع؟"
+          title="هل لديك جهاز للبيع؟"
           subtitle="أضف إعلانك الآن وتواصل مع آلاف المشترين"
           buttonText="أضف إعلانك"
           onButtonPress={goToCreateListing}
-          imageSrc={CMS_ASSETS.home.promoBanner.car}
+          imageSrc={CMS_ASSETS.home.promoBanner.phone}
           imagePosition="left"
           variant="secondary"
           paddingY="sm"
@@ -238,7 +242,7 @@ export default function HomeTab() {
                 title={promo.title}
                 subtitle={promo.subtitle}
                 buttonText={promo.buttonText}
-                onButtonPress={() => { if (promo.slug === 'electronics') goToCreateListing(); }}
+                onButtonPress={() => { if (promo.slug === 'cars') goToCreateListing(); }}
                 imageSrc={promo.imageSrc}
                 imagePosition={index % 2 === 0 ? 'right' : 'left'}
                 badge={promo.badge}
