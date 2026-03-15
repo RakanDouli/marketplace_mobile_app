@@ -23,10 +23,10 @@ import {
   Crown,
   Lock,
 } from 'lucide-react-native';
-import { useTheme, Theme } from '../../../src/theme';
-import { Text, Button, Loading } from '../../../src/components/slices';
-import { useListingAnalyticsStore } from '../../../src/stores/listingAnalyticsStore';
-import { useUserAuthStore } from '../../../src/stores/userAuthStore';
+import { useTheme, Theme } from '../../../../src/theme';
+import { Text, Button, Loading, Grid } from '../../../../src/components/slices';
+import { useListingAnalyticsStore } from '../../../../src/stores/listingAnalyticsStore';
+import { useUserAuthStore } from '../../../../src/stores/userAuthStore';
 
 // Date range options
 const DATE_RANGE_OPTIONS = [
@@ -77,9 +77,9 @@ export default function AnalyticsScreen() {
     setDateRange(days);
   };
 
-  // Handle listing select - navigate to listing detail
+  // Handle listing select - navigate to listing analytics detail
   const handleListingSelect = (listingId: string) => {
-    router.push(`/listing/${listingId}`);
+    router.push(`/menu/analytics/${listingId}`);
   };
 
   // Format number with commas
@@ -267,7 +267,7 @@ export default function AnalyticsScreen() {
             >
               <Text
                 variant="small"
-                color={dateRange === option.value ? 'surface' : 'secondary'}
+                color={dateRange === option.value ? 'light' : 'secondary'}
                 style={dateRange === option.value ? styles.dateRangeTextActive : undefined}
               >
                 {option.label}
@@ -286,7 +286,7 @@ export default function AnalyticsScreen() {
         <View style={styles.statsGrid}>
           {/* Total Views */}
           <View style={styles.statCard}>
-            <View style={[styles.statIcon, { backgroundColor: `${theme.colors.primary}15` }]}>
+            <View style={[styles.statIcon, { backgroundColor: theme.colors.primaryLight }]}>
               <Eye size={20} color={theme.colors.primary} />
             </View>
             <View style={styles.statContent}>
@@ -304,8 +304,8 @@ export default function AnalyticsScreen() {
 
           {/* Total Wishlists */}
           <View style={styles.statCard}>
-            <View style={[styles.statIcon, { backgroundColor: `${theme.colors.error}15` }]}>
-              <Heart size={20} color={theme.colors.error} />
+            <View style={[styles.statIcon, { backgroundColor: theme.colors.primaryLight }]}>
+              <Heart size={20} color={theme.colors.primary} />
             </View>
             <View style={styles.statContent}>
               <Text variant="h3">{formatNumber(analyticsSummary.totalWishlists)}</Text>
@@ -322,8 +322,8 @@ export default function AnalyticsScreen() {
 
           {/* Active Listings */}
           <View style={styles.statCard}>
-            <View style={[styles.statIcon, { backgroundColor: `${theme.colors.success}15` }]}>
-              <TrendingUp size={20} color={theme.colors.success} />
+            <View style={[styles.statIcon, { backgroundColor: theme.colors.primaryLight }]}>
+              <TrendingUp size={20} color={theme.colors.primary} />
             </View>
             <View style={styles.statContent}>
               <Text variant="h3">{formatNumber(analyticsSummary.activeListingsCount)}</Text>
@@ -335,8 +335,8 @@ export default function AnalyticsScreen() {
 
           {/* Engagement Rate */}
           <View style={styles.statCard}>
-            <View style={[styles.statIcon, { backgroundColor: `${theme.colors.info}15` }]}>
-              <Activity size={20} color={theme.colors.info} />
+            <View style={[styles.statIcon, { backgroundColor: theme.colors.primaryLight }]}>
+              <Activity size={20} color={theme.colors.primary} />
             </View>
             <View style={styles.statContent}>
               <Text variant="h3">{analyticsSummary.avgEngagementRate.toFixed(1)}%</Text>
@@ -350,14 +350,13 @@ export default function AnalyticsScreen() {
 
       {/* Top Performers List */}
       {analyticsSummary.topPerformers.length > 0 && (
-        <View style={styles.listingsSection}>
-          <View style={styles.sectionHeaderRow}>
-            <Text variant="h4">إعلاناتك</Text>
-            <Text variant="xs" color="secondary">
-              اضغط للتفاصيل
-            </Text>
-          </View>
-
+        <Grid
+          title="إعلاناتك"
+          columns={2}
+          mobileColumns={2}
+          gap="md"
+          paddingY="md"
+        >
           {analyticsSummary.topPerformers.map((listing) => (
             <Pressable
               key={listing.id}
@@ -365,6 +364,16 @@ export default function AnalyticsScreen() {
               onPress={() => handleListingSelect(listing.id)}
             >
               <View style={styles.listingInfo}>
+                <View
+                  style={[
+                    styles.performanceBadge,
+                    { backgroundColor: getPerformanceColor(listing.performanceIndicator) },
+                  ]}
+                >
+                  <Text variant="xs" style={styles.performanceBadgeText}>
+                    {getPerformanceLabel(listing.performanceIndicator)}
+                  </Text>
+                </View>
                 <Text variant="body" numberOfLines={2} style={styles.listingTitle}>
                   {listing.title}
                 </Text>
@@ -389,19 +398,10 @@ export default function AnalyticsScreen() {
                   </View>
                 </View>
               </View>
-              <View
-                style={[
-                  styles.performanceBadge,
-                  { backgroundColor: getPerformanceColor(listing.performanceIndicator) },
-                ]}
-              >
-                <Text variant="xs" style={styles.performanceBadgeText}>
-                  {getPerformanceLabel(listing.performanceIndicator)}
-                </Text>
-              </View>
+
             </Pressable>
           ))}
-        </View>
+        </Grid>
       )}
 
       {/* Empty listings state */}
@@ -460,7 +460,7 @@ const createStyles = (theme: Theme) =>
       width: 80,
       height: 80,
       borderRadius: 40,
-      backgroundColor: `${theme.colors.warning}15`,
+      backgroundColor: theme.colors.warningLight,
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: theme.spacing.sm,
@@ -482,13 +482,13 @@ const createStyles = (theme: Theme) =>
     },
     dateRangeScroll: {
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       gap: theme.spacing.sm,
       flexDirection: 'row',
     },
     dateRangeButton: {
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.full,
       backgroundColor: theme.colors.surface,
@@ -531,22 +531,13 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
     },
     statContent: {
-      flex: 1,
-      alignItems: theme.isRTL ? 'flex-end' : 'flex-start',
-    },
-    listingsSection: {
-      padding: theme.spacing.lg,
-      paddingTop: 0,
-    },
-    sectionHeaderRow: {
-      justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: theme.spacing.md,
     },
     listingCard: {
       backgroundColor: theme.colors.bg,
       borderRadius: theme.radius.lg,
-      padding: theme.spacing.md,
+      paddingVertical: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.md,
       marginBottom: theme.spacing.sm,
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -561,19 +552,24 @@ const createStyles = (theme: Theme) =>
     },
     listingTitle: {
       marginBottom: theme.spacing.xs,
+      minHeight: 50,
     },
     listingStats: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       gap: theme.spacing.md,
     },
     listingStat: {
+      flexDirection: theme.isRTL ? 'row-reverse' : 'row',
       alignItems: 'center',
       gap: 4,
     },
     performanceBadge: {
       paddingStart: theme.spacing.sm,
-        paddingEnd: theme.spacing.sm,
+      paddingEnd: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
       borderRadius: theme.radius.full,
+      marginBottom: theme.spacing.sm,
+      marginHorizontal: 'auto',
     },
     performanceBadgeText: {
       color: '#fff',

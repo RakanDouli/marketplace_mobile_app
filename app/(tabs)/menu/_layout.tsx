@@ -87,7 +87,7 @@ export default function MenuStackLayout() {
       <Stack.Screen
         name="analytics"
         options={{
-          title: 'الإحصائيات',
+          headerShown: false,
         }}
       />
       <Stack.Screen
