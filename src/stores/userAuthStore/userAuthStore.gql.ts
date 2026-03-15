@@ -31,6 +31,7 @@ export const ME_QUERY = `
         warningCount
         currentWarningMessage
         warningAcknowledged
+        warnedAt
         bannedUntil
         banReason
       }

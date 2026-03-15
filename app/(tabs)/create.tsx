@@ -9,12 +9,13 @@ import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { LayoutGrid } from 'lucide-react-native';
+import { LayoutGrid, AlertTriangle } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import { useTheme } from '../../src/theme';
 import { Text, ListItem, Button } from '../../src/components/slices';
 import { useCategoriesStore, type Category } from '../../src/stores/categoriesStore';
 import { useCreateListingStore } from '../../src/stores/createListingStore';
+import { useUserAuthStore } from '../../src/stores/userAuthStore';
 
 /**
  * Renders category icon from SVG string (from backend)
@@ -46,6 +47,14 @@ export default function CreateListingScreen() {
 
   // Create listing store
   const { setCategory, reset } = useCreateListingStore();
+
+  // User auth store - check if user is suspended or banned
+  const { profile } = useUserAuthStore();
+  const userStatus = profile?.status;
+  const bannedUntil = profile?.bannedUntil;
+  const isSuspended = userStatus === 'SUSPENDED' || userStatus === 'suspended';
+  const isBanned = userStatus === 'BANNED' || userStatus === 'banned';
+  const isBlocked = isSuspended || isBanned;
 
   // Fetch categories on mount
   useEffect(() => {
@@ -99,6 +108,42 @@ export default function CreateListingScreen() {
       router.push('/create/wizard');
     }
   };
+
+  // Format banned until date for display
+  const formatBannedUntil = () => {
+    if (!bannedUntil) return '';
+    try {
+      return new Date(bannedUntil).toLocaleDateString('ar-EG', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch {
+      return '';
+    }
+  };
+
+  // If user is suspended or banned, show blocked message
+  if (isBlocked) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.surface }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: theme.colors.bg, borderBottomColor: theme.colors.border }]}>
+          <Text variant="h2">إضافة إعلان</Text>
+        </View>
+        <View style={styles.blockedContainer}>
+          <AlertTriangle size={64} color={theme.colors.error} />
+          <Text variant="h3" style={styles.blockedTitle}>
+            {isBanned ? 'حسابك محظور' : 'حسابك موقوف مؤقتاً'}
+          </Text>
+          <Text variant="paragraph" color="secondary" style={styles.blockedMessage}>
+            {isBanned
+              ? 'تم حظر حسابك نهائياً. لا يمكنك إضافة إعلانات جديدة.'
+              : `حسابك موقوف مؤقتاً حتى ${formatBannedUntil()}. لا يمكنك إضافة إعلانات جديدة حتى انتهاء فترة الإيقاف.`}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.surface }]} edges={['top']}>
@@ -185,5 +230,20 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: 16,
+  },
+  blockedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  blockedTitle: {
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  blockedMessage: {
+    marginTop: 12,
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });

@@ -9,9 +9,13 @@ import { AlertTriangle, X, Ban, Clock } from 'lucide-react-native';
 import { useTheme, Theme } from '../../theme';
 import { Text } from '../slices/Text';
 
+// Warning expiration period in days (must match backend)
+const WARNING_EXPIRATION_DAYS = 7;
+
 export interface WarningBannerProps {
   warningCount?: number;
   warningMessage?: string | null;
+  warnedAt?: string | null;
   bannedUntil?: string | null;
   banReason?: string | null;
   onDismiss?: () => void;
@@ -20,12 +24,22 @@ export interface WarningBannerProps {
 export const WarningBanner: React.FC<WarningBannerProps> = ({
   warningCount = 0,
   warningMessage,
+  warnedAt,
   bannedUntil,
   banReason,
   onDismiss,
 }) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Check if warning has expired (older than 7 days)
+  const isWarningExpired = useMemo(() => {
+    if (!warnedAt || warningCount !== 1) return false;
+    const warnedDate = new Date(warnedAt);
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() - WARNING_EXPIRATION_DAYS);
+    return warnedDate < expirationDate;
+  }, [warnedAt, warningCount]);
 
   // Check if user is currently suspended
   const isSuspended = useMemo(() => {
@@ -45,8 +59,8 @@ export const WarningBanner: React.FC<WarningBannerProps> = ({
     });
   }, [bannedUntil]);
 
-  // Don't show if no warnings or ban
-  if (warningCount === 0 && !isSuspended) {
+  // Don't show if no warnings, ban, or warning has expired
+  if ((warningCount === 0 || isWarningExpired) && !isSuspended) {
     return null;
   }
 

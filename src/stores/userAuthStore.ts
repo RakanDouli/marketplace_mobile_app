@@ -240,6 +240,7 @@ export interface UserProfile {
   warningCount?: number;
   currentWarningMessage?: string | null;
   warningAcknowledged?: boolean;
+  warnedAt?: string | null;
   bannedUntil?: string | null;
   banReason?: string | null;
 }

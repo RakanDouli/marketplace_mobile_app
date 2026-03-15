@@ -107,6 +107,7 @@ export default function MyListingsScreen() {
   const banReason = profile?.banReason;
   const warningCount = profile?.warningCount || 0;
   const currentWarningMessage = profile?.currentWarningMessage;
+  const warnedAt = profile?.warnedAt;
   const isBanned = userStatus === 'BANNED';
   const isSuspended = userStatus === 'SUSPENDED' && !!bannedUntil; // !! ensures boolean
 
@@ -353,6 +354,7 @@ export default function MyListingsScreen() {
       <WarningBanner
         warningCount={warningCount}
         warningMessage={currentWarningMessage}
+        warnedAt={warnedAt}
         bannedUntil={bannedUntil}
         banReason={banReason}
       />
