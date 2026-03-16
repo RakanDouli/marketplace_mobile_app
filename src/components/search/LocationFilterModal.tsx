@@ -11,13 +11,11 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
 } from 'react-native';
 import { MapView, Camera } from '@maplibre/maplibre-react-native';
 import { X, MapPin } from 'lucide-react-native';
 import { Text, Select } from '../slices';
 import { useTheme, Theme } from '../../theme';
-import { useMetadataStore } from '../../stores/metadataStore';
 
 /**
  * Syria province center coordinates
@@ -84,18 +82,15 @@ export function LocationFilterModal({
 }: LocationFilterModalProps) {
   const theme = useTheme();
   const styles = createStyles(theme);
-  const { provinces } = useMetadataStore();
 
   const [selectedProvince, setSelectedProvince] = useState<string | null>(initialProvince || null);
   const [radiusKm, setRadiusKm] = useState<number>(initialRadiusKm || 0); // 0 = everywhere
-  const [showProvinceList, setShowProvinceList] = useState(false);
 
   // Reset state when modal opens
   useEffect(() => {
     if (visible) {
       setSelectedProvince(initialProvince || null);
       setRadiusKm(initialRadiusKm || 0);
-      setShowProvinceList(false);
     }
   }, [visible]);
 
@@ -120,9 +115,13 @@ export function LocationFilterModal({
   const defaultCenter = { lat: 34.8, lng: 38.0 };
   const center = coords || defaultCenter;
 
-  const getProvinceLabel = useCallback((key: string) => {
-    return PROVINCE_ARABIC[key.toLowerCase()] || key;
-  }, []);
+  // Province options for Select component
+  const provinceOptions = useMemo(() =>
+    Object.entries(PROVINCE_ARABIC).map(([key, label]) => ({
+      value: key,
+      label,
+    })),
+  []);
 
   const handleApply = useCallback(() => {
     if (!selectedProvince) {
@@ -159,57 +158,22 @@ export function LocationFilterModal({
           <View style={styles.closeButton} />
         </View>
 
-        {/* Province Selector */}
-        <TouchableOpacity
-          style={styles.provinceSelector}
-          onPress={() => setShowProvinceList(!showProvinceList)}
-        >
-          <MapPin size={18} color={theme.colors.primary} />
-          <Text variant="body" style={styles.provinceSelectorText}>
-            {selectedProvince ? getProvinceLabel(selectedProvince) : 'اختر المحافظة'}
-          </Text>
-          {selectedProvince && (
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedProvince(null);
-                setRadiusKm(0);
-              }}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <X size={16} color={theme.colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </TouchableOpacity>
+        {/* Province Select */}
+        <View style={styles.selectRow}>
+          <Select
+            label="المحافظة"
+            placeholder="اختر المحافظة"
+            options={provinceOptions}
+            value={selectedProvince || ''}
+            onChange={(value) => {
+              setSelectedProvince(value || null);
+              if (!value) setRadiusKm(0);
+            }}
+          />
+        </View>
 
-        {/* Province List (expandable) */}
-        {showProvinceList && (
-          <ScrollView style={styles.provinceList} nestedScrollEnabled>
-            {(provinces.length > 0 ? provinces : Object.keys(PROVINCE_ARABIC).map(k => ({ key: k, nameAr: PROVINCE_ARABIC[k] }))).map((p) => (
-              <TouchableOpacity
-                key={p.key}
-                style={[
-                  styles.provinceItem,
-                  selectedProvince === p.key && styles.provinceItemActive,
-                ]}
-                onPress={() => {
-                  setSelectedProvince(p.key);
-                  setShowProvinceList(false);
-                }}
-              >
-                <Text
-                  variant="body"
-                  style={selectedProvince === p.key ? styles.provinceItemTextActive : undefined}
-                >
-                  {p.nameAr}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-
-        {/* Map */}
-        {!showProvinceList && (
-          <View style={styles.mapContainer}>
+        {/* Map - always visible */}
+        <View style={styles.mapContainer}>
             <MapView
               style={styles.map}
               mapStyle="https://tiles.openfreemap.org/styles/liberty"
@@ -235,7 +199,6 @@ export function LocationFilterModal({
               </View>
             )}
           </View>
-        )}
 
         {/* Distance Select */}
         <View style={styles.sliderSection}>
@@ -297,7 +260,14 @@ const createStyles = (theme: Theme) =>
       textAlign: 'center',
     },
 
-    // Province Selector
+    // Province Select
+    selectRow: {
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      backgroundColor: theme.colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
     provinceSelector: {
       flexDirection: 'row',
       alignItems: 'center',
