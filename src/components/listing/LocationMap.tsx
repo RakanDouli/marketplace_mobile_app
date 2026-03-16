@@ -1,10 +1,12 @@
 /**
  * LocationMap Component
- * Displays a static map image with listing location
- * Uses OpenStreetMap static tiles (no API key needed)
+ * Displays an interactive MapLibre map with listing location
+ * Falls back to province center coordinates when exact location unavailable
+ *
+ * NOTE: Requires a development build (eas build). Does NOT work in Expo Go.
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,8 +14,9 @@ import {
   Linking,
   Platform,
 } from 'react-native';
+import { MapView, Camera, PointAnnotation } from '@maplibre/maplibre-react-native';
 import { MapPin, Navigation, ExternalLink } from 'lucide-react-native';
-import { Text, Image, IconText } from '../slices';
+import { Text, IconText } from '../slices';
 import { useTheme, Theme } from '../../theme';
 import { formatLocation as formatLocationUtil } from '../../utils';
 
@@ -34,28 +37,92 @@ interface LocationMapProps {
 }
 
 /**
+ * Syria province coordinates - verified centers
+ * Matches web frontend OpenStreetMapProvider
+ */
+const SYRIA_PROVINCE_COORDS: Record<string, { lat: number; lng: number }> = {
+  damascus: { lat: 33.5138, lng: 36.2765 },
+  aleppo: { lat: 36.2021, lng: 37.1343 },
+  homs: { lat: 34.7298, lng: 36.7184 },
+  hama: { lat: 35.1324, lng: 36.7540 },
+  latakia: { lat: 35.5304, lng: 35.7850 },
+  tartous: { lat: 34.8899, lng: 35.8869 },
+  daraa: { lat: 32.6189, lng: 36.1021 },
+  sweida: { lat: 32.7088, lng: 36.5698 },
+  quneitra: { lat: 33.1261, lng: 35.8246 },
+  idlib: { lat: 35.9248, lng: 36.6333 },
+  raqqa: { lat: 35.9505, lng: 39.0089 },
+  deir_ez_zor: { lat: 35.3364, lng: 40.1407 },
+  hasakah: { lat: 36.5024, lng: 40.7478 },
+  rif_damascus: { lat: 33.6844, lng: 36.5135 },
+};
+
+const PROVINCE_ARABIC_TO_ENGLISH: Record<string, string> = {
+  'دمشق': 'damascus',
+  'حلب': 'aleppo',
+  'حمص': 'homs',
+  'حماة': 'hama',
+  'اللاذقية': 'latakia',
+  'طرطوس': 'tartous',
+  'درعا': 'daraa',
+  'السويداء': 'sweida',
+  'القنيطرة': 'quneitra',
+  'إدلب': 'idlib',
+  'الرقة': 'raqqa',
+  'دير الزور': 'deir_ez_zor',
+  'الحسكة': 'hasakah',
+  'ريف دمشق': 'rif_damascus',
+};
+
+function getProvinceCoords(province?: string): { lat: number; lng: number } | null {
+  if (!province) return null;
+  const key = province.toLowerCase();
+  if (SYRIA_PROVINCE_COORDS[key]) return SYRIA_PROVINCE_COORDS[key];
+  const englishKey = PROVINCE_ARABIC_TO_ENGLISH[province];
+  if (englishKey && SYRIA_PROVINCE_COORDS[englishKey]) return SYRIA_PROVINCE_COORDS[englishKey];
+  return null;
+}
+
+/**
  * Extract coordinates from a Google Maps link
- * Supports formats:
- * - https://www.google.com/maps?q=LAT,LNG
- * - https://www.google.com/maps/search/?api=1&query=LAT,LNG
  */
 function extractCoordsFromLink(link?: string): { lat: number; lng: number } | null {
   if (!link) return null;
-
   try {
-    // Try to extract from ?q=LAT,LNG format
     const qMatch = link.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-    if (qMatch) {
-      return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
-    }
-
-    // Try to extract from query=LAT,LNG format
+    if (qMatch) return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
     const queryMatch = link.match(/[?&]query=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-    if (queryMatch) {
-      return { lat: parseFloat(queryMatch[1]), lng: parseFloat(queryMatch[2]) };
-    }
+    if (queryMatch) return { lat: parseFloat(queryMatch[1]), lng: parseFloat(queryMatch[2]) };
   } catch {
-    // Parsing failed, return null
+    // Parsing failed
+  }
+  return null;
+}
+
+/**
+ * Resolve coordinates with fallback chain:
+ * 1. Exact coordinates from location data
+ * 2. Extracted from Google Maps link
+ * 3. Province center coordinates
+ */
+function resolveCoords(location?: Location): { coords: { lat: number; lng: number }; zoom: number; isExact: boolean } | null {
+  if (!location) return null;
+
+  if (location.coordinates?.lat && location.coordinates?.lng) {
+    return { coords: location.coordinates as { lat: number; lng: number }, zoom: 14, isExact: true };
+  }
+
+  const linkCoords = extractCoordsFromLink(location.link);
+  if (linkCoords) {
+    return { coords: linkCoords, zoom: 14, isExact: true };
+  }
+
+  const provinceCoords = getProvinceCoords(location.province);
+  if (provinceCoords) {
+    let zoom = 8;
+    if (location.city) zoom = 11;
+    if (location.area) zoom = 13;
+    return { coords: provinceCoords, zoom, isExact: false };
   }
 
   return null;
@@ -65,12 +132,8 @@ export function LocationMap({ location, title }: LocationMapProps) {
   const theme = useTheme();
   const styles = createStyles(theme);
 
-  // Format location string with Arabic translation
-  // Priority: address (city/area) → province only
   const formatLocation = () => {
     if (!location) return 'موقع غير محدد';
-
-    // If we have city or area, use full format
     if (location.city || location.area) {
       const formatted = formatLocationUtil({
         city: location.city || location.area,
@@ -78,161 +141,129 @@ export function LocationMap({ location, title }: LocationMapProps) {
       });
       return formatted || 'موقع غير محدد';
     }
-
-    // If only province, translate it
     if (location.province) {
-      const formatted = formatLocationUtil({
-        province: location.province,
-      });
+      const formatted = formatLocationUtil({ province: location.province });
       return formatted || location.province;
     }
-
     return 'موقع غير محدد';
   };
 
-  // Check if we have a direct Google Maps link
+  const resolved = useMemo(() => resolveCoords(location), [location]);
   const hasLink = !!location?.link;
 
-  // Check if we have coordinates (either from coordinates object or extracted from link)
-  const extractedCoords = extractCoordsFromLink(location?.link);
-  const coords = location?.coordinates?.lat && location?.coordinates?.lng
-    ? location.coordinates
-    : extractedCoords;
-  const hasCoordinates = !!coords?.lat && !!coords?.lng;
+  const safeOpenURL = useCallback(async (url: string, fallbackUrl?: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else if (fallbackUrl) {
+        await Linking.openURL(fallbackUrl);
+      }
+    } catch {
+      if (fallbackUrl) {
+        try { await Linking.openURL(fallbackUrl); } catch { /* silent */ }
+      }
+    }
+  }, []);
 
-  // Generate static map URL using OpenStreetMap tiles
-  const getStaticMapUrl = () => {
-    if (!hasCoordinates || !coords) return null;
-    const { lat, lng } = coords;
-    // Using OSM static maps - more reliable for Expo
-    const zoom = 15;
-    // Using openstreetmap.org static export (more reliable)
-    return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.01},${lat - 0.01},${lng + 0.01},${lat + 0.01}&layer=mapnik&marker=${lat},${lng}`;
-  };
-
-  // Use static map image from OpenStreetMap tiles
-  // Requires attribution as per OSM tile usage policy
-  const getStaticTileUrl = () => {
-    if (!hasCoordinates || !coords) return null;
-    const { lat, lng } = coords;
-    const zoom = 15;
-    // Calculate tile coordinates
-    const n = Math.pow(2, zoom);
-    const x = Math.floor((lng + 180) / 360 * n);
-    const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n);
-    // Return tile URL from OSM (with attribution displayed below)
-    return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
-  };
-
-  // Open in native maps app
-  // Priority: link → coordinates → search by name
   const openInMaps = useCallback(() => {
-    // Priority 1: If we have a direct link, open it
     if (location?.link) {
-      Linking.openURL(location.link).catch(() => {
-        // If link fails, try coordinates or search
-        openWithCoordinatesOrSearch();
-      });
+      safeOpenURL(location.link);
       return;
     }
-
-    // Priority 2 & 3: Use coordinates or search by name
     openWithCoordinatesOrSearch();
   }, [location, title]);
 
-  // Helper to open maps with coordinates or search by name
   const openWithCoordinatesOrSearch = useCallback(() => {
-    if (!coords?.lat || !coords?.lng) {
-      // If no coordinates, try searching by name
+    if (!resolved?.coords || !resolved.isExact) {
       const query = encodeURIComponent(formatLocation());
       const url = Platform.select({
         ios: `maps:?q=${query}`,
         android: `geo:0,0?q=${query}`,
       });
-      if (url) Linking.openURL(url);
+      if (url) safeOpenURL(url, `https://www.google.com/maps/search/?api=1&query=${query}`);
       return;
     }
 
-    const { lat, lng } = coords;
+    const { lat, lng } = resolved.coords;
     const label = encodeURIComponent(title || formatLocation());
-
     const url = Platform.select({
       ios: `maps:?ll=${lat},${lng}&q=${label}`,
       android: `geo:${lat},${lng}?q=${lat},${lng}(${label})`,
     });
 
     if (url) {
-      Linking.openURL(url).catch(() => {
-        // Fallback to Google Maps web
-        Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
-      });
+      safeOpenURL(url, `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
     }
-  }, [location, title]);
+  }, [resolved, location, title]);
 
-  // Open directions
   const openDirections = useCallback(() => {
-    // If we have a link, open it for directions (user can navigate from there)
     if (location?.link) {
-      Linking.openURL(location.link);
+      safeOpenURL(location.link);
       return;
     }
 
-    if (!coords?.lat || !coords?.lng) {
+    if (!resolved?.coords || !resolved.isExact) {
       openInMaps();
       return;
     }
 
-    const { lat, lng } = coords;
+    const { lat, lng } = resolved.coords;
     const url = Platform.select({
       ios: `maps:?daddr=${lat},${lng}`,
       android: `google.navigation:q=${lat},${lng}`,
     });
 
     if (url) {
-      Linking.openURL(url).catch(() => {
-        // Fallback to Google Maps web
-        Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
-      });
+      safeOpenURL(url, `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
     }
-  }, [location, openInMaps]);
+  }, [resolved, location, openInMaps]);
 
-  if (!location) {
-    return null;
-  }
+  if (!location) return null;
 
-  // Check if we have any location info to display
-  const hasAnyLocationInfo = hasLink || hasCoordinates || location.city || location.area || location.province;
-
-  if (!hasAnyLocationInfo) {
-    return null;
-  }
+  const hasAnyLocationInfo = hasLink || resolved || location.city || location.area || location.province;
+  if (!hasAnyLocationInfo) return null;
 
   return (
     <View style={styles.container}>
-      {/* Map Preview */}
+      {/* Map */}
       <TouchableOpacity
         style={styles.mapPreview}
         onPress={openInMaps}
         activeOpacity={0.9}
       >
-        {hasCoordinates ? (
-          <>
-            <Image
-              src={getStaticTileUrl()!}
+        {resolved ? (
+          <View style={styles.mapContainer}>
+            <MapView
               style={styles.map}
-              resizeMode="cover"
-            />
-            {/* Map Pin Marker Overlay */}
-            <View style={styles.markerContainer}>
-              <MapPin size={32} color={theme.colors.primary} fill={theme.colors.primary} />
+              mapStyle="https://tiles.openfreemap.org/styles/liberty"
+              scrollEnabled={false}
+              pitchEnabled={false}
+              rotateEnabled={false}
+              zoomEnabled={false}
+              attributionEnabled={false}
+              logoEnabled={false}
+            >
+              <Camera
+                centerCoordinate={[resolved.coords.lng, resolved.coords.lat]}
+                zoomLevel={resolved.zoom}
+                animationMode="moveTo"
+              />
+              <PointAnnotation
+                id="listing-location"
+                coordinate={[resolved.coords.lng, resolved.coords.lat]}
+              >
+                <View style={styles.markerContainer}>
+                  <MapPin size={28} color={theme.colors.primary} fill={theme.colors.primary} />
+                </View>
+              </PointAnnotation>
+            </MapView>
+
+            {/* Open in Maps button */}
+            <View style={styles.openButton}>
+              <ExternalLink size={16} color={theme.colors.primary} />
             </View>
-            {/* OSM Attribution (required by tile usage policy) */}
-            <View style={styles.attribution}>
-              <Text variant="xs" style={styles.attributionText}>
-                © OpenStreetMap
-              </Text>
-            </View>
-          </>
+          </View>
         ) : (
           <View style={styles.mapPlaceholder}>
             <MapPin size={32} color={theme.colors.textMuted} />
@@ -241,11 +272,6 @@ export function LocationMap({ location, title }: LocationMapProps) {
             </Text>
           </View>
         )}
-
-        {/* Open in Maps button */}
-        <View style={styles.openButton}>
-          <ExternalLink size={16} color={theme.colors.primary} />
-        </View>
       </TouchableOpacity>
 
       {/* Location Info */}
@@ -258,8 +284,7 @@ export function LocationMap({ location, title }: LocationMapProps) {
           style={styles.locationRow}
         />
 
-        {/* Actions - show directions if we have link or coordinates */}
-        {(hasLink || hasCoordinates) && (
+        {(hasLink || (resolved && resolved.isExact)) && (
           <TouchableOpacity
             style={styles.directionsButton}
             onPress={openDirections}
@@ -284,22 +309,20 @@ const createStyles = (theme: Theme) =>
       borderRadius: theme.radius.lg,
       overflow: 'hidden',
     },
-
-    // Map Preview
     mapPreview: {
-      height: 180,
+      height: 200,
       backgroundColor: theme.colors.bg,
+    },
+    mapContainer: {
+      flex: 1,
       position: 'relative',
     },
     map: {
-      ...StyleSheet.absoluteFillObject,
+      flex: 1,
     },
     markerContainer: {
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      marginTop: -32,
-      marginLeft: -16,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     mapPlaceholder: {
       flex: 1,
@@ -322,21 +345,6 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       ...theme.shadows.sm,
     },
-    attribution: {
-      position: 'absolute',
-      bottom: theme.spacing.xs,
-      end: theme.spacing.xs,
-      backgroundColor: 'rgba(255, 255, 255, 0.7)',
-      paddingHorizontal: theme.spacing.xs,
-      paddingVertical: 2,
-      borderRadius: theme.radius.sm,
-    },
-    attributionText: {
-      fontSize: 10,
-      color: '#000',
-    },
-
-    // Info
     info: {
       padding: theme.spacing.md,
       alignItems: 'center',
@@ -346,8 +354,6 @@ const createStyles = (theme: Theme) =>
     locationRow: {
       flex: 1,
     },
-
-    // Directions Button
     directionsButton: {
       backgroundColor: theme.colors.primary,
       paddingVertical: theme.spacing.sm,
