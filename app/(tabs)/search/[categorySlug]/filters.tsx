@@ -32,6 +32,7 @@ import {
   type AttributeWithCounts,
 } from '../../../../src/stores/filtersStore';
 import { useCurrencyStore, CURRENCY_SYMBOLS, type Currency } from '../../../../src/stores/currencyStore';
+import { LocationFilterModal } from '../../../../src/components/search/LocationFilterModal';
 
 // Range attribute types that use drill-down min/max pattern
 const RANGE_TYPES = ['range_selector', 'range', 'currency'];
@@ -153,6 +154,7 @@ export default function FiltersScreen() {
   // Range picker modal state
   const [rangeModalVisible, setRangeModalVisible] = useState(false);
   const [rangeModalAttribute, setRangeModalAttribute] = useState<AttributeWithCounts | null>(null);
+  const [locationModalVisible, setLocationModalVisible] = useState(false);
 
 
   // Initialize filters from URL params
@@ -542,6 +544,11 @@ export default function FiltersScreen() {
 
         // Handle press - only create handler if not disabled
         const handlePress = isDisabled ? undefined : () => {
+          // Province/location opens the location filter modal
+          if (attr.key === 'province' || attr.key === 'location') {
+            setLocationModalVisible(true);
+            return;
+          }
           if (isRange) {
             openRangeModal(attr);
           } else {
@@ -986,6 +993,26 @@ export default function FiltersScreen() {
             }
           />
         )}
+
+        {/* Location Filter Modal */}
+        <LocationFilterModal
+          visible={locationModalVisible}
+          onClose={() => setLocationModalVisible(false)}
+          onApply={(province, _radius, _lat, _lng) => {
+            // Remove existing province filter
+            const updated = appliedFilters.filter(f => f.key !== 'province');
+            if (province) {
+              updated.push({
+                key: 'province',
+                label: 'المحافظة',
+                value: province,
+                valueLabel: province,
+              });
+            }
+            setAppliedFilters(updated);
+          }}
+          initialProvince={appliedFilters.find(f => f.key === 'province')?.value || null}
+        />
       </SafeAreaView>
     </>
   );
