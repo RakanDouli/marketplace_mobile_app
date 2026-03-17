@@ -28,6 +28,7 @@ import {
   X,
   Trash2,
   ArrowDownUp,
+  Map as MapIcon,
 } from 'lucide-react-native';
 import { useTheme, Theme } from '../../../../src/theme';
 import { Text, Loading, Button } from '../../../../src/components/slices';
@@ -855,6 +856,15 @@ export default function CategoryListingsScreen() {
               <Text variant="xs" style={styles.filterBadgeText}>{filterChips.length}</Text>
             </View>
           )}
+        </TouchableOpacity>
+
+        {/* Map Search Button */}
+        <TouchableOpacity
+          onPress={() => router.push(`/map?category=${categorySlug}&listingType=${listingType}`)}
+          style={styles.filterButton}
+        >
+          <MapIcon size={16} color={theme.colors.textLight} />
+          <Text variant="small" style={styles.filterButtonText}>البحث على الخريطة</Text>
         </TouchableOpacity>
 
         {/* Active Filter Chips - scrollable */}
