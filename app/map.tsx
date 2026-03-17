@@ -4,15 +4,15 @@
  * Uses MapLibre (requires development build)
  */
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { MapView, Camera, PointAnnotation } from '@maplibre/maplibre-react-native';
-import { ArrowLeft, MapPin, X } from 'lucide-react-native';
+import { MapView, Camera, PointAnnotation, MarkerView } from '@maplibre/maplibre-react-native';
+import { MapPin } from 'lucide-react-native';
 import { Text, Image } from '../src/components/slices';
 import { useTheme, Theme } from '../src/theme';
 import { useListingsStore } from '../src/stores/listingsStore';
@@ -89,26 +89,31 @@ export default function MapSearchScreen() {
         lng,
         title: l.title,
         price: l.priceMinor,
-        image: l.imageKeys?.[0] ? getListingImageUrl(l.imageKeys[0], 'small') : null,
+        image: l.imageKeys?.[0] ? getListingImageUrl(l.imageKeys[0], 'card') : null,
       };
     }).filter(Boolean) as MapMarker[];
   }, [listings]);
 
   return (
     <>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTitle: 'البحث على الخريطة',
+          headerStyle: { backgroundColor: theme.colors.bg },
+          headerShadowVisible: true,
+          headerBackVisible: true,
+          headerBackButtonDisplayMode: 'minimal',
+          headerTintColor: theme.colors.text,
+          headerRight: () => (
+            <Text variant="small" color="muted">
+              {isLoading ? 'جاري البحث...' : `${markers.length} إعلان`}
+            </Text>
+          ),
+        }}
+      />
 
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={22} color={theme.colors.text} />
-          </TouchableOpacity>
-          <Text variant="h4">البحث على الخريطة</Text>
-          <Text variant="small" color="muted">
-            {isLoading ? 'جاري البحث...' : `${markers.length} إعلان`}
-          </Text>
-        </View>
 
         {/* Map */}
         <View style={styles.mapContainer}>
@@ -124,6 +129,7 @@ export default function MapSearchScreen() {
               animationMode="moveTo"
             />
 
+            {/* Pins */}
             {markers.map((m) => (
               <PointAnnotation
                 key={m.id}
@@ -136,44 +142,38 @@ export default function MapSearchScreen() {
                 </View>
               </PointAnnotation>
             ))}
+
+            {/* Popup card - rendered as MarkerView at pin coordinate */}
+            {selectedMarker && (
+              <MarkerView
+                coordinate={[selectedMarker.lng, selectedMarker.lat]}
+                anchor={{ x: 0.5, y: 1 }}
+                allowOverlap={true}
+              >
+                <TouchableOpacity
+                  style={styles.popupCard}
+                  onPress={() => router.push(`/listing/${selectedMarker.id}`)}
+                  activeOpacity={0.9}
+                >
+                  {selectedMarker.image && (
+                    <Image
+                      src={selectedMarker.image}
+                      style={styles.cardImage}
+                      resizeMode="cover"
+                    />
+                  )}
+                  <View style={styles.cardContent}>
+                    <Text variant="small" numberOfLines={2} style={styles.cardTitle}>
+                      {selectedMarker.title}
+                    </Text>
+                    <Text variant="body" color="primary">
+                      ${(selectedMarker.price / 100).toLocaleString()}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </MarkerView>
+            )}
           </MapView>
-
-          {/* Selected listing card */}
-          {selectedMarker && (
-            <View style={styles.listingCard}>
-              {/* Close button - top left of image */}
-              <TouchableOpacity
-                onPress={() => setSelectedMarker(null)}
-                style={styles.closeButton}
-              >
-                <X size={16} color={theme.colors.textMuted} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => router.push(`/listing/${selectedMarker.id}`)}
-                activeOpacity={0.9}
-              >
-                {/* Image */}
-                {selectedMarker.image && (
-                  <Image
-                    src={selectedMarker.image}
-                    style={styles.cardImage}
-                    resizeMode="cover"
-                  />
-                )}
-
-                {/* Text content */}
-                <View style={styles.cardContent}>
-                  <Text variant="body" numberOfLines={2} style={styles.cardTitle}>
-                    {selectedMarker.title}
-                  </Text>
-                  <Text variant="h4" color="primary">
-                    ${(selectedMarker.price / 100).toLocaleString()}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       </View>
     </>
@@ -185,23 +185,6 @@ const createStyles = (theme: Theme) =>
     container: {
       flex: 1,
       backgroundColor: theme.colors.bg,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.md,
-      paddingHorizontal: theme.spacing.md,
-      paddingTop: theme.spacing.xl + theme.spacing.md,
-      paddingBottom: theme.spacing.sm,
-      backgroundColor: theme.colors.bg,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    backButton: {
-      width: 36,
-      height: 36,
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     mapContainer: {
       flex: 1,
@@ -215,32 +198,18 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
     },
 
-    // Listing card
-    listingCard: {
-      position: 'absolute',
-      bottom: theme.spacing.lg,
-      left: theme.spacing.md,
-      right: theme.spacing.md,
+    // Popup above pin
+    popupCard: {
+      width: 160,
       backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.lg,
+      borderRadius: theme.radius.md,
       overflow: 'hidden',
-      ...theme.shadows.md,
-    },
-    closeButton: {
-      position: 'absolute',
-      top: theme.spacing.sm,
-      left: theme.spacing.sm,
-      zIndex: 10,
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: 'rgba(255,255,255,0.85)',
-      alignItems: 'center',
-      justifyContent: 'center',
+      ...theme.shadows.lg,
+      elevation: 5,
     },
     cardImage: {
       width: '100%',
-      height: 140,
+      aspectRatio: 4 / 3,
     },
     cardContent: {
       padding: theme.spacing.sm,
@@ -249,5 +218,6 @@ const createStyles = (theme: Theme) =>
     },
     cardTitle: {
       fontWeight: '600' as const,
+      fontSize: 13,
     },
   });
