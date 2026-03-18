@@ -858,15 +858,6 @@ export default function CategoryListingsScreen() {
           )}
         </TouchableOpacity>
 
-        {/* Map Search Button */}
-        <TouchableOpacity
-          onPress={() => router.push(`/map?category=${categorySlug}&listingType=${listingType}`)}
-          style={styles.filterButton}
-        >
-          <MapIcon size={16} color={theme.colors.textLight} />
-          <Text variant="small" style={styles.filterButtonText}>البحث على الخريطة</Text>
-        </TouchableOpacity>
-
         {/* Active Filter Chips - scrollable */}
         <ScrollView
           horizontal
@@ -1085,6 +1076,15 @@ export default function CategoryListingsScreen() {
             }
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}
+            ListHeaderComponent={
+              <TouchableOpacity
+                onPress={() => router.push(`/map?category=${categorySlug}&listingType=${listingType}`)}
+                style={styles.mapSearchButton}
+              >
+                <MapIcon size={18} color={theme.colors.primary} />
+                <Text variant="small" color="primary">البحث على الخريطة</Text>
+              </TouchableOpacity>
+            }
             ListFooterComponent={renderFooter}
             ListEmptyComponent={renderEmptyState}
           />
@@ -1251,6 +1251,19 @@ const createStyles = (
     listContent: {
       paddingHorizontal: horizontalPadding,
       paddingBottom: theme.spacing.xxl + theme.spacing.xxl,
+    },
+    mapSearchButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing.sm,
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.primary,
+      borderRadius: theme.radius.full,
+      alignSelf: 'center',
     },
     row: {
       flexDirection: theme.isRTL ? 'row-reverse' : 'row',

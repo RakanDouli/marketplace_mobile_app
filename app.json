@@ -17,7 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.shambay.marketplace",
       "appleTeamId": "M425KFPB9Z",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "googleServicesFile": "./GoogleService-Info.plist",
       "usesAppleSignIn": true,
       "infoPlist": {

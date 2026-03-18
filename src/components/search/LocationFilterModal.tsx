@@ -12,6 +12,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapView, Camera } from '@maplibre/maplibre-react-native';
 import { X, MapPin } from 'lucide-react-native';
 import { Text, Select } from '../slices';
@@ -81,7 +82,8 @@ export function LocationFilterModal({
   initialRadiusKm,
 }: LocationFilterModalProps) {
   const theme = useTheme();
-  const styles = createStyles(theme);
+  const insets = useSafeAreaInsets();
+  const styles = createStyles(theme, insets.bottom);
 
   const [selectedProvince, setSelectedProvince] = useState<string | null>(initialProvince || null);
   const [radiusKm, setRadiusKm] = useState<number>(initialRadiusKm || 0); // 0 = everywhere
@@ -226,7 +228,7 @@ export function LocationFilterModal({
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, bottomInset: number = 0) =>
   StyleSheet.create({
     overlay: {
       position: 'absolute',
@@ -245,18 +247,19 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: theme.spacing.md,
-      paddingTop: theme.spacing.xl,
-      paddingBottom: theme.spacing.sm,
-      backgroundColor: theme.colors.primary,
+      height: 44,
+      backgroundColor: theme.colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
     },
     closeButton: {
-      width: 40,
-      height: 40,
+      width: 36,
+      height: 36,
       alignItems: 'center',
       justifyContent: 'center',
     },
     headerTitle: {
-      color: theme.colors.textInverse,
+      color: theme.colors.text,
       textAlign: 'center',
     },
 
@@ -332,7 +335,8 @@ const createStyles = (theme: Theme) =>
     footer: {
       flexDirection: 'row',
       paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.md + bottomInset,
       gap: theme.spacing.sm,
       backgroundColor: theme.colors.surface,
       borderTopWidth: 1,

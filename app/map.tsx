@@ -150,11 +150,17 @@ export default function MapSearchScreen() {
                 anchor={{ x: 0.5, y: 1 }}
                 allowOverlap={true}
               >
-                <TouchableOpacity
-                  style={styles.popupCard}
-                  onPress={() => router.push(`/listing/${selectedMarker.id}`)}
-                  activeOpacity={0.9}
-                >
+                <View style={styles.popupCard}>
+                  <TouchableOpacity
+                    onPress={() => setSelectedMarker(null)}
+                    style={styles.closeButton}
+                  >
+                    <Text variant="xs" style={styles.closeText}>✕</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => router.push(`/listing/${selectedMarker.id}`)}
+                    activeOpacity={0.9}
+                  >
                   {selectedMarker.image && (
                     <Image
                       src={selectedMarker.image}
@@ -170,7 +176,8 @@ export default function MapSearchScreen() {
                       ${(selectedMarker.price / 100).toLocaleString()}
                     </Text>
                   </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                </View>
               </MarkerView>
             )}
           </MapView>
@@ -206,6 +213,22 @@ const createStyles = (theme: Theme) =>
       overflow: 'hidden',
       ...theme.shadows.lg,
       elevation: 5,
+    },
+    closeButton: {
+      position: 'absolute',
+      top: theme.spacing.xs,
+      left: theme.spacing.xs,
+      zIndex: 10,
+      width: 22,
+      height: 22,
+      borderRadius: theme.radius.full,
+      backgroundColor: theme.colors.bg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    closeText: {
+      color: theme.colors.textMuted,
+      fontSize: 11,
     },
     cardImage: {
       width: '100%',
