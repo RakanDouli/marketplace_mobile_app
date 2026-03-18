@@ -34,6 +34,9 @@ export interface IconTextProps {
 
   /** Custom text style */
   textStyle?: TextStyle;
+
+  /** Number of lines for text */
+  numberOfLines?: number;
 }
 
 export function IconText({
@@ -44,6 +47,7 @@ export function IconText({
   gap = 'xs',
   style,
   textStyle,
+  numberOfLines,
 }: IconTextProps) {
   const theme = useTheme();
 
@@ -67,7 +71,7 @@ export function IconText({
       ]}
     >
       {icon}
-      <Text variant={variant} color={color} style={textStyle}>
+      <Text variant={variant} color={color} numberOfLines={numberOfLines} style={[numberOfLines ? { flex: 1 } : undefined, textStyle]}>
         {displayText}
       </Text>
     </View>

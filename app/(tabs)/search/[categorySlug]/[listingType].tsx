@@ -1060,7 +1060,7 @@ export default function CategoryListingsScreen() {
             renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
             keyExtractor={(item) => item.id}
             numColumns={viewMode === 'grid' ? gridColumns : 1}
-            key={`${viewMode}-${gridColumns}`} // Force re-render when view mode or columns change
+            key={`${viewMode}-${gridColumns}`}
             contentContainerStyle={[styles.listContent, { paddingTop: TOOLBAR_HEIGHT + theme.spacing.lg }]}
             columnWrapperStyle={viewMode === 'grid' ? styles.row : undefined}
             showsVerticalScrollIndicator={false}

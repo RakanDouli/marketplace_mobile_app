@@ -116,6 +116,7 @@ export const ListingCardGrid = memo(function ListingCardGrid({
             text={location}
             variant="xs"
             color="secondary"
+            numberOfLines={1}
           />
         )}
       </View>
@@ -170,6 +171,7 @@ const createStyles = (theme: Theme) =>
     },
     title: {
       marginBottom: theme.spacing.xs,
+      height: 48, // Fixed 2 lines (h4 font 18px, ~24px line height)
     },
     price: {
       marginBottom: theme.spacing.xs,
