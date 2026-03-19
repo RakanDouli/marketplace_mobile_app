@@ -33,6 +33,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "pan",
+      "versionCode": 3,
       "package": "com.shambay.marketplace",
       "googleServicesFile": "./google-services.json",
       "permissions": [

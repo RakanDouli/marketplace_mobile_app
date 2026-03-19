@@ -37,6 +37,13 @@
             {
               "client_id": "136245589649-82tp841sq0teh958ilqem9e09nivhcf0.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "136245589649-r2ldnafr0kodcgq9fhj8g3e7ivoae7ml.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.shambay.marketplace"
+              }
             }
           ]
         }
