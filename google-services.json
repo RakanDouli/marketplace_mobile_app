@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "136245589649-4d4prkqhd2of3uce773fmcihien25vj4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shambay.marketplace",
+            "certificate_hash": "e38376f7a3ac4d2c01015ceef25ad0d2a788b17d"
+          }
+        },
+        {
           "client_id": "136245589649-pr78q6ggsjc1e71ub7fvrmb5mjr59962.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
