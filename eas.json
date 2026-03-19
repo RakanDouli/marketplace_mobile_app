@@ -52,7 +52,7 @@
         "EXPO_PUBLIC_APP_ENV": "production"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       },
       "ios": {
         "distribution": "store"
@@ -60,6 +60,11 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./marketplace-9be9d-4f453f8f0436.json",
+        "track": "internal"
+      }
+    }
   }
 }
