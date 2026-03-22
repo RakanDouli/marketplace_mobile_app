@@ -30,6 +30,8 @@ import {
   DELETE_AVATAR_MUTATION,
   ACKNOWLEDGE_WARNING_MUTATION,
   REGISTER_PUSH_TOKEN_MUTATION,
+  DELETE_MY_ACCOUNT_MUTATION,
+  DEACTIVATE_MY_ACCOUNT_MUTATION,
 } from './userAuthStore/userAuthStore.gql';
 import { useNotificationStore } from './notificationStore';
 import { translateWarningMessage } from '../constants/metadata-labels';
@@ -317,6 +319,10 @@ interface UserAuthState {
 
   // Push Notification Actions
   registerPushToken: (token: string) => Promise<{ success: boolean; error?: string }>;
+
+  // Account Actions
+  deleteAccount: () => Promise<{ success: boolean; error?: string }>;
+  deactivateAccount: () => Promise<{ success: boolean; error?: string }>;
 }
 
 // =============================================================================
@@ -1423,6 +1429,52 @@ export const useUserAuthStore = create<UserAuthState>((set, get) => ({
     } catch (error: any) {
       console.error('Failed to register push token:', error);
       return { success: false, error: error.message || 'فشل في تسجيل الإشعارات' };
+    }
+  },
+
+  deleteAccount: async () => {
+    try {
+      const { session } = get();
+      if (!session?.access_token) {
+        return { success: false, error: 'غير مسجل الدخول' };
+      }
+
+      await graphqlRequest(
+        DELETE_MY_ACCOUNT_MUTATION,
+        {},
+        false,
+        session.access_token
+      );
+
+      // Sign out after deletion
+      await get().signOut();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to delete account:', error);
+      return { success: false, error: error.message || 'حدث خطأ أثناء حذف الحساب' };
+    }
+  },
+
+  deactivateAccount: async () => {
+    try {
+      const { session } = get();
+      if (!session?.access_token) {
+        return { success: false, error: 'غير مسجل الدخول' };
+      }
+
+      await graphqlRequest(
+        DEACTIVATE_MY_ACCOUNT_MUTATION,
+        { input: { status: 'INACTIVE' } },
+        false,
+        session.access_token
+      );
+
+      // Sign out after deactivation
+      await get().signOut();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to deactivate account:', error);
+      return { success: false, error: error.message || 'حدث خطأ أثناء تعطيل الحساب' };
     }
   },
 }));

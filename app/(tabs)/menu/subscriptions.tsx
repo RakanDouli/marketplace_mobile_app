@@ -68,15 +68,7 @@ export default function SubscriptionsScreen() {
   const isOverLimit = maxListings > 0 && currentListingsCount > maxListings;
   const overLimitCount = isOverLimit ? currentListingsCount - maxListings : 0;
 
-  const handleUpgrade = () => {
-    // Open WebView to subscription plans page
-    router.push('/webview?path=/user-subscriptions&title=باقات الاشتراك');
-  };
-
-  const handleExtend = () => {
-    // Open WebView to subscription plans page
-    router.push('/webview?path=/user-subscriptions&title=باقات الاشتراك');
-  };
+  // Subscription management is done via website (Apple IAP guideline 3.1.1)
 
   // Not authenticated - show login prompt
   if (!isAuthenticated) {
@@ -131,14 +123,9 @@ export default function SubscriptionsScreen() {
               اشتراكك سينتهي خلال {daysRemaining} {daysRemaining === 1 ? 'يوم' : 'أيام'}! قم بتجديد اشتراكك للاستمرار في الاستفادة من جميع الميزات.
             </Text>
           </View>
-          <Button
-            variant="secondary"
-            size="sm"
-            onPress={handleExtend}
-            style={{ alignSelf: 'flex-end', marginTop: 12 }}
-          >
-            تجديد الاشتراك
-          </Button>
+          <Text variant="small" style={{ color: theme.colors.warning, marginTop: 8 }}>
+            لتجديد اشتراكك، يرجى زيارة الموقع shambay.com
+          </Text>
         </View>
       )}
 
@@ -234,29 +221,18 @@ export default function SubscriptionsScreen() {
             )}
           </View>
           <View style={styles.footerActions}>
-            {canExtend && (
-              <Button variant="outline" onPress={handleExtend} style={{ flex: 1 }}>
-                تجديد
-              </Button>
-            )}
-            {canUpgrade && (
-              <Button variant="primary" arrow onPress={handleUpgrade} style={{ flex: 1 }}>
-                ترقية
-              </Button>
-            )}
+            <Text variant="small" color="secondary" center style={{ flex: 1 }}>
+              لتغيير أو ترقية اشتراكك، يرجى زيارة الموقع shambay.com
+            </Text>
           </View>
         </View>
       </View>
 
-      {/* View All Plans Link */}
+      {/* Website Notice */}
       <View style={styles.viewPlansLink}>
-        <Button
-          variant="link"
-          arrow
-          onPress={() => router.push('/webview?path=/user-subscriptions&title=باقات الاشتراك')}
-        >
-          عرض جميع الخطط المتاحة
-        </Button>
+        <Text variant="small" color="muted" center>
+          لعرض جميع الخطط المتاحة وإدارة اشتراكك{'\n'}يرجى زيارة الموقع shambay.com
+        </Text>
       </View>
     </ScrollView>
   );

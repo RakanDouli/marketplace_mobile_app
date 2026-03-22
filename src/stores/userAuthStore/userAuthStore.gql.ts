@@ -119,6 +119,23 @@ export const ACKNOWLEDGE_WARNING_MUTATION = `
   }
 `;
 
+// Delete account permanently
+export const DELETE_MY_ACCOUNT_MUTATION = `
+  mutation DeleteMyAccount {
+    deleteMyAccount
+  }
+`;
+
+// Deactivate account (set status to inactive)
+export const DEACTIVATE_MY_ACCOUNT_MUTATION = `
+  mutation UpdateMe($input: UpdateUserInput!) {
+    updateMe(input: $input) {
+      id
+      status
+    }
+  }
+`;
+
 // Register push notification token
 export const REGISTER_PUSH_TOKEN_MUTATION = `
   mutation RegisterPushToken($token: String) {

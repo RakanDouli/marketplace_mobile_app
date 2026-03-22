@@ -14,7 +14,7 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
 } from 'react-native';
-import { User, Camera, Trash2, Lock, Mail } from 'lucide-react-native';
+import { User, Camera, Trash2, Lock, Mail, UserX, AlertTriangle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme, Theme } from '../../../src/theme';
@@ -55,6 +55,8 @@ export default function EditProfileScreen() {
     uploadAvatar,
     deleteAvatar,
     clearError,
+    deleteAccount,
+    deactivateAccount,
   } = useUserAuthStore();
 
   // Form state - Personal info
@@ -82,6 +84,11 @@ export default function EditProfileScreen() {
   const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
   const [isSendingPasswordReset, setIsSendingPasswordReset] = useState(false);
   const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
+
+  // Account action state
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [accountActionLoading, setAccountActionLoading] = useState(false);
 
   // Email change modal state
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -567,6 +574,41 @@ export default function EditProfileScreen() {
           )}
         </Container>
 
+        {/* Account Actions */}
+        <Container background="bg" paddingY="lg" style={{ marginTop: theme.spacing.md }}>
+          <Text variant="h4" style={styles.sectionTitle}>
+            إعدادات الحساب
+          </Text>
+
+          {/* Deactivate Account */}
+          <TouchableOpacity
+            style={[styles.accountAction, { flexDirection: theme.isRTL ? 'row-reverse' : 'row', backgroundColor: theme.colors.warningLight || 'rgba(255, 193, 7, 0.1)' }]}
+            onPress={() => setShowDeactivateModal(true)}
+          >
+            <UserX size={20} color={theme.colors.warning} />
+            <View style={{ flex: 1 }}>
+              <Text variant="body">إيقاف الحساب مؤقتاً</Text>
+              <Text variant="xs" color="secondary">
+                يمكنك إخفاء حسابك وإعلاناتك مؤقتاً وإعادة تفعيلها لاحقاً
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Delete Account */}
+          <TouchableOpacity
+            style={[styles.accountAction, { flexDirection: theme.isRTL ? 'row-reverse' : 'row', backgroundColor: theme.colors.errorLight || 'rgba(239, 68, 68, 0.1)', marginTop: theme.spacing.sm }]}
+            onPress={() => setShowDeleteModal(true)}
+          >
+            <Trash2 size={20} color={theme.colors.error} />
+            <View style={{ flex: 1 }}>
+              <Text variant="body" style={{ color: theme.colors.error }}>حذف الحساب نهائياً</Text>
+              <Text variant="xs" color="secondary">
+                سيتم حذف جميع بياناتك بشكل نهائي ولا يمكن استرجاعها
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </Container>
+
         {/* Save Button */}
         <Container background="transparent" paddingY="lg">
           <Button
@@ -580,8 +622,8 @@ export default function EditProfileScreen() {
           </Button>
         </Container>
 
-        {/* Spacer for bottom */}
-        <View style={{ height: 40 }} />
+        {/* Spacer for bottom nav */}
+        <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* Email Change Modal */}
@@ -742,6 +784,80 @@ export default function EditProfileScreen() {
           </Button>
         </View>
       </BottomSheet>
+
+      {/* Deactivate Account Modal */}
+      <BottomSheet
+        visible={showDeactivateModal}
+        onClose={() => setShowDeactivateModal(false)}
+        title="إيقاف الحساب مؤقتاً"
+      >
+        <Text variant="paragraph" style={{ marginBottom: theme.spacing.md }}>
+          عند إيقاف حسابك مؤقتاً:
+        </Text>
+        <Text variant="small" color="secondary" style={{ marginBottom: theme.spacing.md }}>
+          • سيتم إخفاء جميع إعلاناتك من نتائج البحث{'\n'}
+          • سيتم إخفاء ملفك الشخصي عن الآخرين{'\n'}
+          • سيتم إيقاف اشتراكاتك المدفوعة مؤقتاً{'\n'}
+          • يمكنك إعادة تفعيل حسابك بتسجيل الدخول مرة أخرى
+        </Text>
+        <View style={{ gap: theme.spacing.sm }}>
+          <Button
+            variant="danger"
+            onPress={async () => {
+              setAccountActionLoading(true);
+              const result = await deactivateAccount();
+              setAccountActionLoading(false);
+              if (result.success) {
+                setShowDeactivateModal(false);
+              }
+            }}
+            loading={accountActionLoading}
+          >
+            إيقاف مؤقت
+          </Button>
+          <Button variant="outline" onPress={() => setShowDeactivateModal(false)}>
+            إلغاء
+          </Button>
+        </View>
+      </BottomSheet>
+
+      {/* Delete Account Modal */}
+      <BottomSheet
+        visible={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="حذف الحساب نهائياً"
+      >
+        <Text variant="paragraph" style={{ color: theme.colors.error, marginBottom: theme.spacing.md }}>
+          تحذير: هذا الإجراء لا يمكن التراجع عنه!
+        </Text>
+        <Text variant="small" color="secondary" style={{ marginBottom: theme.spacing.md }}>
+          سيتم حذف:{'\n'}
+          • جميع إعلاناتك{'\n'}
+          • بياناتك الشخصية{'\n'}
+          • سجل المعاملات{'\n'}
+          • الاشتراكات النشطة{'\n'}
+          • جميع المحادثات
+        </Text>
+        <View style={{ gap: theme.spacing.sm }}>
+          <Button
+            variant="danger"
+            onPress={async () => {
+              setAccountActionLoading(true);
+              const result = await deleteAccount();
+              setAccountActionLoading(false);
+              if (result.success) {
+                setShowDeleteModal(false);
+              }
+            }}
+            loading={accountActionLoading}
+          >
+            حذف الحساب نهائياً
+          </Button>
+          <Button variant="outline" onPress={() => setShowDeleteModal(false)}>
+            إلغاء
+          </Button>
+        </View>
+      </BottomSheet>
     </KeyboardAvoidingView>
   );
 }
@@ -865,5 +981,11 @@ const createStyles = (theme: Theme) =>
     modalActions: {
       gap: theme.spacing.sm,
       marginTop: theme.spacing.md,
+    },
+    // Account Actions
+    accountAction: {
+      alignItems: 'center',
+      padding: theme.spacing.md,
+      gap: theme.spacing.sm,
     },
   });

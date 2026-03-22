@@ -111,14 +111,8 @@ export default function MenuScreen() {
     },
   ];
 
-  // Advertising & Subscriptions section
+  // Advertising section (subscription plans removed - Apple IAP guideline 3.1.1)
   const advertisingMenuItems: MenuItem[] = [
-    {
-      icon: <Crown size={22} color={theme.colors.text} />,
-      labelKey: 'menu.subscriptionPlans',
-      route: '/webview?path=/user-subscriptions&title=باقات الاشتراك',
-      isWebView: true,
-    },
     {
       icon: <Megaphone size={22} color={theme.colors.text} />,
       labelKey: 'menu.advertise',

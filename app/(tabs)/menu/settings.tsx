@@ -214,7 +214,7 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     rowLabel: {
       marginStart: theme.spacing.sm,
-        marginEnd: theme.spacing.sm,
+      marginEnd: theme.spacing.sm,
     },
     // Restart Notice
     restartNotice: {
@@ -233,7 +233,11 @@ const createStyles = (theme: Theme, isRTL: boolean) =>
     },
     // Modal
     modalMessage: {
-      marginBottom: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
+    },
+    modalButtons: {
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.sm,
     },
     versionText: {
       marginTop: theme.spacing.lg,
