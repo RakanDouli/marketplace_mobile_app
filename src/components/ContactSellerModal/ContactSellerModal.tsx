@@ -68,11 +68,13 @@ export function ContactSellerModal({
       const threadId = await getOrCreateThread(listingId, sellerId);
       await sendMessage(threadId, message.trim());
 
-      // Reset and close
+      // Reset and close modal first
       handleClose();
 
-      // Navigate to chat
-      router.push(`/chat/${threadId}`);
+      // Navigate to chat (use setTimeout to let modal close first)
+      setTimeout(() => {
+        router.push(`/chat/${threadId}`);
+      }, 300);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'فشل في إرسال الرسالة');
     } finally {
@@ -105,9 +107,9 @@ export function ContactSellerModal({
         style={styles.sendButton}
         icon={
           isSubmitting ? (
-            <ActivityIndicator size="small" color={theme.colors.textInverse} />
+            <ActivityIndicator size="small" color={theme.colors.textLight} />
           ) : (
-            <Send size={18} color={theme.colors.textInverse} />
+            <Send size={18} color={theme.colors.textLight} />
           )
         }
       >

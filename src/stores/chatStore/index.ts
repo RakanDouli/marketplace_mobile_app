@@ -60,7 +60,7 @@ interface ChatState {
   // Realtime
   subscribeToThread: (threadId: string, userId: string) => void;
   unsubscribeFromThread: () => void;
-  broadcastTyping: (threadId: string, userName: string) => void;
+  broadcastTyping: (threadId: string, userName: string, userId: string) => void;
   subscribeGlobal: (userId: string) => void;
   unsubscribeGlobal: () => void;
 }
@@ -505,13 +505,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  broadcastTyping: (threadId: string, userName: string) => {
+  broadcastTyping: (threadId: string, userName: string, userId: string) => {
     const { realtimeChannel } = get();
     if (realtimeChannel) {
       realtimeChannel.track({
         typing: true,
         userName,
-        userId: userName,
+        userId,
       });
 
       setTimeout(() => {

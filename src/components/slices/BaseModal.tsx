@@ -322,7 +322,8 @@ const createStyles = (
     footer: {
       paddingStart: theme.spacing.lg,
       paddingEnd: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.md + theme.spacing.lg,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
     },

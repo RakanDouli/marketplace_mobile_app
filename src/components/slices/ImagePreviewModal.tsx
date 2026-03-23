@@ -230,12 +230,12 @@ export function ImagePreviewModal({
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={24} color={theme.colors.textInverse} />
+            <X size={24} color={theme.colors.textLight} />
           </TouchableOpacity>
           <View style={styles.counterContainer}>
             {isCurrentVideo && (
               <View style={styles.videoBadge}>
-                <Play size={12} color="#FFFFFF" fill="#FFFFFF" />
+                <Play size={12} color={theme.colors.textLight} fill="#FFFFFF" />
               </View>
             )}
             <Text variant="body" style={styles.counter}>
@@ -273,7 +273,7 @@ export function ImagePreviewModal({
                 style={[styles.navButton, styles.navButtonLeft]}
                 onPress={goToNext}
               >
-                <ChevronLeft size={32} color={theme.colors.textInverse} />
+                <ChevronLeft size={32} color={theme.colors.textLight} />
               </TouchableOpacity>
             )}
             {/* Previous button - right side */}
@@ -282,7 +282,7 @@ export function ImagePreviewModal({
                 style={[styles.navButton, styles.navButtonRight]}
                 onPress={goToPrev}
               >
-                <ChevronRight size={32} color={theme.colors.textInverse} />
+                <ChevronRight size={32} color={theme.colors.textLight} />
               </TouchableOpacity>
             )}
           </>
@@ -311,7 +311,7 @@ export function ImagePreviewModal({
                 >
                   {item.type === 'video' ? (
                     <View style={styles.videoThumbnail}>
-                      <Play size={20} color="#FFFFFF" fill="#FFFFFF" />
+                      <Play size={20} color={theme.colors.textLight} fill="#FFFFFF" />
                     </View>
                   ) : (
                     <Image
@@ -362,7 +362,7 @@ const createStyles = (theme: Theme) =>
       gap: 6,
     },
     counter: {
-      color: theme.colors.textInverse,
+      color: theme.colors.textLight,
     },
     videoBadge: {
       backgroundColor: theme.colors.primary,
@@ -438,7 +438,7 @@ const createStyles = (theme: Theme) =>
       borderColor: 'transparent',
     },
     thumbnailActive: {
-      borderColor: theme.colors.textInverse,
+      borderColor: theme.colors.textLight,
     },
     thumbnailImage: {
       width: '100%',

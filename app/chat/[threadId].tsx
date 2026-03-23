@@ -168,8 +168,8 @@ export default function ChatScreen() {
   const isBuyer = thread ? thread.buyerId === currentUserId : false;
   const otherUserName = thread
     ? (isBuyer
-        ? (thread.seller?.name || thread.seller?.companyName)
-        : (thread.buyer?.name || thread.buyer?.companyName)) || 'المستخدم'
+      ? (thread.seller?.name || thread.seller?.companyName)
+      : (thread.buyer?.name || thread.buyer?.companyName)) || 'المستخدم'
     : 'المستخدم';
 
   // Fetch messages and subscribe on mount
@@ -198,8 +198,8 @@ export default function ChatScreen() {
 
   // Broadcast typing when user types
   useEffect(() => {
-    if (inputText.trim() && threadId && currentUserName) {
-      broadcastTyping(threadId, currentUserName);
+    if (inputText.trim() && threadId && currentUserName && currentUserId) {
+      broadcastTyping(threadId, currentUserName, currentUserId);
     }
   }, [inputText]);
 
@@ -498,7 +498,7 @@ export default function ChatScreen() {
           {isReviewRequest ? (
             <View style={styles.reviewRequestContent}>
               <Star size={24} color="#fbbf24" fill="#fbbf24" />
-              <Text variant="body" weight="medium" style={styles.reviewRequestText}>
+              <Text variant="body" style={styles.reviewRequestText}>
                 طلب تقييم
               </Text>
               {!isOwn && (
@@ -612,11 +612,11 @@ export default function ChatScreen() {
             />
           )}
           <View style={[styles.headerText, { alignItems: theme.isRTL ? 'flex-end' : 'flex-start' }]}>
-            <Text variant="body" weight="semibold" numberOfLines={1}>
+            <Text variant="body" numberOfLines={1}>
               {thread.listing?.title || 'إعلان محذوف'}
             </Text>
             <Text variant="small" color="secondary" numberOfLines={1}>
-              {otherUserName}
+              {typingUserName ? `${typingUserName} يكتب...` : otherUserName}
             </Text>
           </View>
         </TouchableOpacity>
@@ -700,14 +700,7 @@ export default function ChatScreen() {
           />
         )}
 
-        {/* Typing Indicator */}
-        {typingUserName && (
-          <View style={styles.typingIndicator}>
-            <Text variant="small" color="secondary">
-              {typingUserName} يكتب...
-            </Text>
-          </View>
-        )}
+        {/* Typing indicator moved to header */}
 
         {/* Edit Message Bar */}
         {editingMessage && (
@@ -780,7 +773,7 @@ export default function ChatScreen() {
               ((!inputText.trim() && !pendingImages.length && !editingMessage) ||
                 (editingMessage && !editText.trim()) ||
                 isSending) &&
-                styles.sendButtonDisabled,
+              styles.sendButtonDisabled,
             ]}
             onPress={editingMessage ? handleEditMessage : handleSend}
             disabled={
@@ -873,7 +866,7 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
       borderBottomWidth: 1,
@@ -922,7 +915,7 @@ const createStyles = (theme: Theme) =>
     // Typing Indicator
     typingIndicator: {
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.xs,
     },
 
@@ -932,7 +925,7 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.primary + '20',
       borderTopWidth: 1,
@@ -965,7 +958,7 @@ const createStyles = (theme: Theme) =>
     messageBubble: {
       maxWidth: '75%',
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.lg,
     },
@@ -993,7 +986,7 @@ const createStyles = (theme: Theme) =>
     writeReviewButton: {
       backgroundColor: theme.colors.primary,
       paddingStart: theme.spacing.lg,
-        paddingEnd: theme.spacing.lg,
+      paddingEnd: theme.spacing.lg,
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.md,
       marginTop: theme.spacing.xs,
@@ -1060,7 +1053,7 @@ const createStyles = (theme: Theme) =>
     // Pending Images
     pendingImagesContainer: {
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
       borderTopWidth: 1,
@@ -1095,7 +1088,7 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       alignItems: 'flex-end',
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.bg,
       borderTopWidth: 1,
@@ -1127,12 +1120,12 @@ const createStyles = (theme: Theme) =>
       minHeight: 40,
       maxHeight: 120,
       paddingStart: theme.spacing.md,
-        paddingEnd: theme.spacing.md,
+      paddingEnd: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.lg,
-      fontFamily: theme.fontFamily.body,
-      fontSize: theme.fontSize.body,
+      textAlign: theme.isRTL ? 'right' : 'left',
+      writingDirection: theme.isRTL ? 'rtl' : 'ltr',
       color: theme.colors.text,
     },
     sendButton: {
@@ -1144,6 +1137,7 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
     },
     sendButtonDisabled: {
-      backgroundColor: theme.colors.textMuted,
+      backgroundColor: theme.colors.border,
+      opacity: 0.5,
     },
   });

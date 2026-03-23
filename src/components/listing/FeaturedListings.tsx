@@ -9,6 +9,8 @@ import { Slider, Grid, ContainerProps } from '../slices';
 import { ListingCard } from './ListingCard';
 import { Listing } from '../../stores/listingsStore';
 import { formatLocation } from '../../utils';
+import { formatPrice } from '../../utils/formatPrice';
+import { useCurrencyStore } from '../../stores/currencyStore';
 
 export type FeaturedListingsVariant = 'slider' | 'grid';
 
@@ -39,11 +41,7 @@ export function FeaturedListings({
   paddingY = 'lg',
   background = 'transparent',
 }: FeaturedListingsProps) {
-  // Format price for display
-  const formatPrice = (priceMinor: number): string => {
-    const price = priceMinor / 100;
-    return `${price.toLocaleString('en-US')} ل.س`;
-  };
+  const { preferredCurrency } = useCurrencyStore();
 
   // Format specs for display
   const formatSpecs = (specsDisplay: Record<string, any> | string | undefined): string => {
@@ -79,7 +77,7 @@ export function FeaturedListings({
     <ListingCard
       id={listing.id}
       title={listing.title}
-      price={formatPrice(listing.priceMinor)}
+      price={formatPrice(listing.priceMinor, preferredCurrency)}
       location={formatLocation(listing.location)}
       specs={formatSpecs(listing.specsDisplay)}
       specsDisplay={listing.specsDisplay}
@@ -90,7 +88,7 @@ export function FeaturedListings({
       onPress={() => onListingPress?.(listing.id)}
       viewMode="grid"
     />
-  ), [onListingPress]);
+  ), [onListingPress, preferredCurrency]);
 
   // Limit listings
   const displayListings = listings.slice(0, limit);
