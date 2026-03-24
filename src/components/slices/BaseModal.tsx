@@ -21,6 +21,7 @@ import {
   Animated,
 } from 'react-native';
 import { X } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, Theme } from '../../theme';
 import { Text } from './Text';
 
@@ -75,9 +76,10 @@ export function BaseModal({
   closeOnBackdropPress = true,
 }: BaseModalProps) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(
-    () => createStyles(theme, maxHeightPercent, position, bodyPadding),
-    [theme, maxHeightPercent, position, bodyPadding]
+    () => createStyles(theme, maxHeightPercent, position, bodyPadding, insets.bottom),
+    [theme, maxHeightPercent, position, bodyPadding, insets.bottom]
   );
 
   const hasHeader = title || showCloseButton || rightAction;
@@ -236,7 +238,8 @@ const createStyles = (
   theme: Theme,
   maxHeightPercent: number,
   position: 'bottom' | 'center',
-  bodyPadding: 'none' | 'sm' | 'md' | 'lg'
+  bodyPadding: 'none' | 'sm' | 'md' | 'lg',
+  bottomInset: number = 0
 ) => {
   const paddingMap = {
     none: 0,
@@ -323,7 +326,7 @@ const createStyles = (
       paddingStart: theme.spacing.lg,
       paddingEnd: theme.spacing.lg,
       paddingTop: theme.spacing.md,
-      paddingBottom: theme.spacing.md + theme.spacing.lg,
+      paddingBottom: theme.spacing.md + Math.max(bottomInset, theme.spacing.lg),
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
     },

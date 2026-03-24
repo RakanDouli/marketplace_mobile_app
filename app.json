@@ -30,10 +30,10 @@
         "foregroundImage": "./assets/images/app-icon/splash-icon.png",
         "backgroundColor": "#3D5CB6"
       },
-      "edgeToEdgeEnabled": true,
+      "edgeToEdgeEnabled": false,
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "pan",
-      "versionCode": 6,
+      "versionCode": 7,
       "package": "com.shambay.marketplace",
       "googleServicesFile": "./google-services.json",
       "permissions": [

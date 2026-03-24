@@ -122,25 +122,7 @@ export default function ChatScreen() {
   const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
   const [showImagePreview, setShowImagePreview] = useState(false);
 
-  // Keyboard state
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-
-  // Listen for keyboard show/hide
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setIsKeyboardVisible(true)
-    );
-    const hideSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setIsKeyboardVisible(false)
-    );
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
+  // Keyboard state removed - consistent padding handles safe area
 
   // Open image preview
   const openImagePreview = (images: string[], index: number) => {
@@ -672,7 +654,7 @@ export default function ChatScreen() {
       {/* Messages */}
       <KeyboardAvoidingView
         style={styles.messagesContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
         {isLoading && threadMessages.length === 0 ? (
@@ -740,7 +722,9 @@ export default function ChatScreen() {
         )}
 
         {/* Input Area */}
-        <View style={[styles.inputContainer, { paddingBottom: isKeyboardVisible ? theme.spacing.sm : Math.max(insets.bottom, theme.spacing.sm) }]}>
+        <View style={[styles.inputContainer, {
+          paddingBottom: insets.bottom + theme.spacing.md,
+        }]}>
           {/* Direct paperclip button for image attachment */}
           <TouchableOpacity
             style={styles.menuButton}
@@ -1089,7 +1073,8 @@ const createStyles = (theme: Theme) =>
       alignItems: 'flex-end',
       paddingStart: theme.spacing.md,
       paddingEnd: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
+      paddingTop: theme.spacing.sm,
+      paddingBottom: theme.spacing.md,
       backgroundColor: theme.colors.bg,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
