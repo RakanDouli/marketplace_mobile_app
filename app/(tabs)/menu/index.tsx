@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { Text, Button, ListItem, Image } from '../../../src/components/slices';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -92,23 +92,24 @@ export default function MenuScreen() {
       labelKey: 'menu.blockedUsers',
       route: '/menu/blocked-users',
     },
-    {
+    // Subscription & Payments - hidden on iOS (Apple IAP guideline 3.1.1)
+    ...(Platform.OS === 'android' ? [{
       icon: <CreditCard size={22} color={theme.colors.text} />,
       labelKey: 'menu.subscription',
       route: '/menu/subscriptions',
-    },
-    // Analytics - only if subscription includes analytics access
+    }] : []),
+    // Analytics - only if user has access
     ...(hasAnalyticsAccess ? [{
       icon: <BarChart3 size={22} color={theme.colors.text} />,
       labelKey: 'menu.analytics',
       route: '/menu/analytics',
     }] : []),
-    {
+    ...(Platform.OS === 'android' ? [{
       icon: <Receipt size={22} color={theme.colors.text} />,
       labelKey: 'menu.payments',
       route: '/menu/payments',
       dividerAfter: true,
-    },
+    }] : []),
   ];
 
   // Advertising section (subscription plans removed - Apple IAP guideline 3.1.1)
@@ -345,8 +346,8 @@ export default function MenuScreen() {
             <Text style={styles.userEmail}>
               {profile?.email || user?.email}
             </Text>
-            {/* Subscription title */}
-            {userPackage?.userSubscription?.title && (
+            {/* Subscription badge - hidden on iOS */}
+            {Platform.OS === 'android' && userPackage?.userSubscription?.title && (
               <View style={[styles.subscriptionBadge, theme.rtl.alignItems.start()]}>
                 <Crown size={12} color={theme.colors.primary} />
                 <Text style={styles.subscriptionTitle}>

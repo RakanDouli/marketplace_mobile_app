@@ -161,21 +161,21 @@ export default function MapSearchScreen() {
                     onPress={() => router.push(`/listing/${selectedMarker.id}`)}
                     activeOpacity={0.9}
                   >
-                  {selectedMarker.image && (
-                    <Image
-                      src={selectedMarker.image}
-                      style={styles.cardImage}
-                      resizeMode="cover"
-                    />
-                  )}
-                  <View style={styles.cardContent}>
-                    <Text variant="small" numberOfLines={2} style={styles.cardTitle}>
-                      {selectedMarker.title}
-                    </Text>
-                    <Text variant="body" color="primary">
-                      ${(selectedMarker.price / 100).toLocaleString()}
-                    </Text>
-                  </View>
+                    {selectedMarker.image && (
+                      <Image
+                        src={selectedMarker.image}
+                        style={styles.cardImage}
+                        resizeMode="cover"
+                      />
+                    )}
+                    <View style={styles.cardContent}>
+                      <Text variant="small" numberOfLines={2} style={styles.cardTitle}>
+                        {selectedMarker.title}
+                      </Text>
+                      <Text variant="body" color="primary">
+                        ${(selectedMarker.price / 100).toLocaleString()}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 </View>
               </MarkerView>

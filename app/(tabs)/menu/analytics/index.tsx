@@ -12,6 +12,7 @@ import {
   ScrollView,
   RefreshControl,
   Pressable,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -152,16 +153,20 @@ export default function AnalyticsScreen() {
             ميزة غير متاحة
           </Text>
           <Text variant="paragraph" color="muted" center style={styles.emptySubtitle}>
-            الإحصائيات المتقدمة متاحة فقط في{'\n'}خطط التاجر والأعمال
+            {Platform.OS === 'android'
+              ? 'الإحصائيات المتقدمة متاحة فقط في\nخطط التاجر والأعمال'
+              : 'هذه الميزة غير متاحة حالياً'}
           </Text>
-          <Button
-            variant="primary"
-            onPress={() => router.push('/user-subscriptions')}
-            style={styles.emptyButton}
-            icon={<Crown size={18} color={theme.colors.surface} />}
-          >
-            ترقية الاشتراك
-          </Button>
+          {Platform.OS === 'android' && (
+            <Button
+              variant="primary"
+              onPress={() => router.push('/user-subscriptions')}
+              style={styles.emptyButton}
+              icon={<Crown size={18} color={theme.colors.surface} />}
+            >
+              ترقية الاشتراك
+            </Button>
+          )}
         </View>
       </View>
     );

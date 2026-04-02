@@ -11,6 +11,7 @@ import {
   RefreshControl,
   Pressable,
   Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -155,14 +156,22 @@ export default function MyListingsScreen() {
 
     // Check if user has reached listing limit
     if (isAtLimit) {
-      Alert.alert(
-        'الحد الأقصى للإعلانات',
-        `لديك حالياً ${currentListingsCount} إعلان من أصل ${maxListings} إعلان مسموح في خطتك الحالية.\n\nيمكنك:\n• أرشفة بعض الإعلانات الحالية لإتاحة مساحة جديدة\n• ترقية اشتراكك للحصول على المزيد من الإعلانات`,
-        [
-          { text: 'إلغاء', style: 'cancel' },
-          { text: 'ترقية الاشتراك', onPress: () => router.push('/user-subscriptions') },
-        ]
-      );
+      if (Platform.OS === 'android') {
+        Alert.alert(
+          'الحد الأقصى للإعلانات',
+          `لديك حالياً ${currentListingsCount} إعلان من أصل ${maxListings} إعلان مسموح في خطتك الحالية.\n\nيمكنك:\n• أرشفة بعض الإعلانات الحالية لإتاحة مساحة جديدة\n• ترقية اشتراكك للحصول على المزيد من الإعلانات`,
+          [
+            { text: 'إلغاء', style: 'cancel' },
+            { text: 'ترقية الاشتراك', onPress: () => router.push('/user-subscriptions') },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'الحد الأقصى للإعلانات',
+          `لديك حالياً ${currentListingsCount} إعلان. لا يمكنك إضافة المزيد حالياً.\n\nيمكنك أرشفة بعض الإعلانات الحالية لإتاحة مساحة جديدة.`,
+          [{ text: 'حسناً', style: 'cancel' }]
+        );
+      }
       return;
     }
 
@@ -245,9 +254,11 @@ export default function MyListingsScreen() {
     router.push(`/create/wizard?draftId=${listingId}`);
   };
 
-  // Handle upgrade
+  // Handle upgrade - Android only
   const handleUpgrade = () => {
-    router.push('/user-subscriptions');
+    if (Platform.OS === 'android') {
+      router.push('/user-subscriptions');
+    }
   };
 
   // Render listing item
@@ -359,7 +370,7 @@ export default function MyListingsScreen() {
         banReason={banReason}
       />
 
-      {/* Limit Progress Bar - Only show if maxListings > 0 */}
+      {/* Listing count */}
       {maxListings > 0 && (
         <View style={styles.progressSection}>
           <View style={styles.progressHeader}>
@@ -379,7 +390,7 @@ export default function MyListingsScreen() {
               ]}
             />
           </View>
-          {isAtLimit && (
+          {isAtLimit && Platform.OS === 'android' && (
             <Pressable style={styles.upgradeLink} onPress={handleUpgrade}>
               <Text variant="xs" color="primary">ترقية الاشتراك للمزيد</Text>
             </Pressable>

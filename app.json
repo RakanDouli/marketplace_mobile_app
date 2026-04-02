@@ -17,7 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.shambay.marketplace",
       "appleTeamId": "M425KFPB9Z",
-      "buildNumber": "12",
+      "buildNumber": "13",
       "googleServicesFile": "./GoogleService-Info.plist",
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -33,7 +33,7 @@
       "edgeToEdgeEnabled": false,
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "pan",
-      "versionCode": 7,
+      "versionCode": 8,
       "package": "com.shambay.marketplace",
       "googleServicesFile": "./google-services.json",
       "permissions": [

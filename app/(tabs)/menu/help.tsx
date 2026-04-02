@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { HelpCircle, Mail, MapPin, Clock, ExternalLink } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../../src/theme';
@@ -38,13 +38,14 @@ const faqItems = [
       { question: 'ماذا أفعل إذا واجهت مشكلة مع بائع؟', answer: 'يمكنك الإبلاغ عن البائع من صفحة الإعلان أو التواصل معنا عبر صفحة "تواصل معنا".' },
     ],
   },
-  {
+  // Subscription FAQ - Android only (Apple IAP guideline 3.1.1)
+  ...(Platform.OS === 'android' ? [{
     category: 'الاشتراكات',
     questions: [
       { question: 'ما هي الاشتراكات المتاحة؟', answer: 'نوفر عدة باقات اشتراك تتيح لك مزايا إضافية مثل تمييز الإعلانات وزيادة عددها. يمكنك مراجعتها من صفحة "الاشتراك" في القائمة.' },
       { question: 'كيف أقوم بترقية اشتراكي؟', answer: 'اذهب إلى القائمة > الاشتراك، ثم اختر الباقة المناسبة واتبع خطوات الدفع.' },
     ],
-  },
+  }] : []),
 ];
 
 // Contact info
