@@ -35,6 +35,7 @@ import { useCurrencyStore } from '../../src/stores/currencyStore';
 import { useRelatedListingsStore } from '../../src/stores/relatedListingsStore';
 import { useListingOwnerStore } from '../../src/stores/listingOwnerStore';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
+import { AuthRequiredModal } from '../../src/components/AuthRequiredModal';
 import { formatPrice, formatLocation, trackListingView, formatDate } from '../../src/utils';
 
 // Components
@@ -75,7 +76,8 @@ export default function ListingDetailScreen() {
   const preferredCurrency = useCurrencyStore((state) => state.preferredCurrency);
   const { fetchAll: fetchRelated, clearRelated } = useRelatedListingsStore();
   const { owner, isLoading: ownerLoading, clearOwner } = useListingOwnerStore();
-  const { profile: currentUserProfile } = useUserAuthStore();
+  const { profile: currentUserProfile, isAuthenticated } = useUserAuthStore();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Fetch listing on mount
   useEffect(() => {
@@ -119,10 +121,14 @@ export default function ListingDetailScreen() {
     }
   }, [owner, currentListing]);
 
-  // Handle Message - Opens contact seller modal
+  // Handle Message - Opens contact seller modal (auth required)
   const handleMessage = useCallback(() => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
     setShowContactModal(true);
-  }, []);
+  }, [isAuthenticated]);
 
   // Build share metadata
   const shareMetadata = useMemo(() => {
@@ -553,7 +559,7 @@ export default function ListingDetailScreen() {
           )}
 
           {/* Location Map */}
-          {locationForMap && (
+          {locationForMap && LocationMap && (
             <View style={styles.section}>
               <Text variant="h4" style={styles.sectionTitle}>
                 الموقع
@@ -666,6 +672,14 @@ export default function ListingDetailScreen() {
           sellerId={listingUserId}
         />
       )}
+
+      {/* Auth Required Modal for guests */}
+      <AuthRequiredModal
+        visible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        message="سجّل دخولك للتواصل مع البائع"
+        dismissible
+      />
     </>
   );
 }

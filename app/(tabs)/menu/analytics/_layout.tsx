@@ -3,12 +3,14 @@
  * Nested stack navigator for analytics screens
  */
 
-import { Stack } from 'expo-router';
-import { Platform } from 'react-native';
+import { TouchableOpacity, Platform } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { ArrowLeft, ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '../../../../src/theme';
 
 export default function AnalyticsStackLayout() {
   const theme = useTheme();
+  const router = useRouter();
 
   // Use fade animation on Android to avoid RTL animation issues
   const animation = Platform.OS === 'android' ? 'fade' : 'slide_from_right';
@@ -33,6 +35,15 @@ export default function AnalyticsStackLayout() {
         name="index"
         options={{
           title: 'الإحصائيات',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.navigate('/(tabs)/menu')} style={{ padding: 8 }}>
+              {Platform.OS === 'ios' ? (
+                <ChevronLeft size={28} color={theme.colors.text} />
+              ) : (
+                <ArrowLeft size={24} color={theme.colors.text} />
+              )}
+            </TouchableOpacity>
+          ),
         }}
       />
       <Stack.Screen

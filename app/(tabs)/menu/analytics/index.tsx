@@ -243,12 +243,8 @@ export default function AnalyticsScreen() {
       }
       showsVerticalScrollIndicator={false}
     >
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <BarChart3 size={24} color={theme.colors.primary} />
-          <Text variant="h3">الإحصائيات</Text>
-        </View>
+      {/* Subtitle */}
+      <View style={{ paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.sm }}>
         <Text variant="small" color="secondary">
           تحليل شامل لأداء إعلاناتك
         </Text>

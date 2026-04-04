@@ -17,11 +17,13 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.shambay.marketplace",
       "appleTeamId": "M425KFPB9Z",
-      "buildNumber": "13",
+      "buildNumber": "14",
       "googleServicesFile": "./GoogleService-Info.plist",
       "usesAppleSignIn": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك لإنشاء رابط خريطة Google لإعلانك",
+        "NSLocationWhenInUseUsageDescription": "نحتاج إلى موقعك لعرض الإعلانات القريبة منك وإنشاء رابط خريطة لإعلانك",
+        "NSPhotoLibraryUsageDescription": "نحتاج الوصول إلى مكتبة الصور لتتمكن من اختيار ورفع صور إعلاناتك على شام باي",
+        "NSCameraUsageDescription": "نحتاج الوصول إلى الكاميرا لتتمكن من التقاط صور لإعلاناتك على شام باي",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -33,7 +35,7 @@
       "edgeToEdgeEnabled": false,
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "pan",
-      "versionCode": 8,
+      "versionCode": 9,
       "package": "com.shambay.marketplace",
       "googleServicesFile": "./google-services.json",
       "permissions": [

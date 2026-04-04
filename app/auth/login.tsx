@@ -424,7 +424,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>, isRTL: boolean) =>
     },
     dividerText: {
       marginStart: theme.spacing.md,
-        marginEnd: theme.spacing.md,
+      marginEnd: theme.spacing.md,
     },
     // Common
     forgotPassword: {

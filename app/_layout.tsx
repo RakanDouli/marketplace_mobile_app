@@ -99,9 +99,15 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!isAuthenticated && !inAuthGroup) {
-      // Redirect to login if not authenticated
-      router.replace('/auth/login');
+    // Guest can access all tabs (auth screens handle themselves), listing detail, map
+    const inTabs = segments[0] === '(tabs)';
+    const isListingDetail = segments[0] === 'listing';
+    const isMapPage = segments[0] === 'map';
+    const isGuestAllowedRoute = inTabs || isListingDetail || isMapPage;
+
+    if (!isAuthenticated && !inAuthGroup && !isGuestAllowedRoute) {
+      // Redirect to home for unknown routes
+      router.replace('/(tabs)');
     } else if (isAuthenticated && inAuthGroup) {
       router.replace('/(tabs)');
     }

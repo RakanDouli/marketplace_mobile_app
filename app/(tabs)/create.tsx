@@ -16,6 +16,7 @@ import { Text, ListItem, Button } from '../../src/components/slices';
 import { useCategoriesStore, type Category } from '../../src/stores/categoriesStore';
 import { useCreateListingStore } from '../../src/stores/createListingStore';
 import { useUserAuthStore } from '../../src/stores/userAuthStore';
+import { AuthRequiredModal } from '../../src/components/AuthRequiredModal';
 
 /**
  * Renders category icon from SVG string (from backend)
@@ -49,7 +50,7 @@ export default function CreateListingScreen() {
   const { setCategory, reset } = useCreateListingStore();
 
   // User auth store - check if user is suspended or banned
-  const { profile } = useUserAuthStore();
+  const { isAuthenticated, profile } = useUserAuthStore();
   const userStatus = profile?.status;
   const bannedUntil = profile?.bannedUntil;
   const isSuspended = userStatus === 'SUSPENDED' || userStatus === 'suspended';
@@ -122,6 +123,17 @@ export default function CreateListingScreen() {
       return '';
     }
   };
+
+  // If guest, show auth screen
+  if (!isAuthenticated) {
+    return (
+      <AuthRequiredModal
+        visible={true}
+        onClose={() => {}}
+        message="سجّل دخولك لإضافة إعلانك"
+      />
+    );
+  }
 
   // If user is suspended or banned, show blocked message
   if (isBlocked) {

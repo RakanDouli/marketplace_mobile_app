@@ -123,7 +123,7 @@ export function LocationFilterModal({
       value: key,
       label,
     })),
-  []);
+    []);
 
   const handleApply = useCallback(() => {
     if (!selectedProvince) {
@@ -176,31 +176,31 @@ export function LocationFilterModal({
 
         {/* Map - always visible */}
         <View style={styles.mapContainer}>
-            <MapView
-              style={styles.map}
-              mapStyle="https://tiles.openfreemap.org/styles/liberty"
-              scrollEnabled={false}
-              pitchEnabled={false}
-              rotateEnabled={false}
-              zoomEnabled={false}
-              attributionEnabled={false}
-              logoEnabled={false}
-            >
-              <Camera
-                centerCoordinate={[center.lng, center.lat]}
-                zoomLevel={coords ? mapZoom : 5}
-                animationMode="easeTo"
-                animationDuration={300}
-              />
-            </MapView>
+          <MapView
+            style={styles.map}
+            mapStyle="https://tiles.openfreemap.org/styles/liberty"
+            scrollEnabled={false}
+            pitchEnabled={false}
+            rotateEnabled={false}
+            zoomEnabled={false}
+            attributionEnabled={false}
+            logoEnabled={false}
+          >
+            <Camera
+              centerCoordinate={[center.lng, center.lat]}
+              zoomLevel={coords ? mapZoom : 5}
+              animationMode="easeTo"
+              animationDuration={300}
+            />
+          </MapView>
 
-            {/* Pin overlay (center of map) */}
-            {coords && (
-              <View style={styles.pinOverlay}>
-                <MapPin size={32} color={theme.colors.primary} fill={theme.colors.primary} />
-              </View>
-            )}
-          </View>
+          {/* Pin overlay (center of map) */}
+          {coords && (
+            <View style={styles.pinOverlay}>
+              <MapPin size={32} color={theme.colors.primary} fill={theme.colors.primary} />
+            </View>
+          )}
+        </View>
 
         {/* Distance Select */}
         <View style={styles.sliderSection}>

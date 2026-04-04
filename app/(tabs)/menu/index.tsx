@@ -30,6 +30,7 @@ import {
 } from 'lucide-react-native';
 import { useTheme, useThemeMode } from '../../../src/theme';
 import { useUserAuthStore } from '../../../src/stores/userAuthStore';
+import { AuthRequiredModal } from '../../../src/components/AuthRequiredModal';
 import { useCurrencyStore, CURRENCY_SYMBOLS, type Currency } from '../../../src/stores/currencyStore';
 import { useTranslation } from '../../../src/hooks/useTranslation';
 // Image component from slices handles Cloudflare URLs internally
@@ -56,6 +57,17 @@ export default function MenuScreen() {
   const eurToSyp = exchangeRates['EUR_SYP'] || 124;
 
   const styles = createStyles(theme);
+
+  // Show auth screen for guests
+  if (!isAuthenticated) {
+    return (
+      <AuthRequiredModal
+        visible={true}
+        onClose={() => {}}
+        message="سجّل دخولك للوصول إلى حسابك وإعداداتك"
+      />
+    );
+  }
 
   // Theme options
   const themeOptions: { mode: 'light' | 'dark' | 'system'; icon: React.ReactNode; labelKey: string }[] = [

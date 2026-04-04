@@ -11,10 +11,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ShoppingBag, Key, ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react-native';
+import { ShoppingBag, Key, ChevronLeft, ChevronRight, LayoutGrid, ArrowLeft } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import { useTheme, Theme } from '../../../../src/theme';
 import { Text, Loading, ListItem } from '../../../../src/components/slices';
@@ -125,7 +126,15 @@ export default function CategorySelectionScreen() {
         <Stack.Screen
           options={{
             title: category.nameAr,
-            headerBackTitle: 'الأقسام',
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.navigate('/(tabs)/search')} style={{ padding: 8, marginRight: 8 }}>
+                {Platform.OS === 'ios' ? (
+                  <ChevronLeft size={28} color={theme.colors.text} />
+                ) : (
+                  <ArrowLeft size={24} color={theme.colors.text} />
+                )}
+              </TouchableOpacity>
+            ),
           }}
         />
         <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -153,7 +162,15 @@ export default function CategorySelectionScreen() {
       <Stack.Screen
         options={{
           title: category.nameAr,
-          headerBackTitle: 'الأقسام',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.navigate('/(tabs)/search')} style={{ padding: 8, marginRight: 8 }}>
+              {Platform.OS === 'ios' ? (
+                <ChevronLeft size={28} color={theme.colors.text} />
+              ) : (
+                <ArrowLeft size={24} color={theme.colors.text} />
+              )}
+            </TouchableOpacity>
+          ),
         }}
       />
       <SafeAreaView style={styles.container} edges={['bottom']}>

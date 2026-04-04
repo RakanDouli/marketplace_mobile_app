@@ -7,10 +7,10 @@
 import React, { useState } from 'react';
 import { TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Heart } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
 import { useTheme, Theme } from '../../theme';
 import { useWishlistStore } from '../../stores/wishlistStore';
 import { useUserAuthStore } from '../../stores/userAuthStore';
+import { AuthRequiredModal } from '../AuthRequiredModal';
 
 interface FavoriteButtonProps {
   listingId: string;
@@ -26,12 +26,12 @@ export function FavoriteButton({
   style = 'overlay',
 }: FavoriteButtonProps) {
   const theme = useTheme();
-  const router = useRouter();
   const styles = createStyles(theme, style);
 
   const { isInWishlist, toggleWishlist } = useWishlistStore();
   const { isAuthenticated, isLoading: authLoading, profile } = useUserAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Hide button while auth is loading (prevent flash before we know if user owns listing)
   if (authLoading) {
@@ -50,8 +50,7 @@ export function FavoriteButton({
   const handleToggle = async () => {
     // Check if user is authenticated
     if (!isAuthenticated) {
-      // Navigate to login
-      router.push('/auth/login');
+      setShowAuthModal(true);
       return;
     }
 
@@ -70,23 +69,31 @@ export function FavoriteButton({
   };
 
   return (
-    <TouchableOpacity
-      onPress={handleToggle}
-      style={styles.button}
-      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      activeOpacity={0.7}
-      disabled={isLoading}
-    >
-      {isLoading ? (
-        <ActivityIndicator size="small" color={theme.colors.text} />
-      ) : (
-        <Heart
-          size={size}
-          color={isFavorited ? theme.colors.error : theme.colors.text}
-          fill={isFavorited ? theme.colors.error : 'transparent'}
-        />
-      )}
-    </TouchableOpacity>
+    <>
+      <TouchableOpacity
+        onPress={handleToggle}
+        style={styles.button}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        activeOpacity={0.7}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator size="small" color={theme.colors.text} />
+        ) : (
+          <Heart
+            size={size}
+            color={isFavorited ? theme.colors.error : theme.colors.text}
+            fill={isFavorited ? theme.colors.error : 'transparent'}
+          />
+        )}
+      </TouchableOpacity>
+      <AuthRequiredModal
+        visible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        message="سجّل دخولك لإضافة الإعلان إلى المفضلة"
+        dismissible
+      />
+    </>
   );
 }
 

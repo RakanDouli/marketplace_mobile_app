@@ -22,6 +22,7 @@ import { useUserAuthStore } from '../../src/stores/userAuthStore';
 import { useListingsStore, Listing } from '../../src/stores/listingsStore';
 import { getCloudflareImageUrl } from '../../src/utils/cloudflare-images';
 import { formatRelativeTime } from '../../src/utils';
+import { AuthRequiredModal } from '../../src/components/AuthRequiredModal';
 
 // Thread with fetched listing data (like web frontend)
 interface ThreadWithListing extends ChatThread {
@@ -36,6 +37,17 @@ export default function MessagesScreen() {
   // Auth
   const { isAuthenticated, profile } = useUserAuthStore();
   const currentUserId = profile?.id;
+
+  // Show auth screen for guests
+  if (!isAuthenticated) {
+    return (
+      <AuthRequiredModal
+        visible={true}
+        onClose={() => {}}
+        message="سجّل دخولك لعرض رسائلك والتواصل مع البائعين"
+      />
+    );
+  }
 
   // Chat store
   const {
